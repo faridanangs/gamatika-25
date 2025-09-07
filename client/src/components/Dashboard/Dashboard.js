@@ -11,6 +11,7 @@ const menuItems = [
   { id: 'forum', label: 'Forum', icon: '📢', href: '/dashboard/forum' },
   { id: 'jadwal', label: 'Jadwal', icon: '📅', href: '/dashboard/jadwal' },
   { id: 'materi', label: 'Materi', icon: '📚', href: '/dashboard/materi' },
+  { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
   { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
 ];
 
