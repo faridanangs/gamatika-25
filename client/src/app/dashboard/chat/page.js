@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { FileIcon, UploadIcon } from 'lucide-react';
 
 // Fungsi untuk memformat tanggal
 const formatTime = (date) => {
@@ -29,7 +30,6 @@ const MessageImage = ({ src, alt }) => (
 // Komponen untuk pesan dengan animasi
 const MessageBubble = ({ message, isTyping }) => {
   const isUser = message.sender === 'user';
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -155,6 +155,8 @@ const ChatInput = ({
   setUploadedFiles,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -168,7 +170,6 @@ const ChatInput = ({
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
       handleMultipleFileUpload(files);
@@ -179,6 +180,9 @@ const ChatInput = ({
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       handleMultipleFileUpload(files);
+      // Reset input value and force re-render
+      e.target.value = null;
+      setFileInputKey((prev) => prev + 1);
     }
   };
 
@@ -189,103 +193,81 @@ const ChatInput = ({
         alert('Hanya file gambar yang diperbolehkan');
         return false;
       }
-
       // Cek ukuran file (maksimal 20MB)
       if (file.size > 20 * 1024 * 1024) {
         alert(`File ${file.name} terlalu besar. Maksimal 20MB.`);
         return false;
       }
-
       return true;
     });
 
-    // Cek apakah total gambar melebihi 2
-    if (uploadedFiles.length + validFiles.length > 2) {
-      alert('Maksimal 2 gambar dapat di-upload');
+    // Cek apakah total gambar melebihi 1
+    if (uploadedFiles.length + validFiles.length > 1) {
+      alert('Maksimal 1 gambar dapat di-upload');
       return;
     }
 
-    // Proses file yang valid
+    // Proses file yang valid dengan ID unik
     const newFiles = [...uploadedFiles];
-
     validFiles.forEach((file) => {
+      // Buat ID unik untuk file ini
+      const fileId = `file-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
+      // Cek apakah file sudah ada di state
+      const isFileAlreadyUploaded = newFiles.some(
+        (f) => f.file.name === file.name && f.file.size === file.size
+      );
+
+      // Jika file sudah ada, hapus dulu dari state
+      if (isFileAlreadyUploaded) {
+        setUploadedFiles((prev) =>
+          prev.filter(
+            (f) => !(f.file.name === file.name && f.file.size === file.size)
+          )
+        );
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const newFile = {
+          id: fileId,
           file,
           preview: e.target.result,
           name: file.name,
         };
-        newFiles.push(newFile);
-        setUploadedFiles([...newFiles]);
+
+        // Tambahkan ke state
+        setUploadedFiles((prev) => [...prev, newFile]);
       };
       reader.readAsDataURL(file);
     });
   };
 
   const removeFile = (index) => {
-    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    const newFiles = [...uploadedFiles];
+    newFiles.splice(index, 1);
     setUploadedFiles(newFiles);
+    // Reset input value and force re-render
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+    setFileInputKey((prev) => prev + 1);
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 p-4 rounded-t-2xl shadow-lg border-t border-gray-200 dark:border-gray-700"
+      className="px-2 py-3 w-full rounded-t-2xl shadow-lg border-t border-gray-100 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-card"
     >
-      {/* Area upload file */}
-      <div
-        className={`mb-3 p-3 rounded-lg border-2 border-dashed transition-colors ${
-          isDragging
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-          <span className="text-sm">
-            Drag & drop gambar di sini atau klik untuk upload (maks 2 gambar,
-            20MB per gambar)
-          </span>
-        </div>
-        <input
-          type="file"
-          className="hidden"
-          id="file-upload"
-          accept="image/*"
-          multiple
-          onChange={handleFileInputChange}
-        />
-        <label
-          htmlFor="file-upload"
-          className="mt-2 block text-center text-xs text-blue-500 hover:text-blue-600 cursor-pointer"
-        >
-          Pilih gambar
-        </label>
-      </div>
-
       {/* Preview gambar terupload */}
       {uploadedFiles.length > 0 && (
         <div className="mb-3">
           <div className="flex flex-wrap gap-2">
             {uploadedFiles.map((file, index) => (
-              <div key={index} className="relative group">
+              <div key={file.id} className="relative group">
                 <img
                   src={file.preview}
                   alt={`Preview ${index + 1}`}
@@ -316,12 +298,38 @@ const ChatInput = ({
             ))}
           </div>
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {uploadedFiles.length}/2 gambar terupload
+            {uploadedFiles.length}/1 gambar terupload
           </div>
         </div>
       )}
-
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
+        <div
+          className={`px-2 py-1 rounded-lg transition-colors inline-block ${
+            isDragging
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            key={fileInputKey}
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            id="file-upload"
+            accept="image/*"
+            multiple
+            onChange={handleFileInputChange}
+          />
+          <label
+            htmlFor="file-upload"
+            className="block text-center text-xs text-blue-500 hover:text-blue-600 cursor-pointer"
+          >
+            <UploadIcon />
+          </label>
+        </div>
         <input
           type="text"
           value={inputValue}
@@ -360,9 +368,6 @@ const ChatInput = ({
           </svg>
         </motion.button>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-        Tekan Enter untuk mengirim pesan • Maksimal 2 gambar (20MB per gambar)
-      </p>
     </motion.div>
   );
 };
@@ -384,7 +389,6 @@ export default function ChatPage() {
   const ai = new GoogleGenAI({
     apiKey: 'AIzaSyBLiJgdGYRrNEd5wVmYzRj4SCw7cifLtyM',
   });
-
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -393,7 +397,6 @@ export default function ChatPage() {
       timestamp: new Date(),
     },
   ]);
-
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -427,35 +430,53 @@ export default function ChatPage() {
         alert('Hanya file gambar yang diperbolehkan');
         return false;
       }
-
       // Cek ukuran file (maksimal 20MB)
       if (file.size > 20 * 1024 * 1024) {
         alert(`File ${file.name} terlalu besar. Maksimal 20MB.`);
         return false;
       }
-
       return true;
     });
 
-    // Cek apakah total gambar melebihi 2
-    if (uploadedFiles.length + validFiles.length > 2) {
-      alert('Maksimal 2 gambar dapat di-upload');
+    // Cek apakah total gambar melebihi 1
+    if (uploadedFiles.length + validFiles.length > 1) {
+      alert('Maksimal 1 gambar dapat di-upload');
       return;
     }
 
-    // Proses file yang valid
+    // Proses file yang valid dengan ID unik
     const newFiles = [...uploadedFiles];
-
     validFiles.forEach((file) => {
+      // Buat ID unik untuk file ini
+      const fileId = `file-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
+      // Cek apakah file sudah ada di state
+      const isFileAlreadyUploaded = newFiles.some(
+        (f) => f.file.name === file.name && f.file.size === file.size
+      );
+
+      // Jika file sudah ada, hapus dulu dari state
+      if (isFileAlreadyUploaded) {
+        setUploadedFiles((prev) =>
+          prev.filter(
+            (f) => !(f.file.name === file.name && f.file.size === file.size)
+          )
+        );
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const newFile = {
+          id: fileId,
           file,
           preview: e.target.result,
           name: file.name,
         };
-        newFiles.push(newFile);
-        setUploadedFiles([...newFiles]);
+
+        // Tambahkan ke state
+        setUploadedFiles((prev) => [...prev, newFile]);
       };
       reader.readAsDataURL(file);
     });
@@ -501,13 +522,11 @@ export default function ChatPage() {
         sender: 'ai',
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, aiMessage]);
 
       // Simulasikan typing effect
       const words = aiResponse.split(' ');
       let currentText = '';
-
       for (let i = 0; i < words.length; i++) {
         await new Promise((resolve) => setTimeout(resolve, 30));
         currentText += words[i] + ' ';
@@ -561,7 +580,6 @@ export default function ChatPage() {
             data: data,
           },
         }));
-
         // Tambahkan teks sebagai bagian terakhir
         contents.push({ text: msg });
 
@@ -601,7 +619,6 @@ export default function ChatPage() {
             `,
           },
         });
-
         return response.text;
       } else {
         // Tanpa gambar
@@ -641,7 +658,6 @@ export default function ChatPage() {
             `,
           },
         });
-
         return response.text;
       }
     } catch (error) {
@@ -651,11 +667,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-4xl mx-auto w-full flex flex-col h-[90vh] shadow-2xl overflow-hidden bg-white dark:bg-gray-800">
+    <div className="min-h-[87vh] h-full w-full">
+      <div className="w-full flex flex-col overflow-hidden relative h-full">
         {/* Area Pesan */}
         <div
-          className="flex-1 overflow-y-auto p-4 space-y-4"
+          className="flex-1 overflow-y-auto px-2 py-1 space-y-4 w-full"
           onScroll={handleScroll}
         >
           <AnimatePresence>
@@ -675,7 +691,7 @@ export default function ChatPage() {
           </AnimatePresence>
           {/* Pesan sistem untuk instruksi */}
           {messages.length === 1 && (
-            <SystemMessage text="Ketik pertanyaan Anda, upload gambar (maks 2), atau tekan Enter untuk memulai percakapan" />
+            <SystemMessage text="Ketik pertanyaan Anda, upload gambar (maks 1), atau tekan Enter untuk memulai percakapan" />
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -689,11 +705,6 @@ export default function ChatPage() {
           uploadedFiles={uploadedFiles}
           setUploadedFiles={setUploadedFiles}
         />
-      </div>
-      {/* Footer dengan informasi */}
-      <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-3">
-        Powered by Gamatika AI • Gemini 2.5 • Support Markdown & Gambar (maks 2
-        gambar, 20MB per gambar)
       </div>
     </div>
   );

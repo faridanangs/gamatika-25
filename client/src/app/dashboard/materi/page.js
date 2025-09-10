@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DownloadIcon, EyeIcon } from 'lucide-react';
 
 // Komponen CourseSelector
 const CourseSelector = ({ selectedCourse, setSelectedCourse, mockMateri }) => {
@@ -228,18 +229,20 @@ const MateriList = ({ filteredMateri, handlePreview, handleDownload }) => {
                     <span>{item.downloads} downloads</span>
                   </div>
                 </div>
-                <div className="flex space-x-2 ml-4">
+                <div className="flex space-x-1 ml-4">
                   <button
                     onClick={() => handlePreview(item.file)}
-                    className="px-3 py-1 bg-gray-200 dark:bg-card shadow-2xl border-b-[2px] text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="px-2 py-1 bg-gray-200 dark:bg-card shadow-2xl border-b-[2px] text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
-                    Preview
+                    <p className="hidden lg:block">Preview</p>
+                    <EyeIcon className="lg:hidden size-3" />
                   </button>
                   <button
                     onClick={() => handleDownload(item.file)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                   >
-                    Download
+                    <p className="hidden lg:block">Download</p>
+                    <DownloadIcon className="lg:hidden size-3" />
                   </button>
                 </div>
               </div>

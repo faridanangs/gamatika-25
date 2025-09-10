@@ -193,7 +193,7 @@ const SkillsForm = ({ skills, onSkillChange, onAddSkill, onRemoveSkill }) => (
             className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
           >
             <Plus className="w-4 h-4" />
-            Add Skill
+            Skill
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ const SkillsForm = ({ skills, onSkillChange, onAddSkill, onRemoveSkill }) => (
             className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
           >
             <Plus className="w-4 h-4" />
-            Add Skill
+            Skill
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -281,7 +281,7 @@ const ExperienceForm = ({
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Add Experience
+          Experience
         </Button>
       </div>
     </CardHeader>
@@ -355,7 +355,7 @@ const ExperienceForm = ({
                   className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Achievement
+                  Achievement
                 </Button>
               </div>
               <div className="space-y-2">
@@ -398,7 +398,7 @@ const EducationForm = ({ education, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Add Education
+          Education
         </Button>
       </div>
     </CardHeader>
@@ -500,7 +500,7 @@ const ProjectsForm = ({
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Add Project
+          Project
         </Button>
       </div>
     </CardHeader>
@@ -575,7 +575,7 @@ const ProjectsForm = ({
                   className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Technology
+                  Technology
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -625,7 +625,7 @@ const CertificationsForm = ({ certifications, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Add Certification
+          Certification
         </Button>
       </div>
     </CardHeader>
@@ -699,7 +699,7 @@ const LanguagesForm = ({ languages, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Add Language
+          Language
         </Button>
       </div>
     </CardHeader>
@@ -1708,15 +1708,13 @@ const CVBuilder = () => {
                   disabled={step === 1}
                   className="dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2" />
-                  Previous
+                  <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <Button
                   onClick={() => goToStep(step + 1)}
                   className="dark:bg-blue-600 dark:hover:bg-blue-700"
                 >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
