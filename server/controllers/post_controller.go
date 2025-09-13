@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"strconv"
-
 	"github.com/faridanangs/gamatika-25/helpers"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/faridanangs/gamatika-25/services"
@@ -47,7 +45,12 @@ func (pc *PostController) CreatePost(c *fiber.Ctx) error {
 		})
 	}
 
-	post, err := pc.postService.CreatePost(req)
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
+	post, err := pc.postService.CreatePost(req, tokenString)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{
@@ -91,8 +94,15 @@ func (pc *PostController) UpdatePost(c *fiber.Ctx) error {
 		})
 	}
 
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
+	// Get user ID from JWT middleware
 	req.ID = c.Params("id")
-	post, err := pc.postService.UpdatePost(req)
+
+	post, err := pc.postService.UpdatePost(req, tokenString)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{
@@ -104,8 +114,15 @@ func (pc *PostController) UpdatePost(c *fiber.Ctx) error {
 }
 
 func (pc *PostController) DeletePost(c *fiber.Ctx) error {
+
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
 	id := c.Params("id")
-	err := pc.postService.DeletePost(id)
+
+	err = pc.postService.DeletePost(id, tokenString)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{
@@ -115,110 +132,5 @@ func (pc *PostController) DeletePost(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Post deleted successfully",
-	})
-}
-
-// Comment routes
-func (pc *PostController) CreateComment(c *fiber.Ctx) error {
-	var req models.CreateCommentRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	// Set post ID from URL parameter
-	req.PostID = c.Params("id")
-
-	comment, err := pc.commentService.CreateComment(req)
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(comment)
-}
-
-func (pc *PostController) GetCommentByID(c *fiber.Ctx) error {
-	idStr := c.Params("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid id",
-		})
-	}
-
-	comment, err := pc.commentService.GetCommentByID(uint64(id))
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.JSON(comment)
-}
-
-func (pc *PostController) GetAllComments(c *fiber.Ctx) error {
-	comments, err := pc.commentService.GetAllComments()
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.JSON(comments)
-}
-
-func (pc *PostController) UpdateComment(c *fiber.Ctx) error {
-	var req models.UpdateCommentRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	idStr := c.Params("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid id",
-		})
-	}
-
-	req.ID = id
-	comment, err := pc.commentService.UpdateComment(req)
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.JSON(comment)
-}
-
-func (pc *PostController) DeleteComment(c *fiber.Ctx) error {
-	idStr := c.Params("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid id",
-		})
-	}
-
-	err = pc.commentService.DeleteComment(id)
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Comment deleted successfully",
 	})
 }

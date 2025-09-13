@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/faridanangs/gamatika-25/helpers"
+	"github.com/faridanangs/gamatika-25/middleware"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -37,7 +38,7 @@ func checkPassword(password, hash string) bool {
 // CreateUser - Create new user with validation
 func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserResponse, error) {
 	// Validate request
-	if err := us.val.Struct(req); err != nil {
+	if err := us.val.Struct(&req); err != nil {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusBadRequest,
 			Message: "Validation failed: " + err.Error(),
@@ -101,8 +102,13 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 	return us.mapToUserResponse(user), nil
 }
 
-// UpdateUser - Update existing user
-func (us *UserService) UpdateUser(req models.UpdateUserRequest) (*models.UserResponse, error) {
+// UpdateUser - Update existing user with ownership check
+func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString string) (*models.UserResponse, error) {
+	userID, err := us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
 	// Validate request
 	if err := us.val.Struct(req); err != nil {
 		return nil, &helpers.AppError{
@@ -111,9 +117,17 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest) (*models.UserRes
 		}
 	}
 
+	// Check if user is updating their own account
+	if req.ID != userID {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusForbidden,
+			Message: "You can only update your own account",
+		}
+	}
+
 	// Find user
 	var user models.User
-	if err := us.db.First(&user, req.ID).Error; err != nil {
+	if err := us.db.Where("id = ?", req.ID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -188,45 +202,22 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest) (*models.UserRes
 	return us.mapToUserResponse(user), nil
 }
 
-// GetUserByID - Get user by ID
-func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
-	var user models.User
-	if err := us.db.Preload("Posts").First(&user, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+// DeleteUser - Delete user with ownership check
+func (us *UserService) DeleteUser(id string, tokenString string) error {
+	// Validate user token
+	userID, err := us.ValidateUserToken(tokenString)
+	if err != nil {
+		return err
 	}
 
-	return us.mapToUserResponse(user), nil
-}
-
-// GetAllUsers - Get all users
-func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
-	var users []models.User
-	if err := us.db.Preload("Posts").Find(&users).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get users",
+	// Check if user is deleting their own account
+	if id != userID {
+		return &helpers.AppError{
+			Code:    fiber.StatusForbidden,
+			Message: "You can only delete your own account",
 		}
 	}
 
-	responses := make([]models.UserResponse, len(users))
-	for i, user := range users {
-		responses[i] = *us.mapToUserResponse(user)
-	}
-
-	return responses, nil
-}
-
-// DeleteUser - Delete user
-func (us *UserService) DeleteUser(id string) error {
 	// Start transaction
 	tx := us.db.Begin()
 	defer func() {
@@ -245,7 +236,7 @@ func (us *UserService) DeleteUser(id string) error {
 	}
 
 	// Delete the user
-	if err := tx.Delete(&models.User{}, id).Error; err != nil {
+	if err := tx.Where("id = ?", id).Delete(&models.User{}).Error; err != nil {
 		tx.Rollback()
 		if err == gorm.ErrRecordNotFound {
 			return &helpers.AppError{
@@ -270,17 +261,53 @@ func (us *UserService) DeleteUser(id string) error {
 	return nil
 }
 
-// LoginUser - User authentication
-func (us *UserService) LoginUser(username, password string) (*models.UserResponse, error) {
+// GetUserByID - Get user by ID
+
+// GetUserByID - Get user by ID with optimized field selection
+func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
+	var user models.User
+	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Where("id = ?", id).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "User not found",
+			}
+		}
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to find user",
+		}
+	}
+	return us.mapToUserResponse(user), nil
+}
+
+// GetAllUsers - Get all users
+func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
+	var users []models.User
+	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Find(&users).Error; err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to get users",
+		}
+	}
+	responses := make([]models.UserResponse, len(users))
+	for i, user := range users {
+		responses[i] = *us.mapToUserResponse(user)
+	}
+	return responses, nil
+}
+
+// LoginUser - User authentication with JWT token
+func (us *UserService) LoginUser(username, password string) (*models.UserResponse, string, error) {
 	var user models.User
 	if err := us.db.Where("username = ? OR email = ?", username, username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
+			return nil, "", &helpers.AppError{
 				Code:    fiber.StatusUnauthorized,
 				Message: "Invalid credentials",
 			}
 		}
-		return nil, &helpers.AppError{
+		return nil, "", &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
 			Message: "Failed to authenticate user",
 		}
@@ -288,17 +315,61 @@ func (us *UserService) LoginUser(username, password string) (*models.UserRespons
 
 	// Check password
 	if !checkPassword(password, user.Password) {
-		return nil, &helpers.AppError{
+		return nil, "", &helpers.AppError{
 			Code:    fiber.StatusUnauthorized,
 			Message: "Invalid credentials",
 		}
 	}
 
-	return us.mapToUserResponse(user), nil
+	// Generate JWT token
+	token, err := middleware.GenerateJWT(user.ID, user.Username)
+	if err != nil {
+		return nil, "", &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to generate token",
+		}
+	}
+
+	return us.mapToUserResponse(user), token, nil
+}
+
+// ValidateUserToken - Validate user token and check if user exists
+func (us *UserService) ValidateUserToken(tokenString string) (string, error) {
+	// Validate token
+	claims, err := middleware.ValidateJWT(tokenString)
+	if err != nil {
+		return "", &helpers.AppError{
+			Code:    fiber.StatusUnauthorized,
+			Message: "Invalid or expired token",
+		}
+	}
+
+	// Check if user exists
+	var user models.User
+	if err := us.db.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return "", &helpers.AppError{
+				Code:    fiber.StatusUnauthorized,
+				Message: "User not found",
+			}
+		}
+		return "", &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to find user",
+		}
+	}
+
+	return user.ID, nil
 }
 
 // Helper function to map User to UserResponse
 func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse {
+	// Map posts to PostResponse with optimized field selection
+	postResponses := make([]models.PostResponse, len(user.Posts))
+	for i, post := range user.Posts {
+		postResponses[i] = us.mapToPostResponse(post)
+	}
+
 	return &models.UserResponse{
 		ID:        user.ID,
 		FullName:  user.FullName,
@@ -309,6 +380,53 @@ func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse 
 		Email:     user.Email,
 		PublicKey: user.PublicKey,
 		CreatedAt: user.CreatedAt,
-		Posts:     user.Posts,
+		Posts:     postResponses,
+	}
+}
+
+// Helper function to map Post to PostResponse
+func (us *UserService) mapToPostResponse(post models.Post) models.PostResponse {
+	// Map comments to CommentResponse with optimized field selection
+	commentResponses := make([]models.CommentResponse, len(post.Comments))
+	for i, comment := range post.Comments {
+		commentResponses[i] = us.mapToCommentResponse(comment)
+	}
+
+	return models.PostResponse{
+		ID:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		Category:     post.Category,
+		Image:        post.Image,
+		LikeCount:    post.LikeCount,
+		CommentCount: post.CommentCount,
+		ShareCount:   post.ShareCount,
+		Updated:      post.Updated,
+		CreatedAt:    post.CreatedAt,
+		UpdatedAt:    post.UpdatedAt,
+		Author:       us.mapToAuthorResponse(post.Author),
+		Comments:     commentResponses,
+	}
+}
+
+// Helper function to map Comment to CommentResponse
+func (us *UserService) mapToCommentResponse(comment models.Comment) models.CommentResponse {
+	return models.CommentResponse{
+		ID:        comment.ID,
+		Author:    us.mapToAuthorResponse(comment.Author),
+		Content:   comment.Content,
+		Image:     comment.Image,
+		Updated:   comment.Updated,
+		CreatedAt: comment.CreatedAt,
+		UpdatedAt: comment.UpdatedAt,
+	}
+}
+
+// Helper function to map User to AuthorResponse
+func (us *UserService) mapToAuthorResponse(user models.User) models.AuthorResponse {
+	return models.AuthorResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Avatar:   user.Avatar,
 	}
 }

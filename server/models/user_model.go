@@ -14,7 +14,7 @@ type User struct {
 	Username   string    `gorm:"uniqueIndex;column:username;not null;type:varchar(50)"`
 	Avatar     string    `gorm:"column:avatar;type:varchar(250);not null"`
 	Prodi      string    `gorm:"column:prodi;type:varchar(50);not null"`
-	Nim        uint32    `gorm:"column:nim;not null;uniqueIndex"`
+	Nim        uint64    `gorm:"column:nim;not null;uniqueIndex"`
 	Email      string    `gorm:"uniqueIndex;column:email;type:varchar(150)"`
 	Password   string    `gorm:"column:password;type:string;not null"`
 	PublicKey  string    `gorm:"column:public_key;type:varchar(512);not null"`
@@ -34,7 +34,7 @@ type CreateUserRequest struct {
 	Username   string `json:"username" validate:"required"`
 	Avatar     string `json:"avatar"`
 	Prodi      string `json:"prodi" validate:"required"`
-	Nim        uint32 `json:"nim" validate:"required,numeric"`
+	Nim        uint64 `json:"nim" validate:"required,numeric"`
 	Email      string `json:"email" validate:"required,email"`
 	Password   string `json:"password" validate:"required,min=6"`
 	PublicKey  string `json:"public_key"`
@@ -50,14 +50,14 @@ type UpdateUserRequest struct {
 
 // ==================== RESPONSE DTO ====================
 type UserResponse struct {
-	ID        string    `json:"id"`
-	FullName  string    `json:"full_name"`
-	Username  string    `json:"username"`
-	Avatar    string    `json:"avatar"`
-	Prodi     string    `json:"prodi"`
-	Nim       uint32    `json:"nim"`
-	Email     string    `json:"email"`
-	PublicKey string    `json:"public_key"`
-	CreatedAt time.Time `json:"created_at"`
-	Posts     []Post    `json:"posts"`
+	ID        string         `json:"id"`
+	FullName  string         `json:"full_name"`
+	Username  string         `json:"username"`
+	Avatar    string         `json:"avatar"`
+	Prodi     string         `json:"prodi"`
+	Nim       uint64         `json:"nim"`
+	Email     string         `json:"email"`
+	PublicKey string         `json:"public_key"`
+	CreatedAt time.Time      `json:"created_at"`
+	Posts     []PostResponse `json:"posts"`
 }

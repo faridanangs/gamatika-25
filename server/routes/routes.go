@@ -2,50 +2,39 @@ package routes
 
 import (
 	"github.com/faridanangs/gamatika-25/controllers"
+	"github.com/faridanangs/gamatika-25/middleware"
 	"github.com/gofiber/fiber/v2"
 )
 
 // SetupRoutes - Setup all routes for the application
 func SetupRoutes(app *fiber.App, userController *controllers.UserController, postController *controllers.PostController) {
-	// User routes
-	userRoutes(app, userController)
-
-	// Post routes
-	postRoutes(app, postController)
-}
-
-// userRoutes - Setup user related routes
-func userRoutes(app *fiber.App, userController *controllers.UserController) {
-	// User CRUD operations
+	// Public routes
 	app.Post("/users", userController.CreateUser)
-	app.Get("/users", userController.GetAllUsers)
-	app.Get("/users/:id", userController.GetUserByID)
-	app.Put("/users/:id", userController.UpdateUser)
-	app.Delete("/users/:id", userController.DeleteUser)
-
-	// User authentication
 	app.Post("/login", userController.LoginUser)
-}
-
-// postRoutes - Setup post related routes
-func postRoutes(app *fiber.App, postController *controllers.PostController) {
-	// Post CRUD operations
-	app.Post("/posts", postController.CreatePost)
 	app.Get("/posts", postController.GetAllPosts)
-	app.Get("/posts/:id", postController.GetPostByID)
-	app.Put("/posts/:id", postController.UpdatePost)
-	app.Delete("/posts/:id", postController.DeletePost)
 
-	// Comment routes (nested under posts)
-	commentRoutes(app, postController)
-}
+	// Protected routes
+	protected := app.Group("/api")
+	protected.Use(middleware.JWTProtected())
+	{
+		// User routes
+		protected.Get("/users", userController.GetAllUsers)
+		protected.Get("/users/:id", userController.GetUserByID)
+		protected.Put("/users/:id", userController.UpdateUser)
+		protected.Delete("/users/:id", userController.DeleteUser)
+		// protected.Get("/profile", userController.GetProfile)
 
-// commentRoutes - Setup comment related routes
-func commentRoutes(app *fiber.App, postController *controllers.PostController) {
-	// Comment CRUD operations
-	app.Post("/posts/:id/comments", postController.CreateComment)
-	app.Get("/comments", postController.GetAllComments)
-	app.Get("/comments/:id", postController.GetCommentByID)
-	app.Put("/comments/:id", postController.UpdateComment)
-	app.Delete("/comments/:id", postController.DeleteComment)
+		// Post routes
+		protected.Post("/posts", postController.CreatePost)
+		protected.Get("/posts/:id", postController.GetPostByID)
+		protected.Put("/posts/:id", postController.UpdatePost)
+		protected.Delete("/posts/:id", postController.DeletePost)
+
+		// Comment routes
+		protected.Post("/posts/:id/comments", postController.CreateComment)
+		protected.Get("/comments", postController.GetAllComments)
+		protected.Get("/comments/:id", postController.GetCommentByID)
+		protected.Put("/comments/:id", postController.UpdateComment)
+		protected.Delete("/comments/:id", postController.DeleteComment)
+	}
 }

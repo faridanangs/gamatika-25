@@ -73,10 +73,15 @@ func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
 	// Set ID from URL parameter
 	req.ID = c.Params("id")
 
-	user, err := uc.userService.UpdateUser(req)
+	user, err := uc.userService.UpdateUser(req, tokenString)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{
@@ -90,7 +95,13 @@ func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 // DeleteUser - Handle user deletion request
 func (uc *UserController) DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
-	err := uc.userService.DeleteUser(id)
+
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
+	err = uc.userService.DeleteUser(id, tokenString)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{
@@ -116,7 +127,37 @@ func (uc *UserController) LoginUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := uc.userService.LoginUser(req.Username, req.Password)
+	user, token, err := uc.userService.LoginUser(req.Username, req.Password)
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"user":  user,
+		"token": token,
+	})
+}
+
+// GetProfile - Handle get user profile request
+func (uc *UserController) GetProfile(c *fiber.Ctx) error {
+
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
+	userID, err := uc.userService.ValidateUserToken(tokenString)
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
+
+	user, err := uc.userService.GetUserByID(userID)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{

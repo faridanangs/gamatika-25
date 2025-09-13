@@ -5,23 +5,33 @@ import (
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type CommentService struct {
 	db  *gorm.DB
 	val *validator.Validate
+	us  *UserService
 }
 
-func NewCommentService(db *gorm.DB, val *validator.Validate) *CommentService {
+func NewCommentService(db *gorm.DB, val *validator.Validate, us *UserService) *CommentService {
 	return &CommentService{
 		db:  db,
 		val: val,
+		us:  us,
 	}
 }
 
 // CreateComment - Create new comment with validation
-func (cs *CommentService) CreateComment(req models.CreateCommentRequest) (*models.CommentResponse, error) {
+// CreateComment - Create new comment with token verification
+func (cs *CommentService) CreateComment(req models.CreateCommentRequest, tokenString string) (*models.CommentResponse, error) {
+	// Validate token and get user
+	userID, err := cs.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
 	// Validate request
 	if err := cs.val.Struct(req); err != nil {
 		return nil, &helpers.AppError{
@@ -30,9 +40,18 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest) (*model
 		}
 	}
 
+	// Convert IDs to UUID
+	postID, err := uuid.Parse(req.PostID)
+	if err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusBadRequest,
+			Message: "Invalid post ID format",
+		}
+	}
+
 	// Check if post exists
 	var post models.Post
-	if err := cs.db.Where("id = ?", req.PostID).First(&post).Error; err != nil {
+	if err := cs.db.First(&post, postID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -45,28 +64,13 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest) (*model
 		}
 	}
 
-	// Check if user exists
-	var user models.User
-	if err := cs.db.Where("id = ?", req.UserID).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
-	}
-
 	// Create comment
 	comment := models.Comment{
 		Content: req.Content,
 		Image:   req.Image,
 		Updated: false,
 		PostID:  req.PostID,
-		UserID:  req.UserID,
+		UserID:  userID,
 	}
 
 	// Insert comment
@@ -89,45 +93,14 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest) (*model
 	return cs.mapToCommentResponse(comment), nil
 }
 
-// GetCommentByID - Get comment by ID with author
-func (cs *CommentService) GetCommentByID(id uint64) (*models.CommentResponse, error) {
-	var comment models.Comment
-	if err := cs.db.Preload("Author").First(&comment, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "Comment not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find comment",
-		}
+// UpdateComment - Update existing comment with token verification
+func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest, tokenString string) (*models.CommentResponse, error) {
+	// Validate token and get user
+	userID, err := cs.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
 	}
 
-	return cs.mapToCommentResponse(comment), nil
-}
-
-// GetAllComments - Get all comments with authors
-func (cs *CommentService) GetAllComments() ([]models.CommentResponse, error) {
-	var comments []models.Comment
-	if err := cs.db.Preload("Author").Find(&comments).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get comments",
-		}
-	}
-
-	responses := make([]models.CommentResponse, len(comments))
-	for i, comment := range comments {
-		responses[i] = *cs.mapToCommentResponse(comment)
-	}
-
-	return responses, nil
-}
-
-// UpdateComment - Update existing comment
-func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest) (*models.CommentResponse, error) {
 	// Validate request
 	if err := cs.val.Struct(req); err != nil {
 		return nil, &helpers.AppError{
@@ -136,13 +109,13 @@ func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest) (*model
 		}
 	}
 
-	// Find comment
+	// Find comment and check ownership
 	var comment models.Comment
-	if err := cs.db.First(&comment, req.ID).Error; err != nil {
+	if err := cs.db.Where("id = ? AND user_id = ?", req.ID, userID).First(&comment).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
-				Message: "Comment not found",
+				Message: "Comment not found or you don't have permission to update this comment",
 			}
 		}
 		return nil, &helpers.AppError{
@@ -155,8 +128,8 @@ func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest) (*model
 	if req.Content != "" {
 		comment.Content = req.Content
 	}
-	if req.Updated {
-		comment.Updated = req.Updated
+	if !req.Updated {
+		comment.Updated = true
 	}
 
 	// Save changes
@@ -171,15 +144,21 @@ func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest) (*model
 	return cs.mapToCommentResponse(comment), nil
 }
 
-// DeleteComment - Delete comment
-func (cs *CommentService) DeleteComment(id uint64) error {
-	// Find comment
+// DeleteComment - Delete comment with token verification
+func (cs *CommentService) DeleteComment(id uint64, tokenString string) error {
+	// Validate token and get user
+	userID, err := cs.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return err
+	}
+
+	// Find comment and check ownership
 	var comment models.Comment
-	if err := cs.db.First(&comment, id).Error; err != nil {
+	if err := cs.db.Where("id = ? AND user_id = ?", id, userID).First(&comment).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &helpers.AppError{
 				Code:    fiber.StatusNotFound,
-				Message: "Comment not found",
+				Message: "Comment not found or you don't have permission to delete this comment",
 			}
 		}
 		return &helpers.AppError{
@@ -207,11 +186,59 @@ func (cs *CommentService) DeleteComment(id uint64) error {
 	return nil
 }
 
+// GetCommentByID - Get comment by ID with author
+func (cs *CommentService) GetCommentByID(id uint64) (*models.CommentResponse, error) {
+	var comment models.Comment
+	// Hanya ambil field yang diperlukan untuk author
+	if err := cs.db.Where("id = ?", id).Preload("Author").First(&comment).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "Comment not found",
+			}
+		}
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to find comment",
+		}
+	}
+
+	return cs.mapToCommentResponse(comment), nil
+}
+
+// GetAllComments - Get all comments with authors
+func (cs *CommentService) GetAllComments() ([]models.CommentResponse, error) {
+	var comments []models.Comment
+	// Hanya ambil field yang diperlukan untuk author
+	if err := cs.db.Preload("Author").Find(&comments).Error; err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to get comments",
+		}
+	}
+
+	responses := make([]models.CommentResponse, len(comments))
+	for i, comment := range comments {
+		responses[i] = *cs.mapToCommentResponse(comment)
+	}
+
+	return responses, nil
+}
+
+// Helper function to map User to AuthorResponse
+func (cs *CommentService) mapToAuthorResponse(user models.User) models.AuthorResponse {
+	return models.AuthorResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Avatar:   user.Avatar,
+	}
+}
+
 // Helper function to map Comment to CommentResponse
 func (cs *CommentService) mapToCommentResponse(comment models.Comment) *models.CommentResponse {
 	return &models.CommentResponse{
 		ID:        comment.ID,
-		Author:    comment.Author,
+		Author:    cs.mapToAuthorResponse(comment.Author),
 		Content:   comment.Content,
 		Image:     comment.Image,
 		Updated:   comment.Updated,

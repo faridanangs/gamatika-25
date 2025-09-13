@@ -12,17 +12,25 @@ import (
 type PostService struct {
 	db  *gorm.DB
 	val *validator.Validate
+	us  *UserService
 }
 
-func NewPostService(db *gorm.DB, val *validator.Validate) *PostService {
+func NewPostService(db *gorm.DB, val *validator.Validate, us *UserService) *PostService {
 	return &PostService{
 		db:  db,
 		val: val,
+		us:  us,
 	}
 }
 
-// CreatePost - Create new post with validation
-func (ps *PostService) CreatePost(req models.CreatePostRequest) (*models.PostResponse, error) {
+// CreatePost - Create new post with validation and token verification
+func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString string) (*models.PostResponse, error) {
+	// Validate token and get user
+	userID, err := ps.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
 	// Validate request
 	if err := ps.val.Struct(req); err != nil {
 		return nil, &helpers.AppError{
@@ -32,8 +40,8 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest) (*models.PostRes
 	}
 
 	// Check if user exists
-	var user models.User
-	if err := ps.db.Where("id = ?", req.UserID).First(&user).Error; err != nil {
+	var userExists models.User
+	if err := ps.db.Where("id = ?", userID).First(&userExists).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -48,7 +56,6 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest) (*models.PostRes
 
 	// Generate post ID
 	postID := uuid.New().String()
-
 	// Create post
 	post := models.Post{
 		ID:           postID,
@@ -60,9 +67,8 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest) (*models.PostRes
 		CommentCount: 0,
 		ShareCount:   0,
 		Updated:      false,
-		UserID:       req.UserID,
+		UserID:       userID,
 	}
-
 	// Insert post
 	if err := ps.db.Create(&post).Error; err != nil {
 		return nil, &helpers.AppError{
@@ -70,51 +76,18 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest) (*models.PostRes
 			Message: "Failed to create post",
 		}
 	}
-
 	// Prepare response
 	return ps.mapToPostResponse(post), nil
 }
 
-// GetPostByID - Get post by ID with author and comments
-func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
-
-	var post models.Post
-	if err := ps.db.Preload("Author").Preload("Comments").Preload("Comments.Author").Where("id = ?", id).First(&post).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "Post not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find post",
-		}
+// UpdatePost - Update existing post with token verification
+func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString string) (*models.PostResponse, error) {
+	// Validate token and get user
+	userID, err := ps.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
 	}
 
-	return ps.mapToPostResponse(post), nil
-}
-
-// GetAllPosts - Get all posts with authors and comments
-func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
-	var posts []models.Post
-	if err := ps.db.Preload("Author").Preload("Comments").Preload("Comments.Author").Find(&posts).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get posts",
-		}
-	}
-
-	responses := make([]models.PostResponse, len(posts))
-	for i, post := range posts {
-		responses[i] = *ps.mapToPostResponse(post)
-	}
-
-	return responses, nil
-}
-
-// UpdatePost - Update existing post
-func (ps *PostService) UpdatePost(req models.UpdatePostRequest) (*models.PostResponse, error) {
 	// Validate request
 	if err := ps.val.Struct(req); err != nil {
 		return nil, &helpers.AppError{
@@ -123,13 +96,13 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest) (*models.PostRes
 		}
 	}
 
-	// Find post
+	// Find post and check ownership
 	var post models.Post
-	if err := ps.db.Where("id = ?", req.ID).First(&post).Error; err != nil {
+	if err := ps.db.Where("id = ? AND user_id = ?", req.ID, userID).First(&post).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
-				Message: "Post not found",
+				Message: "Post not found or you don't have permission to update this post",
 			}
 		}
 		return nil, &helpers.AppError{
@@ -145,8 +118,8 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest) (*models.PostRes
 	if req.Content != "" {
 		post.Content = req.Content
 	}
-	if req.Updated {
-		post.Updated = req.Updated
+	if !req.Updated {
+		post.Updated = true
 	}
 
 	// Save changes
@@ -161,8 +134,29 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest) (*models.PostRes
 	return ps.mapToPostResponse(post), nil
 }
 
-// DeletePost - Delete post with comments
-func (ps *PostService) DeletePost(id string) error {
+// DeletePost - Delete post with token verification
+func (ps *PostService) DeletePost(id string, tokenString string) error {
+	// Validate token and get user
+	userID, err := ps.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return err
+	}
+
+	// Find post and check ownership
+	var post models.Post
+	if err := ps.db.Where("id = ? AND user_id = ?", id, userID).First(&post).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "Post not found or you don't have permission to delete this post",
+			}
+		}
+		return &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to find post",
+		}
+	}
+
 	// Start transaction
 	tx := ps.db.Begin()
 	defer func() {
@@ -181,14 +175,8 @@ func (ps *PostService) DeletePost(id string) error {
 	}
 
 	// Delete the post
-	if err := tx.Delete(&models.Post{}, id).Error; err != nil {
+	if err := tx.Delete(&post).Error; err != nil {
 		tx.Rollback()
-		if err == gorm.ErrRecordNotFound {
-			return &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "Post not found",
-			}
-		}
 		return &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
 			Message: "Failed to delete post",
@@ -206,8 +194,65 @@ func (ps *PostService) DeletePost(id string) error {
 	return nil
 }
 
+// GetPostByID - Get post by ID with author and comments
+func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
+	var post models.Post
+	// Hanya ambil field yang diperlukan untuk author dan comments author
+	if err := ps.db.Preload("Author").
+		Preload("Comments").
+		Preload("Comments.Author").
+		Where("id = ?", id).First(&post).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "Post not found",
+			}
+		}
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to find post",
+		}
+	}
+	return ps.mapToPostResponse(post), nil
+}
+
+// GetAllPosts - Get all posts with authors and comments
+func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
+	var posts []models.Post
+	// Hanya ambil field yang diperlukan untuk author dan comments author
+	if err := ps.db.Preload("Author").
+		Preload("Comments").
+		Preload("Comments.Author").
+		Find(&posts).Error; err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to get posts",
+		}
+	}
+	responses := make([]models.PostResponse, len(posts))
+	for i, post := range posts {
+		responses[i] = *ps.mapToPostResponse(post)
+	}
+	return responses, nil
+}
+
+// Helper function to map User to AuthorResponse
+func (ps *PostService) mapToAuthorResponse(user models.User) models.AuthorResponse {
+	return models.AuthorResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Avatar:   user.Avatar,
+	}
+}
+
 // Helper function to map Post to PostResponse
 func (ps *PostService) mapToPostResponse(post models.Post) *models.PostResponse {
+	// Map comments to CommentResponse
+	commentResponses := make([]models.CommentResponse, len(post.Comments))
+	for i, comment := range post.Comments {
+		commentResponses[i] = ps.mapToCommentResponse(comment)
+	}
+
 	return &models.PostResponse{
 		ID:           post.ID,
 		Title:        post.Title,
@@ -220,7 +265,20 @@ func (ps *PostService) mapToPostResponse(post models.Post) *models.PostResponse 
 		Updated:      post.Updated,
 		CreatedAt:    post.CreatedAt,
 		UpdatedAt:    post.UpdatedAt,
-		Author:       post.Author,
-		Comments:     post.Comments,
+		Author:       ps.mapToAuthorResponse(post.Author),
+		Comments:     commentResponses,
+	}
+}
+
+// Helper function to map Comment to CommentResponse
+func (ps *PostService) mapToCommentResponse(comment models.Comment) models.CommentResponse {
+	return models.CommentResponse{
+		ID:        comment.ID,
+		Author:    ps.mapToAuthorResponse(comment.Author),
+		Content:   comment.Content,
+		Image:     comment.Image,
+		Updated:   comment.Updated,
+		CreatedAt: comment.CreatedAt,
+		UpdatedAt: comment.UpdatedAt,
 	}
 }

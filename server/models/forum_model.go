@@ -33,7 +33,7 @@ type CreateCommentRequest struct {
 	Content string `json:"content" validate:"required"`
 	Image   string `json:"image"`
 	PostID  string `json:"post_id" validate:"required"`
-	UserID  string `json:"user_id" validate:"required"`
+	UserID  string `json:"user_id" validate:"omitempty"`
 }
 
 type UpdateCommentRequest struct {
@@ -44,13 +44,13 @@ type UpdateCommentRequest struct {
 
 // ==================== RESPONSE DTO ====================
 type CommentResponse struct {
-	ID        uint64    `json:"id"`
-	Author    User      `json:"author"`
-	Content   string    `json:"content"`
-	Image     string    `json:"image"`
-	Updated   bool      `json:"updated"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint64         `json:"id"`
+	Author    AuthorResponse `json:"author"`
+	Content   string         `json:"content"`
+	Image     string         `json:"image"`
+	Updated   bool           `json:"updated"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 // ==================== POST MODEL ====================
@@ -84,8 +84,8 @@ type CreatePostRequest struct {
 	Title    string `json:"title" validate:"required"`
 	Content  string `json:"content" validate:"required"`
 	Category string `json:"category" validate:"required"`
-	UserID   string `json:"user_id" validate:"required"`
-	Image    string `json:"image"`
+	// UserID   string `json:"user_id" validate:"required"`
+	Image string `json:"image"`
 }
 
 type UpdatePostRequest struct {
@@ -97,17 +97,23 @@ type UpdatePostRequest struct {
 
 // ==================== RESPONSE DTO ====================
 type PostResponse struct {
-	ID           string    `json:"id"`
-	Title        string    `json:"title"`
-	Content      string    `json:"content"`
-	Category     string    `json:"category"`
-	Image        string    `json:"image"`
-	LikeCount    uint64    `json:"like_count"`
-	CommentCount uint64    `json:"comment_count"`
-	ShareCount   uint64    `json:"share_count"`
-	Updated      bool      `json:"updated"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	Author       User      `json:"author"`
-	Comments     []Comment `json:"comments"`
+	ID           string            `json:"id"`
+	Title        string            `json:"title"`
+	Content      string            `json:"content"`
+	Category     string            `json:"category"`
+	Image        string            `json:"image"`
+	LikeCount    uint64            `json:"like_count"`
+	CommentCount uint64            `json:"comment_count"`
+	ShareCount   uint64            `json:"share_count"`
+	Updated      bool              `json:"updated"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	Author       AuthorResponse    `json:"author"`
+	Comments     []CommentResponse `json:"comments"`
+}
+
+type AuthorResponse struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
 }
