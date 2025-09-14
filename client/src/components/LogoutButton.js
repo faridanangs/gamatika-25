@@ -1,5 +1,6 @@
 'use client';
 
+import { signOut } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 
@@ -11,8 +12,9 @@ export default function LogoutButton() {
     setTimeout(() => {
       console.log('Logging out...');
       setIsLoggingOut(false);
-      redirect('/');
-      // Implementasi logout sebenarnya
+      signOut({
+        callbackUrl: '/',
+      });
     }, 1000);
   };
 

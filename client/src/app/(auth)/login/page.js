@@ -3,11 +3,20 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -15,47 +24,40 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulasi proses login
-    setTimeout(() => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+      // langsung panggil NextAuth
+      const res = await signIn('credentials', {
+        callbackUrl: '/dashboard/profile',
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success('Login berhasil!');
+        // router.push('/dashboard/profile');
+      }
+    } catch (error) {
+      toast.error('Terjadi kesalahan');
+    } finally {
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-card relative overflow-hidden pt-16 pb-6">
       <Head>
-        <title>Login - Gamatika Prodi Matematika</title>
+        <title>Login - Gamatika</title>
         <meta
           name="description"
           content="Login ke sistem Gamatika Prodi Matematika"
         />
       </Head>
-
-      {/* Background Circles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Circle 1 - Light Mode: Gray-200, Dark Mode: Gray-700 */}
-        <div className="absolute top-10 left-10 w-40 h-40 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 2 */}
-        <div className="absolute top-40 right-20 w-48 h-48 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 3 */}
-        <div className="absolute bottom-20 left-1/4 w-44 h-44 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 4 */}
-        <div className="absolute bottom-40 right-1/3 w-36 h-36 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 5 */}
-        <div className="absolute top-1/3 left-1/2 w-52 h-52 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 6 */}
-        <div className="absolute top-1/2 right-10 w-32 h-32 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 7 */}
-        <div className="absolute bottom-10 right-1/4 w-40 h-40 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 8 */}
-        <div className="absolute top-20 left-1/3 w-48 h-48 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 9 - Additional circle for better coverage */}
-        <div className="absolute bottom-1/3 left-10 w-36 h-36 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-        {/* Circle 10 */}
-        <div className="absolute top-1/4 right-1/4 w-44 h-44 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
-      </div>
-
+      <BackgroundCircle />
       {/* Main Content */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -84,148 +86,127 @@ export default function LoginPage() {
               Masuk ke akun Gamatika Prodi Matematika
             </p>
           </div>
-
           {/* Login Card */}
-          <div className="bg-white dark:bg-card rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700 transform transition-all hover:shadow-2xl relative z-10">
-            <form onSubmit={handleSubmit}>
-              {/* Email Input */}
-              <div className="mb-4">
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-black dark:text-white mb-1"
-                >
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-black dark:bg-card dark:text-white dark:focus:ring-white dark:focus:border-white transition duration-200"
-                    placeholder="nama@universitas.edu"
-                  />
-                </div>
-              </div>
-
-              {/* Password Input */}
-              <div className="mb-6">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-black dark:text-white mb-1"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-black dark:bg-card dark:text-white dark:focus:ring-white dark:focus:border-white transition duration-200"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded dark:bg-card dark:border-gray-600"
-                  />
-                  <label
-                    htmlFor="remember-me"
-                    className="ml-2 block text-sm text-black dark:text-gray-300"
+          <Card className="bg-white dark:bg-card border border-gray-200 dark:border-gray-700 shadow-xl transform transition-all hover:shadow-2xl relative z-10">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center text-black dark:text-white">
+                Masuk ke Akun
+              </CardTitle>
+              <CardDescription className="text-center text-gray-600 dark:text-gray-400">
+                Masukkan email dan password Anda
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email Input */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-black dark:text-white"
                   >
-                    Ingat saya
-                  </label>
-                </div>
-                <div className="text-sm">
-                  <Link
-                    href="/forgot-password"
-                    className="font-medium text-black hover:underline dark:text-white"
-                  >
-                    Lupa password?
-                  </Link>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-300 transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
                         stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Memproses...
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
+                      </svg>
+                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      disabled={isLoading}
+                      placeholder="nama@universitas.edu"
+                      className="pl-10"
+                    />
                   </div>
-                ) : (
-                  'Masuk'
-                )}
-              </button>
-            </form>
-          </div>
+                </div>
+
+                {/* Password Input */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-medium text-black dark:text-white"
+                  >
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
+                      </svg>
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      disabled={isLoading}
+                      placeholder="••••••••"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Memproses...
+                    </div>
+                  ) : (
+                    'Masuk'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Sign Up Link */}
           <div className="mt-8 text-center">
@@ -241,6 +222,33 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function BackgroundCircle() {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Circle 1 - Light Mode: Gray-200, Dark Mode: Gray-700 */}
+      <div className="absolute top-10 left-10 w-40 h-40 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 2 */}
+      <div className="absolute top-40 right-20 w-48 h-48 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 3 */}
+      <div className="absolute bottom-20 left-1/4 w-44 h-44 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 4 */}
+      <div className="absolute bottom-40 right-1/3 w-36 h-36 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 5 */}
+      <div className="absolute top-1/3 left-1/2 w-52 h-52 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 6 */}
+      <div className="absolute top-1/2 right-10 w-32 h-32 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 7 */}
+      <div className="absolute bottom-10 right-1/4 w-40 h-40 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 8 */}
+      <div className="absolute top-20 left-1/3 w-48 h-48 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 9 - Additional circle for better coverage */}
+      <div className="absolute bottom-1/3 left-10 w-36 h-36 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
+      {/* Circle 10 */}
+      <div className="absolute top-1/4 right-1/4 w-44 h-44 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
     </div>
   );
 }

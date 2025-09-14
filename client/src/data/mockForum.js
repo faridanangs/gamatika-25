@@ -13,7 +13,7 @@ export const mockPosts = [
     },
     likes: 12,
     commentCount: 8,
-    shares: 2,
+    shareCount: 2,
     timestamp: '2 jam yang lalu',
     liked: false,
     images: ['/img/linear.jpeg', '/img/random.jpeg'],
