@@ -117,7 +117,7 @@ func (uc *UserController) DeleteUser(c *fiber.Ctx) error {
 // LoginUser - Handle user login request
 func (uc *UserController) LoginUser(c *fiber.Ctx) error {
 	var req struct {
-		Username string `json:"username" validate:"required"`
+		Email    string `json:"email" validate:"required"`
 		Password string `json:"password" validate:"required"`
 	}
 
@@ -127,7 +127,7 @@ func (uc *UserController) LoginUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, token, err := uc.userService.LoginUser(req.Username, req.Password)
+	user, token, err := uc.userService.LoginUser(req.Email, req.Password)
 	if err != nil {
 		appErr := err.(*helpers.AppError)
 		return c.Status(appErr.Code).JSON(fiber.Map{

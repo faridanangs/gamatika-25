@@ -47,7 +47,7 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 
 	// Check if username or email already exists
 	var existingUser models.User
-	if err := us.db.Where("username = ? OR email = ?", req.Username, req.Email).First(&existingUser).Error; err != nil {
+	if err := us.db.Where("username = ? OR email = ? OR nim = ?", req.Username, req.Email, req.Nim).First(&existingUser).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusInternalServerError,
@@ -57,7 +57,7 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 	} else {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusConflict,
-			Message: "Username or email already exists",
+			Message: "Username or Email or Nim already exists",
 		}
 	}
 
@@ -298,9 +298,9 @@ func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
 }
 
 // LoginUser - User authentication with JWT token
-func (us *UserService) LoginUser(username, password string) (*models.UserResponse, string, error) {
+func (us *UserService) LoginUser(email, password string) (*models.UserResponse, string, error) {
 	var user models.User
-	if err := us.db.Where("username = ? OR email = ?", username, username).First(&user).Error; err != nil {
+	if err := us.db.Where("username = ? OR email = ?", email, email).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, "", &helpers.AppError{
 				Code:    fiber.StatusUnauthorized,
