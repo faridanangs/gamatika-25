@@ -367,7 +367,7 @@ func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse 
 	// Map posts to PostResponse with optimized field selection
 	postResponses := make([]models.PostResponse, len(user.Posts))
 	for i, post := range user.Posts {
-		postResponses[i] = us.mapToPostResponse(post)
+		postResponses[i] = *helpers.MapToPostResponse(post)
 	}
 
 	return &models.UserResponse{
@@ -381,52 +381,5 @@ func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse 
 		PublicKey: user.PublicKey,
 		CreatedAt: user.CreatedAt,
 		Posts:     postResponses,
-	}
-}
-
-// Helper function to map Post to PostResponse
-func (us *UserService) mapToPostResponse(post models.Post) models.PostResponse {
-	// Map comments to CommentResponse with optimized field selection
-	commentResponses := make([]models.CommentResponse, len(post.Comments))
-	for i, comment := range post.Comments {
-		commentResponses[i] = us.mapToCommentResponse(comment)
-	}
-
-	return models.PostResponse{
-		ID:           post.ID,
-		Title:        post.Title,
-		Content:      post.Content,
-		Category:     post.Category,
-		Image:        post.Image,
-		LikeCount:    post.LikeCount,
-		CommentCount: post.CommentCount,
-		ShareCount:   post.ShareCount,
-		Updated:      post.Updated,
-		CreatedAt:    post.CreatedAt,
-		UpdatedAt:    post.UpdatedAt,
-		Author:       us.mapToAuthorResponse(post.Author),
-		Comments:     commentResponses,
-	}
-}
-
-// Helper function to map Comment to CommentResponse
-func (us *UserService) mapToCommentResponse(comment models.Comment) models.CommentResponse {
-	return models.CommentResponse{
-		ID:        comment.ID,
-		Author:    us.mapToAuthorResponse(comment.Author),
-		Content:   comment.Content,
-		Image:     comment.Image,
-		Updated:   comment.Updated,
-		CreatedAt: comment.CreatedAt,
-		UpdatedAt: comment.UpdatedAt,
-	}
-}
-
-// Helper function to map User to AuthorResponse
-func (us *UserService) mapToAuthorResponse(user models.User) models.AuthorResponse {
-	return models.AuthorResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Avatar:   user.Avatar,
 	}
 }

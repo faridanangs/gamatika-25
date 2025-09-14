@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -39,6 +40,14 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 		}
 	}
 
+	// Validate image count
+	if len(req.Images) > 4 {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusBadRequest,
+			Message: "Maximum 4 images allowed",
+		}
+	}
+
 	// Check if user exists
 	var userExists models.User
 	if err := ps.db.Where("id = ?", userID).First(&userExists).Error; err != nil {
@@ -62,13 +71,16 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 		Title:        req.Title,
 		Content:      req.Content,
 		Category:     req.Category,
-		Image:        req.Image,
+		Images:       datatypes.JSON([]byte("[]")),
 		LikeCount:    0,
 		CommentCount: 0,
 		ShareCount:   0,
 		Updated:      false,
 		UserID:       userID,
 	}
+
+	post.SetImages(req.Images)
+
 	// Insert post
 	if err := ps.db.Create(&post).Error; err != nil {
 		return nil, &helpers.AppError{
@@ -77,7 +89,7 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 		}
 	}
 	// Prepare response
-	return ps.mapToPostResponse(post), nil
+	return helpers.MapToPostResponse(post), nil
 }
 
 // UpdatePost - Update existing post with token verification
@@ -131,7 +143,7 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString stri
 	}
 
 	// Prepare response
-	return ps.mapToPostResponse(post), nil
+	return helpers.MapToPostResponse(post), nil
 }
 
 // DeletePost - Delete post with token verification
@@ -213,7 +225,7 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 			Message: "Failed to find post",
 		}
 	}
-	return ps.mapToPostResponse(post), nil
+	return helpers.MapToPostResponse(post), nil
 }
 
 // GetAllPosts - Get all posts with authors and comments
@@ -231,54 +243,7 @@ func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
 	}
 	responses := make([]models.PostResponse, len(posts))
 	for i, post := range posts {
-		responses[i] = *ps.mapToPostResponse(post)
+		responses[i] = *helpers.MapToPostResponse(post)
 	}
 	return responses, nil
-}
-
-// Helper function to map User to AuthorResponse
-func (ps *PostService) mapToAuthorResponse(user models.User) models.AuthorResponse {
-	return models.AuthorResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Avatar:   user.Avatar,
-	}
-}
-
-// Helper function to map Post to PostResponse
-func (ps *PostService) mapToPostResponse(post models.Post) *models.PostResponse {
-	// Map comments to CommentResponse
-	commentResponses := make([]models.CommentResponse, len(post.Comments))
-	for i, comment := range post.Comments {
-		commentResponses[i] = ps.mapToCommentResponse(comment)
-	}
-
-	return &models.PostResponse{
-		ID:           post.ID,
-		Title:        post.Title,
-		Content:      post.Content,
-		Category:     post.Category,
-		Image:        post.Image,
-		LikeCount:    post.LikeCount,
-		CommentCount: post.CommentCount,
-		ShareCount:   post.ShareCount,
-		Updated:      post.Updated,
-		CreatedAt:    post.CreatedAt,
-		UpdatedAt:    post.UpdatedAt,
-		Author:       ps.mapToAuthorResponse(post.Author),
-		Comments:     commentResponses,
-	}
-}
-
-// Helper function to map Comment to CommentResponse
-func (ps *PostService) mapToCommentResponse(comment models.Comment) models.CommentResponse {
-	return models.CommentResponse{
-		ID:        comment.ID,
-		Author:    ps.mapToAuthorResponse(comment.Author),
-		Content:   comment.Content,
-		Image:     comment.Image,
-		Updated:   comment.Updated,
-		CreatedAt: comment.CreatedAt,
-		UpdatedAt: comment.UpdatedAt,
-	}
 }

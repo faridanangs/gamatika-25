@@ -90,7 +90,7 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest, tokenSt
 	}
 
 	// Prepare response
-	return cs.mapToCommentResponse(comment), nil
+	return helpers.MapToCommentResponse(comment), nil
 }
 
 // UpdateComment - Update existing comment with token verification
@@ -141,7 +141,7 @@ func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest, tokenSt
 	}
 
 	// Prepare response
-	return cs.mapToCommentResponse(comment), nil
+	return helpers.MapToCommentResponse(comment), nil
 }
 
 // DeleteComment - Delete comment with token verification
@@ -203,7 +203,7 @@ func (cs *CommentService) GetCommentByID(id uint64) (*models.CommentResponse, er
 		}
 	}
 
-	return cs.mapToCommentResponse(comment), nil
+	return helpers.MapToCommentResponse(comment), nil
 }
 
 // GetAllComments - Get all comments with authors
@@ -219,30 +219,8 @@ func (cs *CommentService) GetAllComments() ([]models.CommentResponse, error) {
 
 	responses := make([]models.CommentResponse, len(comments))
 	for i, comment := range comments {
-		responses[i] = *cs.mapToCommentResponse(comment)
+		responses[i] = *helpers.MapToCommentResponse(comment)
 	}
 
 	return responses, nil
-}
-
-// Helper function to map User to AuthorResponse
-func (cs *CommentService) mapToAuthorResponse(user models.User) models.AuthorResponse {
-	return models.AuthorResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Avatar:   user.Avatar,
-	}
-}
-
-// Helper function to map Comment to CommentResponse
-func (cs *CommentService) mapToCommentResponse(comment models.Comment) *models.CommentResponse {
-	return &models.CommentResponse{
-		ID:        comment.ID,
-		Author:    cs.mapToAuthorResponse(comment.Author),
-		Content:   comment.Content,
-		Image:     comment.Image,
-		Updated:   comment.Updated,
-		CreatedAt: comment.CreatedAt,
-		UpdatedAt: comment.UpdatedAt,
-	}
 }
