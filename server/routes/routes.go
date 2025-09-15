@@ -12,6 +12,8 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 	app.Post("/users", userController.CreateUser)
 	app.Post("/login", userController.LoginUser)
 	app.Get("/posts", postController.GetAllPosts)
+	app.Get("/users/top-contributors", userController.GetTopContributors)
+	app.Get("/users/:id/contribution", userController.GetUserContribution)
 
 	// Protected routes
 	protected := app.Group("/api")
@@ -21,8 +23,9 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 		protected.Get("/users", userController.GetAllUsers)
 		protected.Get("/users/:id", userController.GetUserByID)
 		protected.Put("/users/:id", userController.UpdateUser)
+		protected.Post("/users/private-key", userController.GetPrivateKey)
 		protected.Delete("/users/:id", userController.DeleteUser)
-		// protected.Get("/profile", userController.GetProfile)
+		protected.Get("/users/profile", userController.GetProfile)
 
 		// Post routes
 		protected.Post("/posts", postController.CreatePost)

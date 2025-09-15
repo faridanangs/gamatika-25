@@ -71,7 +71,9 @@ func (pc *PostController) GetPostByID(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(post)
+	return c.Status(200).JSON(fiber.Map{
+		"post": post,
+	})
 }
 
 func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
@@ -83,7 +85,9 @@ func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(posts)
+	return c.Status(200).JSON(fiber.Map{
+		"posts": posts,
+	})
 }
 
 func (pc *PostController) UpdatePost(c *fiber.Ctx) error {

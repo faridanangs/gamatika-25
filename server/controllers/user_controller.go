@@ -167,3 +167,61 @@ func (uc *UserController) GetProfile(c *fiber.Ctx) error {
 
 	return c.JSON(user)
 }
+
+func (uc *UserController) GetCachedTopContributors(c *fiber.Ctx) error {
+	topContributors := uc.userService.GetCachedTopContributors()
+
+	return c.JSON(topContributors)
+}
+
+// GetUserContribution - Handle get user contribution request
+func (uc *UserController) GetUserContribution(c *fiber.Ctx) error {
+	userID := c.Params("id")
+
+	contribution, err := uc.userService.CalculateUserContribution(userID)
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
+
+	return c.JSON(contribution)
+}
+
+// controllers/user_controller.go
+func (uc *UserController) GetPrivateKey(c *fiber.Ctx) error {
+	var req models.PrivKeyReq
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	tokenString, err := helpers.TokenString(c)
+	if err != nil {
+		return err
+	}
+
+	userID, err := uc.userService.ValidateUserToken(tokenString)
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
+
+	// Dapatkan private key dengan password
+	privateKey, err := uc.userService.GetPrivateKeyWithPassword(userID, req)
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
+
+	// Kembalikan private key
+	return c.JSON(fiber.Map{
+		"private_key": privateKey,
+	})
+}
