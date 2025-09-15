@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { EventSkeleton } from '@/components/EventSkeleton';
 
 // Kategori pengumuman
 const kategoriList = ['Semua', 'Penting', 'Akademik', 'Beasiswa', 'Event'];
@@ -22,6 +23,16 @@ export default function PengumumanPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showClearButton, setShowClearButton] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter pengumuman berdasarkan kategori dan pencarian
   const filteredPengumuman = pengumuman.filter((item) => {
@@ -60,6 +71,10 @@ export default function PengumumanPage() {
     setSelectedItem(null);
   };
 
+  if (isLoading) {
+    return <EventSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 max-w-7xl mx-auto">
       <Head>
@@ -69,7 +84,6 @@ export default function PengumumanPage() {
           content="Pengumuman resmi Program Studi Matematika"
         />
       </Head>
-
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-md z-10 pt-10">
         <div className="container mx-auto px-4 py-4">
@@ -85,7 +99,6 @@ export default function PengumumanPage() {
           </div>
         </div>
       </header>
-
       <main className="container mx-auto px-4 py-8">
         {/* Pencarian dan Filter */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
@@ -140,7 +153,6 @@ export default function PengumumanPage() {
             </div>
           </div>
         </div>
-
         {/* Daftar Pengumuman */}
         <div className="space-y-4">
           {sortedPengumuman.length > 0 ? (
@@ -179,15 +191,12 @@ export default function PengumumanPage() {
                         </span>
                       )}
                     </div>
-
                     <h3 className="font-semibold text-lg text-gray-800 dark:text-white mb-2">
                       {item.judul}
                     </h3>
-
                     <p className="text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
                       {item.konten}
                     </p>
-
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                       <svg
                         className="w-4 h-4 mr-1"
@@ -205,7 +214,6 @@ export default function PengumumanPage() {
                       {item.tanggal}
                     </div>
                   </div>
-
                   <div className="flex flex-col items-end ml-4">
                     {item.lampiran && (
                       <button
@@ -272,7 +280,6 @@ export default function PengumumanPage() {
             </div>
           )}
         </div>
-
         {/* Subscribe Notifikasi */}
         <div className="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-8 text-white">
           <div className="max-w-2xl mx-auto text-center">
@@ -296,7 +303,6 @@ export default function PengumumanPage() {
           </div>
         </div>
       </main>
-
       {/* Detail Modal */}
       {showDetail && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -350,13 +356,11 @@ export default function PengumumanPage() {
                   </svg>
                 </button>
               </div>
-
               <div className="prose dark:prose-invert max-w-none mb-6">
                 <p className="text-gray-700 dark:text-gray-300">
                   {selectedItem.konten}
                 </p>
               </div>
-
               {selectedItem.lampiran && (
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
@@ -387,7 +391,6 @@ export default function PengumumanPage() {
           </div>
         </div>
       )}
-
       {/* Footer */}
       <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 mt-12">
         <div className="container mx-auto px-4">

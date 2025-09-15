@@ -67,7 +67,7 @@ export const mockPosts = [
 export const categories = [
   'Semua',
   'Kalkulus',
-  'Aljabar Linear',
+  'Aljabar',
   'Statistika',
   'Geometri',
   'Matematika Terapan',

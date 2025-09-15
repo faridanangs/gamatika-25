@@ -30,16 +30,21 @@ export default function LoginPage() {
     try {
       // langsung panggil NextAuth
       const res = await signIn('credentials', {
+        redirect: false,
         callbackUrl: '/dashboard/profile',
         email,
         password,
       });
 
+      console.log(res, 'res');
+
       if (res?.error) {
-        toast.error(res.error);
+        toast.error('Login Gagal');
       } else {
         toast.success('Login berhasil!');
-        // router.push('/dashboard/profile');
+        setTimeout(() => {
+          router.push('/dashboard/profile');
+        }, 600);
       }
     } catch (error) {
       toast.error('Terjadi kesalahan');

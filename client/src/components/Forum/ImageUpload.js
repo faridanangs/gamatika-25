@@ -1,26 +1,58 @@
+'use client';
+
 import Image from 'next/image';
+import { useState } from 'react';
 
 export function ImageUpload({ images, setImages, maxImages = 4 }) {
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const newImage = {
-          id: Date.now(),
-          url: event.target.result,
-          file: file,
-        };
-        if (images.length < maxImages) {
-          setImages([...images, newImage]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageChange = async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      setUploading(true);
+
+      try {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append('images', file);
+        });
+
+        const response = await fetch('/api/auth/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Upload failed');
         }
-      };
-      reader.readAsDataURL(file);
+
+        const data = await response.json();
+
+        // Tambahkan gambar yang sudah diupload ke state
+        const newImages = data.images.map((img, index) => ({
+          id: Date.now() + index,
+          url: img.url,
+          public_id: img.public_id,
+          file: files[index],
+        }));
+
+        console.log('new Images ', newImages);
+
+        setImages((prev) => [...prev, ...newImages]);
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert(`Gagal mengunggah gambar: ${error.message}`);
+      } finally {
+        setUploading(false);
+      }
     }
   };
+
   const removeImage = (id) => {
     setImages(images.filter((img) => img.id !== id));
   };
+
   return (
     <div className="mb-4">
       <label className="block text-gray-700 dark:text-gray-300 mb-2">
@@ -63,24 +95,34 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
               className="hidden"
+              disabled={uploading}
             />
             <div className="text-center">
-              <svg
-                className="w-8 h-8 mx-auto text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              <p className="text-xs text-gray-500 mt-1">Tambah Gambar</p>
+              {uploading ? (
+                <div className="w-8 h-8 mx-auto">
+                  <div className="w-8 h-8 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <>
+                  <svg
+                    className="w-8 h-8 mx-auto text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  <p className="text-xs text-gray-500 mt-1">Tambah Gambar</p>
+                </>
+              )}
             </div>
           </label>
         )}
@@ -93,11 +135,11 @@ export function ImageModal({ image, isOpen, onClose }) {
   if (!isOpen || !image) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="relative max-w-4xl max-h-[90vh] overflow-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-3xl bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="relative max-h-[80vh]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 z-10"
+          className="absolute -top-1 -right-1 text-white bg-black bg-opacity-50 rounded-full p-1 z-10"
         >
           <svg
             className="w-6 h-6"
@@ -113,10 +155,12 @@ export function ImageModal({ image, isOpen, onClose }) {
             />
           </svg>
         </button>
-        <img
+        <Image
           src={image}
-          alt="Full size"
-          className="max-w-full max-h-[80vh] object-contain"
+          alt="Show image"
+          width={1000}
+          height={1000}
+          className="w-full h-[50vh] md:h-[80vh] object-contain"
         />
       </div>
     </div>

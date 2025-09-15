@@ -1,20 +1,39 @@
 'use client';
 import Image from 'next/image';
 import { useState } from 'react';
-import { categories } from '@/data/mockForum';
-import { ImageModal, ImageUpload } from './ImageUpload';
 import { Comment, CommentInput } from './Comment';
+import { ImageModal } from './ImageUpload';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
+import { formatDateTime } from '@/lib/utils';
+import { categories } from '@/data/mockForum';
+import Link from 'next/link';
 
 export function ForumPost({
   post,
   onLike,
-  onComment,
   onShare,
   comments,
   onAddComment,
+  isAuth,
 }) {
   const [showComments, setShowComments] = useState(false);
-  const [commentCount, setCommentCount] = useState(post.commentCount);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -23,8 +42,7 @@ export function ForumPost({
   };
 
   const handleAddComment = (newComment) => {
-    onAddComment(post.id, newComment);
-    setCommentCount(commentCount + 1);
+    onAddComment(post?.id, newComment);
   };
 
   const handleImageClick = (image) => {
@@ -33,42 +51,46 @@ export function ForumPost({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-4 transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-auto mb-4 transition-colors duration-300">
       <div className="flex items-start mb-4">
         <img
-          src={post.author.avatar}
-          alt={post.author.name}
+          src="https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png"
+          alt={post?.author.name}
           width={40}
           height={40}
           className="w-10 h-10 rounded-full object-cover"
         />
-        <div className="ml-3 flex-1">
-          <h3 className="font-semibold text-gray-800 dark:text-white">
-            {post.title}
-          </h3>
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-            <span>{post.author.name}</span>
-            <span className="mx-2">•</span>
-            <span>{post.timestamp}</span>
+        <div className="ml-2 flex-1">
+          <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
+            <span>{post?.author.username}</span>
+            <span>{formatDateTime(post?.created_at)}</span>
           </div>
         </div>
         <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
-          {post.category}
+          {post?.category}
         </span>
       </div>
-      <p className="text-gray-700 dark:text-gray-300 mb-4">{post.content}</p>
-      {post.images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-          {post.images.map((image, index) => (
+      <p
+        className={`text-gray-700 dark:text-gray-300 mb-4 ${
+          post?.images.length > 0 ? '' : 'text-2xl py-8'
+        }`}
+      >
+        {post?.content}
+      </p>
+      {post?.images.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-4 rounded-2xl">
+          {post?.images.map((image, index) => (
             <div
               key={index}
-              className="aspect-square rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer"
+              className="aspect-square  dark:border-gray-600 cursor-pointer"
               onClick={() => handleImageClick(image)}
             >
-              <img
-                src={image}
+              <Image
                 alt={`Post image ${index + 1}`}
-                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                src={image}
+                width={500}
+                height={500}
+                className="object-contain border"
               />
             </div>
           ))}
@@ -77,14 +99,14 @@ export function ForumPost({
       <div className="flex items-center justify-between">
         <div className="flex space-x-4">
           <button
-            onClick={() => onLike(post.id)}
+            onClick={() => onLike(post?.id)}
             className={`flex items-center space-x-1 ${
-              post.liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+              post?.liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
             } transition-colors`}
           >
             <svg
               className="w-5 h-5"
-              fill={post.liked ? 'currentColor' : 'none'}
+              fill={post?.liked ? 'currentColor' : 'none'}
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
@@ -95,7 +117,7 @@ export function ForumPost({
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-            <span>{post.likes}</span>
+            <span>{post?.like_count}</span>
           </button>
           <button
             onClick={handleCommentClick}
@@ -114,10 +136,10 @@ export function ForumPost({
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <span>{commentCount}</span>
+            <span>{post?.comment_count}</span>
           </button>
           <button
-            onClick={() => onShare(post.id)}
+            onClick={() => onShare(post?.id)}
             className="flex items-center space-x-1 text-gray-500 hover:text-green-500 transition-colors"
           >
             <svg
@@ -133,7 +155,7 @@ export function ForumPost({
                 d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 010-5.368m-9.032 5.368a9.001 9.001 0 01-5.368-9.032m9.032 9.032a9.001 9.001 0 015.368-9.032"
               />
             </svg>
-            <span>{post.shares}</span>
+            <span>{post?.share_count}</span>
           </button>
         </div>
         <button className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
@@ -156,7 +178,7 @@ export function ForumPost({
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold text-gray-800 dark:text-white">
-              Komentar ({commentCount})
+              Komentar ({post?.comment_count})
             </h4>
             <button
               onClick={handleCommentClick}
@@ -177,10 +199,18 @@ export function ForumPost({
               </svg>
             </button>
           </div>
-          {comments.map((comment) => (
-            <Comment key={comment.id} comment={comment} />
+          {comments.map((comment, i) => (
+            <Comment key={i} comment={comment} />
           ))}
-          <CommentInput onAddComment={handleAddComment} />
+          {isAuth ? (
+            <CommentInput onAddComment={handleAddComment} />
+          ) : (
+            <Link className="" href={`/login`}>
+              <p className="text-[10px] text-center text-red-400">
+                jika ingin komen login terlebih dahulu{' '}
+              </p>
+            </Link>
+          )}
         </div>
       )}
 
@@ -223,31 +253,189 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('Kalkulus');
   const [images, setImages] = useState([]);
-  const handleSubmit = () => {
-    if (title && content) {
-      onCreate({ title, content, category, images });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title || !content) {
+      toast.error('Judul dan konten wajib diisi');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      // Upload images to Cloudinary
+      let uploadedImages = [];
+      if (images.length > 0) {
+        const response = await fetch('/api/uploads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            files: images.map((img) => ({
+              base64: img.base64,
+              name: img.file.name,
+            })),
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Upload failed');
+        }
+        const data = await response.json();
+        uploadedImages = data.images;
+      }
+      // Format data postingan
+      const postData = {
+        title,
+        content,
+        category,
+        images: uploadedImages.map((img) => ({
+          url: img.url,
+          public_id: img.public_id,
+        })),
+      };
+      // Panggil fungsi onCreate dari parent component
+      await onCreate(postData);
+      // Reset form
       setTitle('');
       setContent('');
       setCategory('Kalkulus');
       setImages([]);
       onClose();
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert(`Gagal membuat postingan: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-              Buat Postingan Baru
-            </h2>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="dark:bg-gray-800 w-[80%]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
+            Buat Postingan Baru
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+              Judul
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Masukkan judul postingan"
+              className="dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+              Kategori
+            </label>
+            <Select
+              value={category}
+              onValueChange={setCategory}
+              defaultValue="Kalkulus"
+            >
+              <SelectTrigger className="dark:bg-gray-700 dark:text-white">
+                <SelectValue placeholder="Pilih kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+              Konten
+            </label>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Tulis konten diskusi Anda..."
+              className="dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <div className="mb-2">
+            <ImageUpload images={images} setImages={setImages} maxImages={4} />
+          </div>
+        </div>
+        <DialogFooter className="flex justify-end space-x-3">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Membuat...' : 'Posting'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+function ImageUpload({ images, setImages, maxImages = 4 }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+
+      // Convert files to base64 and add to state
+      const newImages = files.map((file, index) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        return new Promise((resolve) => {
+          reader.onload = () => {
+            resolve({
+              id: Date.now() + index,
+              file: file,
+              base64: reader.result,
+              url: URL.createObjectURL(file), // Temporary URL for preview
+            });
+          };
+        });
+      });
+
+      Promise.all(newImages).then((results) => {
+        setImages((prev) => [...prev, ...results]);
+      });
+    }
+  };
+
+  const removeImage = (id) => {
+    setImages(images.filter((img) => img.id !== id));
+  };
+
+  return (
+    <div className="mb-2">
+      <label className="block text-gray-700 dark:text-gray-300 mb-2">
+        Gambar (maksimal {maxImages})
+      </label>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {images.map((image) => (
+          <div key={image.id} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+              <Image
+                src={image.url}
+                alt="Uploaded"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
             <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              onClick={() => removeImage(image.id)}
+              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <svg
-                className="w-6 h-6"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -261,62 +449,36 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
               </svg>
             </button>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
-              Judul
-            </label>
+        ))}
+        {images.length < maxImages && (
+          <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              placeholder="Masukkan judul postingan"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
-              Kategori
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            >
-              {categories.slice(1).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
-              Konten
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              placeholder="Tulis konten diskusi Anda..."
-            ></textarea>
-          </div>
-          <ImageUpload images={images} setImages={setImages} maxImages={4} />
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              Posting
-            </button>
-          </div>
-        </div>
+            <div className="text-center">
+              <>
+                <svg
+                  className="w-8 h-8 mx-auto text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <p className="text-xs text-gray-500 mt-1">Tambah Gambar</p>
+              </>
+            </div>
+          </label>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-
 const nextConfig = {
   images: {
     domains: [
@@ -7,6 +6,7 @@ const nextConfig = {
       'source.unsplash.com',
       'images.unsplash.com',
       'placehold.co',
+      'res.cloudinary.com',
     ],
   },
 };

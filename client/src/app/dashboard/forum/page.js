@@ -1,8 +1,10 @@
-import ForumPage from '@/components/Forum/Forum';
+import DashboardForumPage from '@/components/Forum/DashboardForum';
+import { getAllPosts } from '@/data/getAllPosts';
 import React from 'react';
 
-const DashboardForum = () => {
-  return <h1>tes</h1>;
+const DashboardForum = async () => {
+  const posts = await getAllPosts();
+  return <DashboardForumPage postsO={posts} />;
 };
 
 export default DashboardForum;

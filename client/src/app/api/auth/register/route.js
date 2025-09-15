@@ -1,13 +1,16 @@
 // app/api/auth/register/route.js
+import { ethers } from 'ethers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    const wallet = ethers.Wallet.createRandom();
+
     const { fullName, username, prodi, nim, email, password } =
       await request.json();
 
     // Call backend registration API
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+    const response = await fetch(`${process.env.SERVER_API_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,6 +22,8 @@ export async function POST(request) {
         nim: Number(nim),
         email,
         password,
+        public_key: wallet.publicKey,
+        private_key: wallet.privateKey,
       }),
     });
 

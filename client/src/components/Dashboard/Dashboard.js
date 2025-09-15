@@ -95,7 +95,7 @@ export default function DashboardPage({ children }) {
                   <div>
                     <h1 className="text-xl font-bold">GAMATIKA 25</h1>
                     <p className="text-xs text-muted-foreground">
-                      Dashboard Matematika
+                      Dashboard Science
                     </p>
                   </div>
                 </div>

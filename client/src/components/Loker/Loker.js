@@ -5,6 +5,7 @@ import { mockJobs } from '../../data/mockJobs';
 import { FilterBar } from './FilterBar';
 import { JobCard } from './JobCard';
 import { JobDetailModal } from './JobDetailModal';
+import { JobCardSkeleton, JobListSkeleton } from '../JobCardSkeleton';
 export default function LokerPage() {
   const [jobs] = useState(mockJobs);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -49,7 +50,7 @@ export default function LokerPage() {
   }, [theme, mounted]);
 
   // Fungsi filter dan pencarian
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobs?.filter((job) => {
     return (
       job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
       (filters.category ? job.category === filters.category : true) &&
@@ -61,8 +62,8 @@ export default function LokerPage() {
   // Pagination logic
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const currentJobs = filteredJobs?.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(filteredJobs?.length / jobsPerPage);
 
   // Reset ke halaman 1 saat filter berubah
   useEffect(() => {
@@ -87,7 +88,8 @@ export default function LokerPage() {
           </p>
           <div className="flex flex-wrap gap-4">
             <div className="bg-white text-black bg-opacity-20 px-4 py-2 rounded-lg">
-              <span className="font-medium">Total Lowongan:</span> {jobs.length}
+              <span className="font-medium">Total Lowongan:</span>{' '}
+              {jobs?.length || 0}
             </div>
             <div className="bg-white text-black bg-opacity-20 px-4 py-2 rounded-lg">
               <span className="font-medium">Kategori:</span> Teknologi,
@@ -117,9 +119,13 @@ export default function LokerPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentJobs.map((job) => (
-            <JobCard key={job.id} job={job} onSelect={setSelectedJob} />
-          ))}
+          {currentJobs.length < 1
+            ? Array.from({ length: 6 }).map((_, i) => {
+                return <JobCardSkeleton key={i} />;
+              })
+            : currentJobs.map((job) => (
+                <JobCard key={job.id} job={job} onSelect={setSelectedJob} />
+              ))}
         </div>
 
         {/* Pagination Controls */}

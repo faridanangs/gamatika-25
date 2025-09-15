@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { JobCardSkeleton } from '../JobCardSkeleton';
 
 export function JobCard({ job, onSelect }) {
   return (

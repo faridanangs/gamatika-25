@@ -16,19 +16,16 @@ export const authOptions = {
 
         try {
           // Call backend login API
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/login`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: credentials.email,
-                password: credentials.password,
-              }),
-            }
-          );
+          const response = await fetch(`${process.env.SERVER_API_URL}/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
 
           if (!response.ok) {
             return null;
@@ -48,7 +45,6 @@ export const authOptions = {
             token: data.token,
           };
         } catch (error) {
-          console.error('Auth error:', error);
           return null;
         }
       },

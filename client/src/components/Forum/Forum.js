@@ -4,33 +4,16 @@ import Head from 'next/head';
 import { mockContributors } from '@/data/mockForum';
 import { categories, mockPosts } from '@/data/mockForum';
 import CreatePostModal, { CreatePostButton, ForumPost } from './ForumPost';
+import { PostSkeleton } from '../PostSkeleton';
+import { TopContributorsSkeleton } from '../TopContibSkeleton';
 
 // Main Forum Page Component
-export default function ForumPage() {
-  const [posts, setPosts] = useState(mockPosts);
-  const [filteredPosts, setFilteredPosts] = useState(mockPosts);
+export default function ForumPage({ postsO, contribsO }) {
+  const [posts, setPosts] = useState([]);
+  const [contribs, setContribs] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState('light');
-  // Initialize theme
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
-  }, []);
-  // Apply theme
-  useEffect(() => {
-    if (mounted) {
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  }, [theme, mounted]);
+
   // Filter posts by category
   useEffect(() => {
     if (selectedCategory === 'Semua') {
@@ -41,6 +24,7 @@ export default function ForumPage() {
       );
     }
   }, [selectedCategory, posts]);
+
   // Handle like action
   const handleLike = (postId) => {
     setPosts(
@@ -56,10 +40,7 @@ export default function ForumPage() {
       })
     );
   };
-  // Handle comment action
-  const handleComment = (postId) => {
-    // This is handled by the ForumPost component
-  };
+
   // Handle share action
   const handleShare = (postId) => {
     setPosts(
@@ -73,59 +54,19 @@ export default function ForumPage() {
     // In a real app, this would trigger the share functionality
     alert('Postingan telah dibagikan!');
   };
-  // Handle create new post
-  const handleCreatePost = (newPost) => {
-    const post = {
-      id: posts.length + 1,
-      title: newPost.title,
-      content: newPost.content,
-      category: newPost.category,
-      author: {
-        id: 999,
-        name: 'Anda',
-        avatar: 'https://i.pravatar.cc',
-      },
-      likes: 0,
-      commentCount: 0,
-      shares: 0,
-      timestamp: 'Baru saja',
-      liked: false,
-      images: newPost.images.map((img) => img.url),
-      comments: [],
-    };
-    setPosts([post, ...posts]);
-  };
-  // Handle add comment
-  const handleAddComment = (postId, newComment) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          const comment = {
-            id: Date.now(),
-            author: {
-              id: 999,
-              name: 'Anda',
-              avatar: 'https://i.pravatar.cc',
-            },
-            content: newComment.content,
-            timestamp: 'Baru saja',
-            images: newComment.images, // Langung gunakan array gambar tanpa mapping
-          };
-          return {
-            ...post,
-            commentCount: post.commentCount + 1,
-            comments: [...post.comments, comment],
-          };
-        }
-        return post;
-      })
+
+  useEffect(() => {
+    const sorted = postsO.posts.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
-  };
+    setPosts(sorted);
+    setContribs(contribsO);
+  }, [postsO, contribsO]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 pt-10">
       <Head>
-        <title>Forum Diskusi - Angkatan 25 Gamatika</title>
+        <title>Forum Diskusi - Gamatika 25</title>
         <meta
           name="description"
           content="Forum diskusi untuk belajar matematika bersama"
@@ -136,7 +77,7 @@ export default function ForumPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Sidebar - Top Contributors */}
           <div className="lg:col-span-1">
-            <TopContributors />
+            <TopContributors props={contribs} />
           </div>
           {/* Right Main Content */}
           <div className="lg:col-span-3">
@@ -150,7 +91,6 @@ export default function ForumPage() {
                   Bertukar pengetahuan dan memecahkan masalah bersama
                 </p>
               </div>
-              <CreatePostButton onClick={() => setShowCreateModal(true)} />
             </div>
             {/* Category Filter */}
             <div className="mb-6">
@@ -172,16 +112,19 @@ export default function ForumPage() {
             </div>
             {/* Forum Posts */}
             <div>
-              {filteredPosts?.length > 0 ? (
+              {posts.length == 0 ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <PostSkeleton key={i} />
+                ))
+              ) : filteredPosts?.length > 0 ? (
                 filteredPosts.map((post, i) => (
                   <ForumPost
                     key={i}
                     post={post}
                     onLike={handleLike}
-                    onComment={handleComment}
                     onShare={handleShare}
                     comments={post.comments}
-                    onAddComment={handleAddComment}
+                    isAuth={false}
                   />
                 ))
               ) : (
@@ -213,12 +156,7 @@ export default function ForumPage() {
           </div>
         </div>
       </main>
-      {/* Create Post Modal */}
-      <CreatePostModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onCreate={handleCreatePost}
-      />
+
       {/* Footer */}
       <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 mt-12 transition-colors duration-300">
         <div className="container mx-auto px-4">
@@ -259,44 +197,43 @@ export default function ForumPage() {
   );
 }
 
-function TopContributors() {
+function TopContributors({ props }) {
+  if (props.length < 1) {
+    return <TopContributorsSkeleton />;
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
       <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-        Top Contributor
+        Top Contributor{' '}
+        <p className="text-[14px] text-gray-400">(setiap 7 hari)</p>
       </h2>
       <div className="space-y-4">
-        {mockContributors.map((contributor, index) => (
-          <div key={contributor.id} className="flex items-center">
+        {props?.map((contributor, index) => (
+          <div key={index} className="flex items-center">
             <div className="relative">
               <img
-                src={contributor.avatar}
-                alt={contributor.name}
+                src="https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png"
+                alt={contributor?.user.username}
                 width={48}
                 height={48}
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
-                {index + 1}
+                {contributor?.rank}
               </div>
             </div>
             <div className="ml-3 flex-1">
               <h3 className="font-semibold text-gray-800 dark:text-white">
-                {contributor.name}
+                {contributor?.user.username}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {contributor.posts} posts • {contributor.points} pts
+                {contributor?.breakdown.posts} posts •{' '}
+                {contributor?.breakdown.comments} comments
               </p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {contributor.expertise.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {contributor?.score} poin
+              </p>
             </div>
           </div>
         ))}
