@@ -169,9 +169,15 @@ func (uc *UserController) GetProfile(c *fiber.Ctx) error {
 }
 
 func (uc *UserController) GetCachedTopContributors(c *fiber.Ctx) error {
-	topContributors := uc.userService.GetCachedTopContributors()
+	res, err := uc.userService.GetTopContributors()
+	if err != nil {
+		appErr := err.(*helpers.AppError)
+		return c.Status(appErr.Code).JSON(fiber.Map{
+			"error": appErr.Message,
+		})
+	}
 
-	return c.JSON(topContributors)
+	return c.JSON(res)
 }
 
 // GetUserContribution - Handle get user contribution request
@@ -211,7 +217,6 @@ func (uc *UserController) GetPrivateKey(c *fiber.Ctx) error {
 		})
 	}
 
-	// Dapatkan private key dengan password
 	privateKey, err := uc.userService.GetPrivateKeyWithPassword(userID, req)
 	if err != nil {
 		appErr := err.(*helpers.AppError)

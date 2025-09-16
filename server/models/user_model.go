@@ -44,6 +44,7 @@ type CreateUserRequest struct {
 type UpdateUserRequest struct {
 	ID       string `json:"id" validate:"required"`
 	Username string `json:"username" validate:"omitempty"`
+	Avatar   string `json:"avatar" validate:"omitempty"`
 	Email    string `json:"email" validate:"omitempty,email"`
 	Password string `json:"password" validate:"omitempty,min=6"`
 }

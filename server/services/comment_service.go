@@ -74,7 +74,7 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest, tokenSt
 	}
 
 	// Insert comment
-	if err := cs.db.Create(&comment).Error; err != nil {
+	if err := cs.db.Preload("Author").Create(&comment).Error; err != nil {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
 			Message: "Failed to create comment",
@@ -86,6 +86,13 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest, tokenSt
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
 			Message: "Failed to update comment count",
+		}
+	}
+
+	if err = cs.db.Preload("Author").First(&comment, comment.ID).Error; err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to load comment with author",
 		}
 	}
 

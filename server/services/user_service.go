@@ -75,18 +75,14 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 		}
 	}
 
-	// Set default values
-	avatar := req.Avatar
-	if avatar == "" {
-		avatar = "https://default-avatar.com/default.png"
-	}
+	req.Avatar = "https://res.cloudinary.com/detetmaw8/image/upload/v1758013653/forum-comments/xzfg7jskt08evwbdh0n5.png"
 
 	// Create user
 	user := models.User{
 		ID:         uuid.NewString(),
 		FullName:   req.FullName,
 		Username:   req.Username,
-		Avatar:     avatar,
+		Avatar:     req.Avatar,
 		Prodi:      req.Prodi,
 		Nim:        req.Nim,
 		Email:      req.Email,
@@ -192,6 +188,10 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 			}
 		}
 		user.Password = hashedPassword
+	}
+
+	if req.Avatar != "" {
+		user.Avatar = req.Avatar
 	}
 
 	if err := us.db.Save(&user).Error; err != nil {
@@ -362,7 +362,6 @@ func (us *UserService) ValidateUserToken(tokenString string) (string, error) {
 }
 
 func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivKeyReq) (string, error) {
-	// Validasi password
 	if err := us.val.Struct(req); err != nil {
 		return "", &helpers.AppError{
 			Code:    fiber.StatusBadRequest,
@@ -430,6 +429,7 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 	var contribution models.Contribution
 	var user models.User
 
+	// Ambil user + posts
 	if err := us.db.Preload("Posts").Where("id = ?", userID).First(&user).Error; err != nil {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusNotFound,
@@ -441,6 +441,7 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 
 	var postsCount, commentsCount, likesReceived, sharesReceived uint64
 
+	// Hitung post dalam 7 hari terakhir
 	for _, post := range user.Posts {
 		if post.CreatedAt.After(sevenDaysAgo) {
 			postsCount++
@@ -449,20 +450,23 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 		}
 	}
 
-	comments := []models.Comment{}
+	// Ambil semua comment milik user ini
+	var comments []models.Comment
 	if err := us.db.Where("user_id = ?", userID).Find(&comments).Error; err != nil {
 		return nil, &helpers.AppError{
-			Code:    fiber.StatusNotFound,
-			Message: "Comments not found",
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to fetch comments",
 		}
 	}
 
+	// Hitung comment dalam 7 hari terakhir
 	for _, comment := range comments {
 		if comment.CreatedAt.After(sevenDaysAgo) {
 			commentsCount++
 		}
 	}
 
+	// Hitung skor total
 	totalScore := (postsCount * 3) + (commentsCount * 1) + (likesReceived * 2) + (sharesReceived * 1)
 
 	contribution = models.Contribution{
@@ -483,6 +487,7 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 	var users []models.User
 	var topContributors []models.TopContributorsResponse
 
+	// Ambil semua user dengan posts dan comments yang terkait
 	if err := us.db.Preload("Posts").Find(&users).Error; err != nil {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
@@ -492,11 +497,22 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 
 	var contributions []models.Contribution
 	for _, user := range users {
+		// Pastikan user memiliki ID
+		if user.ID == "" {
+			continue
+		}
+
 		contrib, err := us.CalculateUserContribution(user.ID)
 		if err != nil {
+			log.Printf("Error calculating contribution for user %s: %v", user.ID, err)
 			continue
 		}
 		contributions = append(contributions, *contrib)
+	}
+
+	if len(contributions) == 0 {
+		log.Println("No contributions calculated")
+		return topContributors, nil
 	}
 
 	sort.Slice(contributions, func(i, j int) bool {
@@ -514,6 +530,11 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 				user = u
 				break
 			}
+		}
+
+		// Pastikan user ditemukan
+		if user.ID == "" {
+			continue
 		}
 
 		topContributors = append(topContributors, models.TopContributorsResponse{
@@ -539,28 +560,37 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 func (us *UserService) StartTopContributorScheduler() {
 	ticker := time.NewTicker(5 * time.Minute)
 
+	// Isi pertama kali saat service start
+	go func() {
+		us.updateCache()
+	}()
+
+	// Update berkala
 	go func() {
 		for range ticker.C {
 			us.updateCache()
 		}
 	}()
-
-	// Isi pertama kali saat service start
-	us.updateCache()
 }
 
 func (us *UserService) updateCache() {
 	contributors, err := us.GetTopContributors()
 	if err != nil {
-		log.Println("Failed to update top contributors:", err)
+		log.Printf("Failed to update top contributors: %v", err)
 		return
 	}
+
+	if len(contributors) == 0 {
+		log.Println("No top contributors to cache")
+		return
+	}
+
+	log.Printf("Updated top contributors cache with %d entries", len(contributors))
 
 	us.mu.Lock()
 	us.cachedContributors = contributors
 	us.mu.Unlock()
 }
-
 func (us *UserService) GetCachedTopContributors() []models.TopContributorsResponse {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
