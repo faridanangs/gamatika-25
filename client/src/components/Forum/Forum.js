@@ -110,7 +110,6 @@ export default function ForumPage({ postsO, contribsO }) {
                 ))}
               </div>
             </div>
-            {/* Forum Posts */}
             <div>
               {posts.length == 0 ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -119,6 +118,7 @@ export default function ForumPage({ postsO, contribsO }) {
               ) : filteredPosts?.length > 0 ? (
                 filteredPosts.map((post, i) => (
                   <ForumPost
+                    className={'dark:bg-gray-800'}
                     key={i}
                     post={post}
                     onLike={handleLike}
@@ -198,7 +198,7 @@ export default function ForumPage({ postsO, contribsO }) {
 }
 
 function TopContributors({ props }) {
-  if (props.length < 1) {
+  if (props.length == 0) {
     return <TopContributorsSkeleton />;
   }
 

@@ -1,4 +1,4 @@
-import DashboardForumPage from '@/components/Forum/DashboardForum';
+import DashboardForumPage from '@/components/Dashboard/DashboardForum';
 import { getAllPosts } from '@/data/getAllPosts';
 import React from 'react';
 

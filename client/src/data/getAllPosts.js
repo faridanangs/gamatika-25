@@ -8,5 +8,11 @@ export async function getAllPosts() {
       'Content-Type': 'application/json',
     },
   });
-  return res.json();
+
+  if (!res.ok) {
+    console.error('Failed fetch data posts from server');
+    return;
+  }
+
+  return await res.json();
 }

@@ -2,7 +2,10 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { categories, mockPosts } from '@/data/mockForum';
-import CreatePostModal, { CreatePostButton, ForumPost } from './ForumPost';
+import CreatePostModal, {
+  CreatePostButton,
+  ForumPost,
+} from '../Forum/ForumPost';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -77,15 +80,14 @@ export default function DashboardForumPage({ postsO }) {
       toast.success('Berhasil membuat post');
     } catch (error) {
       console.error(error);
-    } finally {
     }
   };
 
   const handleAddComment = async (postId, newComment) => {
     try {
       const resp = await createComment(postId, token, newComment);
-      if (resp != null) {
-        toast.error(resp);
+      if (resp?.error) {
+        toast.error(resp.error);
       }
     } catch (error) {
       toast.error(error);

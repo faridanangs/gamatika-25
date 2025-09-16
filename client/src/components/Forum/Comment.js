@@ -4,7 +4,8 @@ import { ImageModal } from './ImageUpload';
 import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export function Comment({ comment, isCurrentUser = false }) {
@@ -24,19 +25,20 @@ export function Comment({ comment, isCurrentUser = false }) {
       )}
     >
       <div className="flex items-start">
-        {/* Avatar dengan indikator user */}
-        <div className="relative">
-          <img
-            src={
-              'https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png'
-            }
-            alt={comment?.author.name || 'User'}
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md"
-          />
+        <div className="relative hidden md:inline-block">
+          <Avatar className="w-10 h-10">
+            <AvatarImage
+              src={
+                'https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png'
+              }
+              alt={comment?.author.name || 'User'}
+            />
+            <AvatarFallback>
+              {comment?.author.username?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
           {isCurrentUser && (
-            <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-gray-800">
+            <Badge className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-gray-800 p-0">
               <svg
                 className="w-3 h-3"
                 fill="none"
@@ -50,12 +52,11 @@ export function Comment({ comment, isCurrentUser = false }) {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-            </div>
+            </Badge>
           )}
         </div>
 
-        <div className="ml-3 flex-1">
-          {/* Header komentar */}
+        <div className="mx-3 flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <h4
@@ -67,9 +68,12 @@ export function Comment({ comment, isCurrentUser = false }) {
                 {comment?.author.username}
               </h4>
               {isCurrentUser && (
-                <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded-full">
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs"
+                >
                   Anda
-                </span>
+                </Badge>
               )}
             </div>
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -110,7 +114,7 @@ export function Comment({ comment, isCurrentUser = false }) {
   );
 }
 
-export function CommentInput({ onAddComment }) {
+export function CommentInput({ onAddComment, className }) {
   const [content, setContent] = useState('');
   const [image, setImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -145,10 +149,8 @@ export function CommentInput({ onAddComment }) {
 
         const data = await response.json();
         imageUrl = data.image.url;
-        console.log('data: ', data);
       }
 
-      // Kirim komentar
       onAddComment({
         content,
         image: imageUrl,
@@ -192,7 +194,9 @@ export function CommentInput({ onAddComment }) {
   };
 
   return (
-    <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm">
+    <div
+      className={`border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm ${className} `}
+    >
       <div className="flex space-x-3">
         {/* Input area */}
         <div className="flex-1">
@@ -214,9 +218,11 @@ export function CommentInput({ onAddComment }) {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <button
+              <Button
                 onClick={removeImage}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                variant="destructive"
+                size="icon"
+                className="absolute top-1 right-1 w-6 h-6"
               >
                 <svg
                   className="w-4 h-4"
@@ -231,7 +237,7 @@ export function CommentInput({ onAddComment }) {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </button>
+              </Button>
             </div>
           )}
 

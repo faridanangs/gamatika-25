@@ -19,19 +19,15 @@ export const createComment = async (postId, token, newComment) => {
       }
     );
     if (!resp.ok) {
-      console.log(resp.statusText);
+      console.error(resp.statusText);
     }
 
-    const data = await resp.json();
-
-    if (data?.error) {
-      return data.error;
-    }
     revalidatePath(`/dashboard/forum`, 'page');
+    revalidatePath(`/dashboard/profile`, 'page');
 
-    return null;
+    return await resp.json();
   } catch (error) {
-    throw error;
+    console.error(error);
   }
 };
 
@@ -61,7 +57,75 @@ export const createPost = async (token, newPost) => {
       return data.error;
     }
 
-    setTimeout(() => {}, 1000);
     revalidatePath(`/dashboard/forum`, 'page');
-  } catch (error) {}
+    return null;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const updatePost = async (token, newPost) => {
+  try {
+    const resp = await fetch(`http://localhost:8080/api/posts/${newPost.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: newPost.title,
+        content: newPost.content,
+      }),
+    });
+
+    if (!resp.ok) {
+      console.log(resp.statusText);
+    }
+
+    const data = await resp.json();
+
+    if (data?.error) {
+      return data.error;
+    }
+
+    revalidatePath(`/dashboard/profile`, 'page');
+
+    return null;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const updateUser = async (token, newUser) => {
+  try {
+    const resp = await fetch(`http://localhost:8080/api/users/${newUser.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        email: newUser.email,
+        username: newUser.username,
+        avatar: newUser.avatar,
+        password: newUser.password,
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error(resp.statusText);
+    }
+
+    const data = await resp.json();
+
+    if (data?.error) {
+      return data.error;
+    }
+
+    revalidatePath(`/dashboard/profile`, 'page');
+
+    return null;
+  } catch (error) {
+    console.error(error);
+  }
 };

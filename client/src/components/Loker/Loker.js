@@ -17,28 +17,24 @@ export default function LokerPage() {
   });
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState('light');
-  // Pagination states
+
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  // Fungsi untuk toggle tema
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   };
 
-  // Hanya render di client
   useEffect(() => {
     setMounted(true);
-    // Ambil tema dari localStorage
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
     }
   }, []);
 
-  // Tambahkan kelas dark ke HTML element
   useEffect(() => {
     if (mounted) {
       if (theme === 'dark') {
@@ -49,7 +45,6 @@ export default function LokerPage() {
     }
   }, [theme, mounted]);
 
-  // Fungsi filter dan pencarian
   const filteredJobs = jobs?.filter((job) => {
     return (
       job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -59,13 +54,11 @@ export default function LokerPage() {
     );
   });
 
-  // Pagination logic
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = filteredJobs?.slice(indexOfFirstJob, indexOfLastJob);
   const totalPages = Math.ceil(filteredJobs?.length / jobsPerPage);
 
-  // Reset ke halaman 1 saat filter berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
@@ -119,7 +112,7 @@ export default function LokerPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentJobs.length < 1
+          {currentJobs.length == 0
             ? Array.from({ length: 6 }).map((_, i) => {
                 return <JobCardSkeleton key={i} />;
               })

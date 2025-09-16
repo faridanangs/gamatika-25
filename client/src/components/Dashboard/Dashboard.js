@@ -23,7 +23,7 @@ export default function DashboardPage({ children }) {
     menuItems.find((item) => pathname === item.href)?.id || 'dashboard';
 
   return (
-    <div className="flex h-screen bg-card">
+    <div className="flex h-screen bg-card w-full mx-auto max-w-[110rem]">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div

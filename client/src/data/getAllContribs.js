@@ -8,5 +8,11 @@ export async function getAllConribs() {
       'Content-Type': 'application/json',
     },
   });
-  return res.json();
+
+  if (!res.ok) {
+    console.error('Failed fetch data contirbs from server');
+    return;
+  }
+
+  return await res.json();
 }
