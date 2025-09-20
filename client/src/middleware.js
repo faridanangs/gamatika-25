@@ -9,13 +9,11 @@ export async function middleware(req) {
 
   const { pathname } = req.nextUrl;
 
-  console.log('Middleware:', { pathname, token: !!token });
-
   if (pathname.startsWith('/dashboard') && !token) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  if (pathname === '/login' && token) {
+  if ((pathname === '/login' || pathname === '/register') && token) {
     return NextResponse.redirect(new URL('/dashboard/profile', req.url));
   }
 
@@ -23,5 +21,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/login', '/register'],
 };

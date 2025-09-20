@@ -7,14 +7,12 @@ import CreatePostModal, { CreatePostButton, ForumPost } from './ForumPost';
 import { PostSkeleton } from '../PostSkeleton';
 import { TopContributorsSkeleton } from '../TopContibSkeleton';
 
-// Main Forum Page Component
 export default function ForumPage({ postsO, contribsO }) {
   const [posts, setPosts] = useState([]);
   const [contribs, setContribs] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
 
-  // Filter posts by category
   useEffect(() => {
     if (selectedCategory === 'Semua') {
       setFilteredPosts(posts);
@@ -25,7 +23,6 @@ export default function ForumPage({ postsO, contribsO }) {
     }
   }, [selectedCategory, posts]);
 
-  // Handle like action
   const handleLike = (postId) => {
     setPosts(
       posts.map((post) => {
@@ -41,7 +38,6 @@ export default function ForumPage({ postsO, contribsO }) {
     );
   };
 
-  // Handle share action
   const handleShare = (postId) => {
     setPosts(
       posts.map((post) => {
@@ -69,23 +65,19 @@ export default function ForumPage({ postsO, contribsO }) {
         <title>Forum Diskusi - Gamatika 25</title>
         <meta
           name="description"
-          content="Forum diskusi untuk belajar matematika bersama"
+          content="Forum diskusi untuk belajar sciences bersama"
         />
       </Head>
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Sidebar - Top Contributors */}
           <div className="lg:col-span-1">
             <TopContributors props={contribs} />
           </div>
-          {/* Right Main Content */}
           <div className="lg:col-span-3">
-            {/* Header with Create Post Button */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                  Diskusi Matematika
+                  Diskusi Sciences
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
                   Bertukar pengetahuan dan memecahkan masalah bersama

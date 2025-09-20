@@ -1,9 +1,24 @@
 'use client';
-import { useSession } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import { conGetNftByID, conMintNFT, conSetBaseURI } from '@/nft/action';
 
 export default function TestSession() {
-  const { data: session, status } = useSession();
-  console.log('Session data:', session, 'Status:', status);
+  const handleMintNFT = async () => {
+    await conMintNFT();
+  };
+  const handleGetTokenURI = async () => {
+    await conGetNftByID(1);
+  };
 
-  return <pre>{JSON.stringify(session, null, 2)}</pre>;
+  const handleSetBaseURI = async () => {
+    await conSetBaseURI();
+  };
+
+  return (
+    <div className="w-full h-screen flex items-center justify-center flex-col gap-2">
+      <Button onClick={handleMintNFT}>mint nft</Button>
+      <Button onClick={handleGetTokenURI}>get token uri</Button>
+      <Button onClick={handleSetBaseURI}>set base uri</Button>
+    </div>
+  );
 }

@@ -22,7 +22,7 @@ export async function POST(request) {
         nim: Number(nim),
         email,
         password,
-        public_key: wallet.publicKey,
+        public_key: wallet.address,
         private_key: wallet.privateKey,
       }),
     });

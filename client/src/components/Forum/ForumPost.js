@@ -25,6 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '@/lib/utils';
 import { categories } from '@/data/mockForum';
@@ -41,7 +42,7 @@ export function ForumPost({
 }) {
   const [showComments, setShowComments] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const handleCommentClick = () => {
     setShowComments(!showComments);
@@ -51,9 +52,21 @@ export function ForumPost({
     onAddComment(post?.id, newComment);
   };
 
-  const handleImageClick = (image) => {
-    setSelectedImage(image);
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
     setShowImageModal(true);
+  };
+
+  const handlePrevImage = () => {
+    setSelectedImageIndex((prevIndex) =>
+      prevIndex === 0 ? (post?.images.length || 0) - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setSelectedImageIndex((prevIndex) =>
+      prevIndex === (post?.images.length || 0) - 1 ? 0 : prevIndex + 1
+    );
   };
 
   return (
@@ -69,8 +82,10 @@ export function ForumPost({
           </Avatar>
           <div className="ml-2 flex-1">
             <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
-              <span>{post?.author.username}</span>
-              <span>{formatDateTime(post?.created_at)}</span>
+              <span className="font-medium">{post?.author.username}</span>
+              <span className="text-xs">
+                {formatDateTime(post?.created_at)}
+              </span>
             </div>
           </div>
           <Badge
@@ -84,39 +99,88 @@ export function ForumPost({
       <CardContent className="pt-0">
         <p
           className={`text-gray-700 dark:text-gray-300 mb-4 ${
-            post?.images.length > 0 ? '' : 'text-2xl py-8'
+            post?.images.length > 0 ? '' : 'text-lg'
           }`}
         >
           {post?.content}
         </p>
+
         {post?.images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-4 rounded-2xl">
-            {post?.images.map((image, index) => (
-              <div
-                key={index}
-                className="aspect-square dark:border-gray-600 cursor-pointer"
-                onClick={() => handleImageClick(image)}
-              >
-                <Image
-                  alt={`Post image ${index + 1}`}
-                  src={image}
-                  width={500}
-                  height={500}
-                  className="object-contain border"
-                />
+          <div className="mb-4 rounded-2xl overflow-hidden">
+            <div className="relative group">
+              <Image
+                alt={`Post image ${selectedImageIndex + 1}`}
+                src={post?.images[selectedImageIndex]}
+                width={800}
+                height={600}
+                unoptimized
+                className="w-full h-auto object-contain border dark:border-gray-700"
+              />
+
+              {/* Navigation buttons */}
+              {post?.images.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Image counter */}
+              {post?.images.length > 1 && (
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                  {selectedImageIndex + 1} / {post?.images.length}
+                </div>
+              )}
+            </div>
+
+            {post?.images.length > 1 && (
+              <div className="flex space-x-2 overflow-x-auto py-2 px-1">
+                {post?.images.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 transition-all ${
+                      index === selectedImageIndex
+                        ? 'border-blue-500 ring-2 ring-blue-300'
+                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                    onClick={() => handleImageClick(index)}
+                  >
+                    <Image
+                      alt={`Thumbnail ${index + 1}`}
+                      src={image}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
-        <div className="flex items-center justify-between">
+
+        <div className="flex items-center justify-between pt-2 border-t dark:border-gray-700">
           <div className="flex space-x-4">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onLike(post?.id)}
               className={`flex items-center space-x-1 ${
                 post?.liked
                   ? 'text-red-500'
                   : 'text-gray-500 hover:text-red-500'
-              } transition-colors`}
+              }`}
             >
               <svg
                 className="w-5 h-5"
@@ -132,10 +196,13 @@ export function ForumPost({
                 />
               </svg>
               <span>{post?.like_count}</span>
-            </button>
-            <button
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleCommentClick}
-              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
+              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500"
             >
               <svg
                 className="w-5 h-5"
@@ -151,10 +218,13 @@ export function ForumPost({
                 />
               </svg>
               <span>{post?.comment_count}</span>
-            </button>
-            <button
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onShare(post?.id)}
-              className="flex items-center space-x-1 text-gray-500 hover:text-green-500 transition-colors"
+              className="flex items-center space-x-1 text-gray-500 hover:text-green-500"
             >
               <svg
                 className="w-5 h-5"
@@ -170,9 +240,14 @@ export function ForumPost({
                 />
               </svg>
               <span>{post?.share_count}</span>
-            </button>
+            </Button>
           </div>
-          <button className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          >
             <svg
               className="w-5 h-5"
               fill="none"
@@ -186,15 +261,18 @@ export function ForumPost({
                 d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
               />
             </svg>
-          </button>
+          </Button>
         </div>
+
         {showComments && (
           <div className="mt-6">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-gray-800 dark:text-white">
                 Komentar ({post?.comment_count})
               </h4>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleCommentClick}
                 className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               >
@@ -211,18 +289,20 @@ export function ForumPost({
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </button>
+              </Button>
             </div>
-            <ScrollArea className="h-[calc(100vh-200px)] w-full rounded-md">
+            <ScrollArea
+              className={` w-full rounded-md dark:border-gray-700 md:p-4 p-1 ${'h-auto max-h-[calc(100vh-200px)] overflow-y-scroll'}`}
+            >
               {comments.map((comment, i) => (
                 <Comment key={i} comment={comment} />
               ))}
               {isAuth ? (
                 <CommentInput onAddComment={handleAddComment} />
               ) : (
-                <Link className="" href={`/login`}>
-                  <p className="text-[10px] text-center text-red-400">
-                    jika ingin komen login terlebih dahulu{' '}
+                <Link className="block" href={`/login`}>
+                  <p className="text-sm text-center text-red-400 hover:underline">
+                    Jika ingin berkomentar, login terlebih dahulu
                   </p>
                 </Link>
               )}
@@ -231,9 +311,12 @@ export function ForumPost({
         )}
       </CardContent>
       <ImageModal
-        image={selectedImage}
+        images={post?.images || []}
+        currentImageIndex={selectedImageIndex}
         isOpen={showImageModal}
         onClose={() => setShowImageModal(false)}
+        onPrev={handlePrevImage}
+        onNext={handleNextImage}
       />
     </Card>
   );
@@ -241,9 +324,9 @@ export function ForumPost({
 
 export function CreatePostButton({ onClick }) {
   return (
-    <button
+    <Button
       onClick={onClick}
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg flex items-center justify-center transition-colors duration-300 font-medium"
+      className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg flex items-center justify-center transition-colors duration-300 font-medium"
     >
       <svg
         className="w-5 h-5 mr-2"
@@ -259,7 +342,7 @@ export function CreatePostButton({ onClick }) {
         />
       </svg>
       Buat Postingan
-    </button>
+    </Button>
   );
 }
 
@@ -299,7 +382,6 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
         const data = await response.json();
         uploadedImages = data.images;
       }
-      // Format data postingan
       const postData = {
         title,
         content,
@@ -309,7 +391,6 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
           public_id: img.public_id,
         })),
       };
-      // Panggil fungsi onCreate dari parent component
       await onCreate(postData);
       // Reset form
       setTitle('');
@@ -327,7 +408,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="dark:bg-gray-800 w-[80%]">
+      <DialogContent className="dark:bg-gray-800 w-[80%] max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
             Buat Postingan Baru
@@ -374,7 +455,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Tulis konten diskusi Anda..."
-              className="dark:bg-gray-700 dark:text-white"
+              className="dark:bg-gray-700 dark:text-white min-h-[120px]"
             />
           </div>
           <div className="mb-2">
@@ -394,6 +475,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
     </Dialog>
   );
 }
+
 function ImageUpload({ images, setImages, maxImages = 4 }) {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -432,19 +514,21 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
         Gambar (maksimal {maxImages})
       </label>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {images.map((image) => (
+        {images?.map((image) => (
           <div key={image.id} className="relative group">
             <div className="aspect-square rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
               <Image
-                src={image.url}
+                src={image?.url}
                 alt="Uploaded"
                 width={40}
                 height={40}
                 className="w-full h-full object-cover"
               />
             </div>
-            <button
+            <Button
               onClick={() => removeImage(image.id)}
+              variant="ghost"
+              size="sm"
               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <svg
@@ -460,7 +544,7 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-            </button>
+            </Button>
           </div>
         ))}
         {images.length < maxImages && (

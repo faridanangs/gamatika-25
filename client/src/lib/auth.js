@@ -15,7 +15,6 @@ export const authOptions = {
         }
 
         try {
-          // Call backend login API
           const response = await fetch(`${process.env.SERVER_API_URL}/login`, {
             method: 'POST',
             headers: {
@@ -52,6 +51,11 @@ export const authOptions = {
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 60 * 60 * 5,
+    updateAge: 0,
+  },
+  jwt: {
+    maxAge: 60 * 60 * 5,
   },
   callbacks: {
     jwt: async ({ token, user }) => {

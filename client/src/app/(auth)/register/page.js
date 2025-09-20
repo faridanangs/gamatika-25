@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import toast from 'react-hot-toast';
+import { prodis } from '@/data/prodi';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -209,7 +210,6 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* NIM Input */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="nim"
@@ -246,7 +246,6 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* Study Program Input */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="prodi"
@@ -264,14 +263,11 @@ export default function RegisterPage() {
                         <SelectValue placeholder="Pilih Program Studi" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Matematika">Matematika</SelectItem>
-                        <SelectItem value="Statistika">Statistika</SelectItem>
-                        <SelectItem value="Pendidikan Matematika">
-                          Pendidikan Matematika
-                        </SelectItem>
-                        <SelectItem value="Ilmu Komputer">
-                          Ilmu Komputer
-                        </SelectItem>
+                        {prodis.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {/* Hidden input untuk menyimpan nilai prodi */}

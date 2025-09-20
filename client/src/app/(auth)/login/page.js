@@ -57,10 +57,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white dark:bg-card relative overflow-hidden pt-16 pb-6">
       <Head>
         <title>Login - Gamatika</title>
-        <meta
-          name="description"
-          content="Login ke sistem Gamatika Prodi Matematika"
-        />
+        <meta name="description" content="Login ke sistem Gamatika" />
       </Head>
       <BackgroundCircle />
       {/* Main Content */}
@@ -88,7 +85,7 @@ export default function LoginPage() {
               Selamat Datang
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Masuk ke akun Gamatika Prodi Matematika
+              Masuk ke akun Gamatika
             </p>
           </div>
           {/* Login Card */}

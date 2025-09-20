@@ -15,9 +15,9 @@ export function TopContributorsSkeleton() {
               <Skeleton className="w-12 h-12 rounded-full dark:bg-gray-700" />
             </div>
             <div className="ml-3 flex-1 space-y-2">
-              <Skeleton className="h-4 w-32 dark:bg-gray-700" />
-              <Skeleton className="h-3 w-48 dark:bg-gray-700" />
-              <Skeleton className="h-3 w-24 dark:bg-gray-700" />
+              <Skeleton className="h-4  dark:bg-gray-700" />
+              <Skeleton className="h-3  dark:bg-gray-700" />
+              <Skeleton className="h-3 dark:bg-gray-700" />
             </div>
           </div>
         ))}

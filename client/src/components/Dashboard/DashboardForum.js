@@ -95,7 +95,7 @@ export default function DashboardForumPage({ postsO }) {
   };
 
   return (
-    <div className="min-h-screen dark:bg-card transition-colors duration-300">
+    <div className="min-h-screen dark:bg-card transition-colors duration-300 w-full border-2 overflow-x-hidden">
       <Head>
         <title>Forum Diskusi - Gamatika 25</title>
         <meta
@@ -104,13 +104,13 @@ export default function DashboardForumPage({ postsO }) {
         />
       </Head>
 
-      <main className="container mx-auto px-4 py-8 w-full">
+      <main className="px-4 py-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                  Diskusi Matematika
+                  Diskusi Sciences
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
                   Bertukar pengetahuan dan memecahkan masalah bersama

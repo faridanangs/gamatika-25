@@ -1,7 +1,26 @@
-export const GMTKNFTAddress = '0xd18f3f339f8FFd1cDe29B763805127d13e957515';
+import { ethers } from 'ethers';
+
+export const GMTKNFTAddress = '0x600B0d59f8dAB234948b3F0e3143609C180BBa18';
+export const polygonProvider = new ethers.JsonRpcProvider(
+  'https://polygon-rpc.com'
+);
+export const polygonAmoyProvider = new ethers.JsonRpcProvider(
+  'https://rpc-amoy.polygon.technology'
+);
+
+//
+
+//
+
 export const ABI = [
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'initialOwner',
+        type: 'address',
+      },
+    ],
     stateMutability: 'nonpayable',
     type: 'constructor',
   },
@@ -109,6 +128,28 @@ export const ABI = [
     type: 'error',
   },
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'owner',
+        type: 'address',
+      },
+    ],
+    name: 'OwnableInvalidOwner',
+    type: 'error',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'account',
+        type: 'address',
+      },
+    ],
+    name: 'OwnableUnauthorizedAccount',
+    type: 'error',
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -156,6 +197,25 @@ export const ABI = [
       },
     ],
     name: 'ApprovalForAll',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'previousOwner',
+        type: 'address',
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'newOwner',
+        type: 'address',
+      },
+    ],
+    name: 'OwnershipTransferred',
     type: 'event',
   },
   {
@@ -270,11 +330,6 @@ export const ABI = [
         name: 'to_',
         type: 'address',
       },
-      {
-        internalType: 'string',
-        name: 'tokenURI_',
-        type: 'string',
-      },
     ],
     name: 'mintNFT',
     outputs: [],
@@ -289,6 +344,19 @@ export const ABI = [
         internalType: 'string',
         name: '',
         type: 'string',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address',
       },
     ],
     stateMutability: 'view',
@@ -311,6 +379,13 @@ export const ABI = [
       },
     ],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -385,6 +460,19 @@ export const ABI = [
   {
     inputs: [
       {
+        internalType: 'string',
+        name: 'newBaseURI',
+        type: 'string',
+      },
+    ],
+    name: 'setBaseURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
         internalType: 'bytes4',
         name: 'interfaceId',
         type: 'bytes4',
@@ -452,6 +540,19 @@ export const ABI = [
       },
     ],
     name: 'transferFrom',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'newOwner',
+        type: 'address',
+      },
+    ],
+    name: 'transferOwnership',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',

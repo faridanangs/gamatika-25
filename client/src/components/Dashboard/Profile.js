@@ -4,7 +4,12 @@ import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { formatDateTime } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { createComment, updatePost, updateUser } from '@/lib/action';
+import {
+  createComment,
+  deletePost,
+  updatePost,
+  updateUser,
+} from '@/lib/action';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
@@ -32,7 +37,7 @@ const createPlaceholderSVG = (text, width = 150, height = 150) => {
 };
 
 // Modal untuk edit postingan dengan Shadcn UI
-const EditPostModal = ({ post, onClose, onSave }) => {
+const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -43,6 +48,11 @@ const EditPostModal = ({ post, onClose, onSave }) => {
       content,
     });
   };
+
+  const handleDelete = () => {
+    onDeletePost(post.id);
+  };
+
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
       prev === 0 ? post.images.length - 1 : prev - 1
@@ -79,8 +89,8 @@ const EditPostModal = ({ post, onClose, onSave }) => {
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={onClose}>
-            Batal
+          <Button variant="destructive" onClick={handleDelete}>
+            Delete
           </Button>
           <Button onClick={handleSave}>Simpan</Button>
         </div>
@@ -349,16 +359,18 @@ const PrivateKeyModal = ({ isOpen, onClose, onVerify, token }) => {
   };
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-[90%]">
+      <DialogContent className="max-w-md w-[90%] dark:bg-gray-800">
         <DialogHeader>
           <DialogTitle>Lihat Private Key</DialogTitle>
         </DialogHeader>
         {privateKey ? (
           <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">Private Key Anda:</p>
-              <div className="flex items-center justify-between">
-                <code className="text-sm font-mono bg-white p-2 rounded border break-all">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2 dark:text-white">
+                Private Key Anda:
+              </p>
+              <div className="flex items-center justify-between gap-1">
+                <code className="text-sm font-mono dark:bg-gray-800 bg-white p-2 rounded border break-all">
                   {privateKey}
                 </code>
                 <Button variant="outline" size="icon" onClick={copyToClipboard}>
@@ -385,8 +397,8 @@ const PrivateKeyModal = ({ isOpen, onClose, onVerify, token }) => {
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-gray-500">
-              Simpan private key dengan aman. Jangan berikan kepada siapa pun.
+            <p className="text-xs text-red-400">
+              *Simpan private key dengan aman. Jangan berikan kepada siapa pun.
             </p>
           </div>
         ) : (
@@ -421,7 +433,6 @@ const PrivateKeyModal = ({ isOpen, onClose, onVerify, token }) => {
 export default function ProfilePageComp({ user, token }) {
   const [nfts, setNfts] = useState([]);
   const [achievements, setAchievements] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({});
@@ -536,33 +547,6 @@ export default function ProfilePageComp({ user, token }) {
     setNfts(mockNFTs);
   };
 
-  const fetchNotifications = async () => {
-    const mockNotifications = [
-      {
-        id: 1,
-        title: 'Postinganmu dapat 10 likes',
-        description: 'Postingan "Integral Tak Tentu" mendapat 10 likes',
-        time: '1 jam lalu',
-        read: false,
-      },
-      {
-        id: 2,
-        title: 'Kamu baru saja dapat badge',
-        description: 'Diterima badge "Top Contributor"',
-        time: '2 hari lalu',
-        read: true,
-      },
-      {
-        id: 3,
-        title: 'Teman mengomentari postinganmu',
-        description: 'Ahmad Rizki mengomentari postinganmu',
-        time: '3 hari lalu',
-        read: true,
-      },
-    ];
-    setNotifications(mockNotifications);
-  };
-
   const fetchAchievements = async () => {
     const mockAchievements = [
       {
@@ -635,15 +619,19 @@ export default function ProfilePageComp({ user, token }) {
     }
   };
 
-  const markNotificationAsRead = (id) => {
-    setNotifications(
-      notifications.map((notif) =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+  const handleDeletePost = async (id) => {
+    try {
+      setEditingPost(null);
+      const resp = await deletePost(token, id);
+      if (resp?.error) {
+        toast.error(resp.error);
+      }
+      toast.success(resp.message);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const unreadNotifications = notifications.filter((n) => !n.read).length;
   const sortedPosts = user?.posts
     ? [...user.posts].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -670,14 +658,13 @@ export default function ProfilePageComp({ user, token }) {
 
   useEffect(() => {
     fetchAchievements();
-    fetchNotifications();
     fetchUserNFTs();
   }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 border border-gray-100">
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24">
@@ -740,7 +727,7 @@ export default function ProfilePageComp({ user, token }) {
             <div>
               <p className="text-sm text-muted-foreground">Public Key</p>
               <div className="flex items-center gap-2">
-                <code className="text-sm font-mono bg-gray-100 p-1 rounded truncate">
+                <code className="text-sm font-mono bg-gray-100 p-1 dark:bg-gray-800 rounded truncate">
                   {user?.public_key}
                 </code>
                 <Button
@@ -804,9 +791,6 @@ export default function ProfilePageComp({ user, token }) {
             </TabsTrigger>
             <TabsTrigger value="achievements" className="whitespace-nowrap">
               Achievements
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="whitespace-nowrap">
-              Notifications
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1091,59 +1075,6 @@ export default function ProfilePageComp({ user, token }) {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Notifikasi</CardTitle>
-                {unreadNotifications > 0 && (
-                  <Badge variant="destructive">
-                    {unreadNotifications} baru
-                  </Badge>
-                )}
-              </div>
-              <CardDescription>
-                Pemberitahuan terkait aktivitas Anda
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <Card
-                    key={notification.id}
-                    className={
-                      !notification.read ? 'border-blue-200 bg-blue-50' : ''
-                    }
-                  >
-                    <CardContent className="pt-4">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium">{notification.title}</h4>
-                        <span className="text-sm text-muted-foreground">
-                          {notification.time}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground mt-1">
-                        {notification.description}
-                      </p>
-                      {!notification.read && (
-                        <Button
-                          variant="link"
-                          onClick={() =>
-                            markNotificationAsRead(notification.id)
-                          }
-                          className="mt-2 p-0 h-auto"
-                        >
-                          Tandai sebagai sudah dibaca
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Edit Profile Modal */}
@@ -1181,8 +1112,9 @@ export default function ProfilePageComp({ user, token }) {
       {editingPost && (
         <EditPostModal
           post={editingPost}
-          onClose={() => setEditingPost(null)}
+          onDeletePost={handleDeletePost}
           onSave={handleSavePost}
+          onClose={() => setEditingPost(null)}
         />
       )}
 

@@ -1,47 +1,33 @@
-const { default: toast } = require('react-hot-toast');
+import { signOut } from 'next-auth/react';
 
-// Error handler yang lebih rapi
-export const handleRegistrationError = (error) => {
-  // Parsing error message dari server
-  const errorMessage =
-    error || error.error || 'Terjadi kesalahan saat registrasi';
+export const handleServerResponse = async (response) => {
+  if (!response) {
+    throw new Error('Network error: Failed to fetch data');
+  }
 
-  // Cek tipe error dan berikan pesan yang lebih spesifik
-  if (errorMessage.includes('Username or email already exists')) {
-    toast.error(
-      'Username atau email sudah digunakan. Silakan gunakan yang lain.'
-    );
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('Nim')
-  ) {
-    toast.error('NIM harus diisi dan berupa angka minimal 8 digit.');
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('Prodi')
-  ) {
-    toast.error('Program studi harus dipilih.');
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('Email')
-  ) {
-    toast.error('Format email tidak valid.');
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('Password')
-  ) {
-    toast.error('Password minimal 6 karakter.');
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('full_name')
-  ) {
-    toast.error('Nama lengkap harus diisi.');
-  } else if (
-    errorMessage.includes('Validation failed') &&
-    errorMessage.includes('username')
-  ) {
-    toast.error('Username harus diisi.');
-  } else {
-    toast.error(errorMessage);
+  const data = await response.json().catch(() => ({}));
+
+  if (response.ok) {
+    return data;
+  }
+
+  switch (response.status) {
+    case 401:
+      throw new Error('Authentication failed: Invalid or expired token');
+    case 403:
+      throw new Error('Authorization failed: You do not have permission');
+    case 404:
+      throw new Error('Resource not found: User/profile does not exist');
+    case 422:
+      throw new Error(
+        `Validation error: ${data.message || 'Invalid input data'}`
+      );
+    case 500:
+      throw new Error(
+        `Server error: ${data.message || 'Internal server error'}`
+      );
+    default:
+      const errorMessage = data.message || `Error ${response.status}`;
+      throw new Error(`${errorMessage} (${response.status})`);
   }
 };

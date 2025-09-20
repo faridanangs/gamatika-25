@@ -81,12 +81,10 @@ export function Comment({ comment, isCurrentUser = false }) {
             </span>
           </div>
 
-          {/* Konten komentar */}
           <p className="text-gray-700 dark:text-gray-300 mt-2 leading-relaxed">
             {comment?.content}
           </p>
 
-          {/* Gambar komentar */}
           {comment?.image && (
             <div
               className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
@@ -94,7 +92,7 @@ export function Comment({ comment, isCurrentUser = false }) {
             >
               <Image
                 src={comment.image}
-                alt={`Comment image`}
+                alt={`Comment image ${comment.id}`}
                 width={100}
                 height={100}
                 className="object-cover w-60 h-40"
@@ -195,10 +193,9 @@ export function CommentInput({ onAddComment, className }) {
 
   return (
     <div
-      className={`border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm ${className} `}
+      className={` dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm ${className} `}
     >
       <div className="flex space-x-3">
-        {/* Input area */}
         <div className="flex-1">
           <textarea
             value={content}
@@ -208,7 +205,6 @@ export function CommentInput({ onAddComment, className }) {
             placeholder="Tulis komentar Anda..."
           />
 
-          {/* Preview gambar */}
           {image && (
             <div className="mt-3 relative">
               <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
@@ -241,8 +237,7 @@ export function CommentInput({ onAddComment, className }) {
             </div>
           )}
 
-          {/* Tombol aksi */}
-          <div className="flex justify-between items-center mt-3">
+          <div className="flex justify-between items-center my-2">
             <div className="flex space-x-2">
               {!image && (
                 <Button
@@ -281,7 +276,7 @@ export function CommentInput({ onAddComment, className }) {
               onClick={handleSubmit}
               disabled={!content.trim() && !image}
               className={cn(
-                'px-4 py-2 rounded-full font-medium',
+                'px-4 py-2 rounded-full font-medium inline-block',
                 content.trim() || image
                   ? 'bg-blue-600 hover:bg-blue-700 text-white'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'

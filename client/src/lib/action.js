@@ -1,5 +1,6 @@
 'use server';
 
+import { signOut } from 'next-auth/react';
 import { revalidatePath } from 'next/cache';
 
 export const createComment = async (postId, token, newComment) => {
@@ -91,6 +92,32 @@ export const updatePost = async (token, newPost) => {
     revalidatePath(`/dashboard/profile`, 'page');
 
     return null;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const deletePost = async (token, postID) => {
+  try {
+    const resp = await fetch(`http://localhost:8080/api/posts/${postID}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!resp.ok) {
+      console.error(resp.statusText);
+    }
+
+    const data = await resp.json();
+
+    revalidatePath(`/dashboard/profile`, 'page');
+    revalidatePath(`/dashboard/forum`, 'page');
+    revalidatePath(`/forum`, 'page');
+
+    return data;
   } catch (error) {
     console.error(error);
   }
