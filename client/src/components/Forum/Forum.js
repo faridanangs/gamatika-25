@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { mockContributors } from '@/data/mockForum';
-import { categories, mockPosts } from '@/data/mockForum';
-import CreatePostModal, { CreatePostButton, ForumPost } from './ForumPost';
+import { categories } from '@/data/mockForum';
+import { ForumPost } from './ForumPost';
 import { PostSkeleton } from '../PostSkeleton';
 import { TopContributorsSkeleton } from '../TopContibSkeleton';
 
@@ -23,36 +22,8 @@ export default function ForumPage({ postsO, contribsO }) {
     }
   }, [selectedCategory, posts]);
 
-  const handleLike = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            likes: post.liked ? post.likes - 1 : post.likes + 1,
-            liked: !post.liked,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleShare = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return { ...post, shares: post.shares + 1 };
-        }
-        return post;
-      })
-    );
-    // In a real app, this would trigger the share functionality
-    alert('Postingan telah dibagikan!');
-  };
-
   useEffect(() => {
-    const sorted = postsO.posts.sort(
+    const sorted = postsO.sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
     setPosts(sorted);
@@ -113,8 +84,6 @@ export default function ForumPage({ postsO, contribsO }) {
                     className={'dark:bg-gray-800'}
                     key={i}
                     post={post}
-                    onLike={handleLike}
-                    onShare={handleShare}
                     comments={post.comments}
                     isAuth={false}
                   />

@@ -1,3 +1,4 @@
+// app/login/page.js
 'use client';
 import { useState } from 'react';
 import Head from 'next/head';
@@ -18,17 +19,18 @@ import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors({});
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
     try {
-      // langsung panggil NextAuth
       const res = await signIn('credentials', {
         redirect: false,
         callbackUrl: '/dashboard/profile',
@@ -36,10 +38,21 @@ export default function LoginPage() {
         password,
       });
 
-      console.log(res, 'res');
-
       if (res?.error) {
-        toast.error('Login Gagal');
+        try {
+          const errorData = JSON.parse(res.error);
+          toast.error(errorData.error || 'Login Gagal');
+
+          if (errorData.fieldErrors && errorData.fieldErrors.length > 0) {
+            const fieldErrors = {};
+            errorData.fieldErrors.forEach((err) => {
+              fieldErrors[err.field] = err.message;
+            });
+            setErrors(fieldErrors);
+          }
+        } catch (parseError) {
+          toast.error(errors?.resource || 'Login gagal');
+        }
       } else {
         toast.success('Login berhasil!');
         setTimeout(() => {
@@ -131,9 +144,14 @@ export default function LoginPage() {
                       required
                       disabled={isLoading}
                       placeholder="nama@universitas.edu"
-                      className="pl-10"
+                      className={`pl-10 ${
+                        errors.email ? 'border-red-500' : ''
+                      }`}
                     />
                   </div>
+                  {errors.email && (
+                    <p className="text-sm text-red-600">{errors.email}</p>
+                  )}
                 </div>
 
                 {/* Password Input */}
@@ -167,10 +185,22 @@ export default function LoginPage() {
                       required
                       disabled={isLoading}
                       placeholder="••••••••"
-                      className="pl-10"
+                      className={`pl-10 ${
+                        errors.password ? 'border-red-500' : ''
+                      }`}
                     />
                   </div>
+                  {errors.password && (
+                    <p className="text-sm text-red-600">{errors.password}</p>
+                  )}
                 </div>
+
+                {/* General Error Message */}
+                {errors.general && (
+                  <div className="p-3 bg-red-50 text-red-700 rounded-md">
+                    {errors.general}
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <Button

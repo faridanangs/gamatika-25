@@ -360,7 +360,6 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
     }
     setIsSubmitting(true);
     try {
-      // Upload images to Cloudinary
       let uploadedImages = [];
       if (images.length > 0) {
         const response = await fetch('/api/uploads', {
@@ -479,10 +478,17 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
 function ImageUpload({ images, setImages, maxImages = 4 }) {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
+      const remainingSlots = maxImages - images.length;
+      if (remainingSlots <= 0) {
+        toast.error(`Maksimal ${maxImages} gambar yang diperbolehkan`);
+        return;
+      }
+
       const files = Array.from(e.target.files);
 
-      // Convert files to base64 and add to state
-      const newImages = files.map((file, index) => {
+      const filesToProcess = files.slice(0, remainingSlots);
+
+      const newImages = filesToProcess.map((file, index) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
 
@@ -492,7 +498,7 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
               id: Date.now() + index,
               file: file,
               base64: reader.result,
-              url: URL.createObjectURL(file), // Temporary URL for preview
+              url: URL.createObjectURL(file),
             });
           };
         });
@@ -511,11 +517,11 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
   return (
     <div className="mb-2">
       <label className="block text-gray-700 dark:text-gray-300 mb-2">
-        Gambar (maksimal {maxImages})
+        Gambar ({images.length}/{maxImages})
       </label>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {images?.map((image) => (
-          <div key={image.id} className="relative group">
+        {images?.map((image, id) => (
+          <div key={id} className="relative group">
             <div className="aspect-square rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
               <Image
                 src={image?.url}
@@ -555,6 +561,7 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
               multiple
               onChange={handleImageChange}
               className="hidden"
+              disabled={images.length >= maxImages}
             />
             <div className="text-center">
               <>
@@ -572,11 +579,20 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
                   />
                 </svg>
                 <p className="text-xs text-gray-500 mt-1">Tambah Gambar</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {maxImages - images.length} slot tersisa
+                </p>
               </>
             </div>
           </label>
         )}
       </div>
+      {images.length >= maxImages && (
+        <p className="text-sm text-red-500 mt-1">
+          Maksimal {maxImages} gambar telah tercapai. Hapus gambar yang ada
+          untuk menambahkan yang baru.
+        </p>
+      )}
     </div>
   );
 }

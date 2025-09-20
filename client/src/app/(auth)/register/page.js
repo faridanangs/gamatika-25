@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import toast from 'react-hot-toast';
 import { prodis } from '@/data/prodi';
+import { registerUser } from '@/lib/action';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,32 +37,20 @@ export default function RegisterPage() {
       password: document.getElementById('password').value,
     };
 
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+    const response = await registerUser(formData);
+
+    if (!response.success) {
+      response?.errors.map((e) => {
+        toast.error(e.message);
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw result;
-      }
-
-      // Success toast
-      toast.success('Registrasi berhasil! Silakan login.');
-
-      // Redirect ke halaman login setelah 2 detik
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-    } catch (error) {
-      const message = error?.error || error?.message || 'Terjadi kesalahan';
-      toast.error(message);
+      return;
     }
+
+    toast.success(response.message);
+
+    setTimeout(() => {
+      router.push('/login');
+    }, 2000);
   };
 
   return (
@@ -223,9 +212,8 @@ export default function RegisterPage() {
                         name="nim"
                         type="text"
                         required
-                        pattern="[0-9]{8,}"
-                        title="NIM harus berupa angka minimal 8 digit"
-                        placeholder="12345678"
+                        title="NIM minimal 8 digit"
+                        placeholder="X12345678"
                         className="pl-10"
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

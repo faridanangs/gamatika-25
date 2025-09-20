@@ -9,7 +9,7 @@ const ProfilePage = async () => {
   const session = await getServerSession(authOptions);
   const resp = await getUserProfile(session.accessToken);
 
-  return <ProfilePageComp user={resp} token={session.accessToken} />;
+  return <ProfilePageComp user={resp.data} token={session.accessToken} />;
 };
 
 export default ProfilePage;

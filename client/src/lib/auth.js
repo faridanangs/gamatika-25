@@ -1,5 +1,6 @@
 // lib/auth.js
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { handleApiResponse } from './apiHandler';
 
 export const authOptions = {
   providers: [
@@ -11,40 +12,53 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Email dan password harus diisi');
         }
 
         try {
-          const response = await fetch(`${process.env.SERVER_API_URL}/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_SERVER_API_URL}/login`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+              }),
+            }
+          );
 
-          if (!response.ok) {
-            return null;
+          const result = await handleApiResponse(response);
+
+          if (!result.success) {
+            const error = {
+              message: result.message,
+              fieldErrors: result.errors || [],
+              success: result.success,
+            };
+            throw new Error(JSON.stringify(error));
           }
 
-          const data = await response.json();
-
           return {
-            id: data.user.id,
-            fullName: data.user.full_name,
-            username: data.user.username,
-            avatar: data.user.avatar,
-            prodi: data.user.prodi,
-            nim: data.user.nim,
-            email: data.user.email,
-            publicKey: data.user.public_key,
-            token: data.token,
+            id: result.data.user.id,
+            fullName: result.data.user.full_name,
+            username: result.data.user.username,
+            avatar: result.data.user.avatar,
+            prodi: result.data.user.prodi,
+            nim: result.data.user.nim,
+            email: result.data.user.email,
+            publicKey: result.data.user.public_key,
+            token: result.data.token,
           };
         } catch (error) {
-          return null;
+          // Jika error berasal dari fetch (network error), lempar error asli
+          if (error instanceof TypeError) {
+            throw new Error('Terjadi kesalahan saat menghubungi server');
+          }
+          // Jika error sudah dalam format JSON, lempar kembali
+          throw error;
         }
       },
     }),

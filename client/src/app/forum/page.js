@@ -7,7 +7,7 @@ const Forum = async () => {
   const posts = await getAllPosts();
   const contribs = await getAllConribs();
 
-  return <ForumPage postsO={posts} contribsO={contribs} />;
+  return <ForumPage postsO={posts.data} contribsO={contribs.data} />;
 };
 
 export default Forum;

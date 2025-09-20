@@ -28,7 +28,6 @@ import { Button } from '../ui/button';
 import { getPrivateKey } from '@/data/getPrivateKey';
 import { CommentInput } from '../Forum/Comment';
 
-// Fungsi untuk membuat placeholder SVG
 const createPlaceholderSVG = (text, width = 150, height = 150) => {
   return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <rect width="${width}" height="${height}" fill="#f3f4f6"/>
@@ -36,7 +35,6 @@ const createPlaceholderSVG = (text, width = 150, height = 150) => {
   </svg>`;
 };
 
-// Modal untuk edit postingan dengan Shadcn UI
 const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
@@ -99,7 +97,6 @@ const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   );
 };
 
-// Modal untuk detail postingan dengan Shadcn UI yang lebih baik
 const PostDetailModal = ({ post, onClose, token, onCommentAdded }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [comments, setComments] = useState(post.comments || []);
@@ -125,21 +122,17 @@ const PostDetailModal = ({ post, onClose, token, onCommentAdded }) => {
   };
 
   const handleAddComment = async (commentData) => {
-    try {
-      const resp = await createComment(post.id, token, commentData);
-      if (resp?.error) {
-        toast.error(resp.error);
-        return;
-      }
+    const resp = await createComment(post.id, token, commentData);
+    if (!resp.success) {
+      toast.error(resp.errors[0].message);
+      return;
+    }
 
-      setComments((prev) => [resp, ...prev]);
-      setNewComment('');
+    setComments((prev) => [resp.data, ...prev]);
+    setNewComment('');
 
-      if (onCommentAdded) {
-        onCommentAdded(post.id, resp);
-      }
-    } catch (error) {
-      toast.error(error.message || 'Gagal menambahkan komentar');
+    if (onCommentAdded) {
+      onCommentAdded(post.id, resp.data);
     }
   };
 
@@ -336,23 +329,20 @@ const PrivateKeyModal = ({ isOpen, onClose, onVerify, token }) => {
   const handleVerify = async () => {
     setIsLoading(true);
     setError('');
-    try {
-      const resp = await getPrivateKey(token, password);
-      if (resp?.error) {
-        toast.error(resp.error);
-      }
-      setPrivateKey(resp.private_key);
-      onVerify(true);
-    } catch (err) {
-      console.error(err);
-      setError('Password salah. Silakan coba lagi.');
-    } finally {
+    const resp = await getPrivateKey(token, password);
+    if (!resp.success) {
+      toast.error(resp.errors[0].message);
       setIsLoading(false);
+      return;
     }
+    setPrivateKey(resp.data.private_key);
+    onVerify(true);
+    setIsLoading(false);
   };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(privateKey);
-    toast.success('Private key telah disalin ke clipboard');
+    toast.success('Private key copied!');
     setPrivateKey('');
     onClose(true);
     setPassword('');
@@ -444,7 +434,6 @@ export default function ProfilePageComp({ user, token }) {
   const postsPerPage = 6;
   const route = useRouter();
 
-  // Leveling System
   const calculateLevel = () => {
     const totalContributions =
       userStats.totalPosts + userStats.totalComments + userStats.totalLikes;
@@ -586,16 +575,13 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const handleSaveProfile = async () => {
-    try {
-      const resp = await updateUser(token, editData);
-      if (resp?.error != undefined) {
-        toast.error(resp.error);
-      }
-      toast.success('Username berhasil diperbarui');
-      setShowEditModal(false);
-    } catch (error) {
-      console.error(error);
+    const resp = await updateUser(token, editData);
+    if (!resp.success) {
+      toast.error(resp?.errors[0].message);
+      return;
     }
+    toast.success(resp.message);
+    setShowEditModal(false);
   };
 
   const handleEditPost = (post) => {
@@ -607,29 +593,25 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const handleSavePost = async (updatedPost) => {
-    try {
-      setEditingPost(null);
-      const resp = await updatePost(token, updatedPost);
-      if (resp != null) {
-        toast.error(resp);
-      }
-      toast.success('Postingan berhasil diperbarui!');
-    } catch (error) {
-      console.error(error);
+    setEditingPost(null);
+    const resp = await updatePost(token, updatedPost);
+    console.log(resp);
+    if (!resp.success) {
+      toast.error(resp.errors[0].message);
+      return;
     }
+    toast.success(resp.message);
   };
 
   const handleDeletePost = async (id) => {
-    try {
-      setEditingPost(null);
-      const resp = await deletePost(token, id);
-      if (resp?.error) {
-        toast.error(resp.error);
-      }
-      toast.success(resp.message);
-    } catch (error) {
-      console.error(error);
+    setEditingPost(null);
+    alert('Delete post!');
+    const resp = await deletePost(token, id);
+    if (!resp.success) {
+      toast.error(resp.message);
+      return;
     }
+    toast.success(resp.message);
   };
 
   const sortedPosts = user?.posts
@@ -1118,14 +1100,12 @@ export default function ProfilePageComp({ user, token }) {
         />
       )}
 
-      {/* Post Detail Modal */}
       {viewingPost && (
         <PostDetailModal
           post={viewingPost}
           onClose={() => setViewingPost(null)}
           token={token}
           onCommentAdded={(postId, newComment) => {
-            // Update komentar di postingan yang sedang dilihat
             setViewingPost((prev) => {
               if (!prev) return prev;
               return {
@@ -1137,7 +1117,6 @@ export default function ProfilePageComp({ user, token }) {
         />
       )}
 
-      {/* Private Key Modal */}
       <PrivateKeyModal
         isOpen={showPrivateKeyModal}
         onClose={() => {

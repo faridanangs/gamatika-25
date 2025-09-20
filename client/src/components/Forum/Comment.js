@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 export function Comment({ comment, isCurrentUser = false }) {
   const [showImageModal, setShowImageModal] = useState(false);
@@ -125,8 +126,7 @@ export function CommentInput({ onAddComment, className }) {
     try {
       let imageUrl = null;
 
-      // Upload image jika ada
-      if (image) {
+      if (image && content != '') {
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: {
@@ -154,11 +154,9 @@ export function CommentInput({ onAddComment, className }) {
         image: imageUrl,
       });
 
-      // Reset form
       setContent('');
       setImage(null);
     } catch (error) {
-      console.error('Error uploading image:', error);
       alert(`Gagal mengupload gambar: ${error.message}`);
     } finally {
       setIsUploading(false);
@@ -201,6 +199,8 @@ export function CommentInput({ onAddComment, className }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={2}
+            required={true}
+            minLength={10}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
             placeholder="Tulis komentar Anda..."
           />

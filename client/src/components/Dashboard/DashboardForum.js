@@ -37,7 +37,7 @@ export default function DashboardForumPage({ postsO }) {
   }, [selectedCategory, posts]);
 
   useEffect(() => {
-    const sorted = postsO.posts.sort(
+    const sorted = postsO.sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
     setPosts(sorted);
@@ -71,26 +71,22 @@ export default function DashboardForumPage({ postsO }) {
   };
 
   const handleCreatePost = async (newPost) => {
-    try {
-      setShowCreateModal(false);
-      const resp = await createPost(token, newPost);
-      if (resp != null) {
-        toast.error(resp);
-      }
-      toast.success('Berhasil membuat post');
-    } catch (error) {
-      console.error(error);
+    setShowCreateModal(false);
+    const resp = await createPost(token, newPost);
+    if (!resp.success) {
+      resp?.errors.map((e) => {
+        toast.error(e.message);
+      });
+      return;
     }
+    toast.success(resp.message);
   };
 
   const handleAddComment = async (postId, newComment) => {
-    try {
-      const resp = await createComment(postId, token, newComment);
-      if (resp?.error) {
-        toast.error(resp.error);
-      }
-    } catch (error) {
-      toast.error(error);
+    const resp = await createComment(postId, token, newComment);
+    if (!resp.success) {
+      toast.error(resp.errors[0].message);
+      return;
     }
   };
 
