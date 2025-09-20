@@ -8,10 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWT Secret Key (harus diubah ke environment variable di production)
 var jwtSecret = []byte("your-secret-key-here")
 
-// JWT Claims structure
 type JWTClaims struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
@@ -24,7 +22,7 @@ func GenerateJWT(userID, username string) (string, error) {
 		UserID:   userID,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(3 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
