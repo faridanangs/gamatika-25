@@ -10,15 +10,15 @@ import (
 type User struct {
 	gorm.Model
 	ID         string    `gorm:"type:string;primaryKey;column:id"`
-	FullName   string    `gorm:"column:full_name;not null;type:varchar(150)"`
-	Username   string    `gorm:"uniqueIndex;column:username;not null;type:varchar(50)"`
-	Avatar     string    `gorm:"column:avatar;type:varchar(250);not null"`
+	FullName   string    `gorm:"column:full_name;not null;type:varchar(100)"`
+	Username   string    `gorm:"uniqueIndex;column:username;not null;type:varchar(20)"`
+	Avatar     string    `gorm:"column:avatar;type:varchar(500);not null"`
 	Prodi      string    `gorm:"column:prodi;type:varchar(50);not null"`
-	Nim        uint64    `gorm:"column:nim;not null;uniqueIndex"`
+	Nim        string    `gorm:"column:nim;not null;uniqueIndex;varchar(30)"`
 	Email      string    `gorm:"uniqueIndex;column:email;type:varchar(150)"`
 	Password   string    `gorm:"column:password;type:string;not null"`
-	PublicKey  string    `gorm:"column:public_key;type:varchar(512);not null"`
-	PrivateKey string    `gorm:"column:private_key;type:text;not null"`
+	PublicKey  string    `gorm:"column:public_key;type:varchar(200);not null"`
+	PrivateKey string    `gorm:"column:private_key;type:varchar(500);not null"`
 	CreatedAt  time.Time `gorm:"column:created_at;autoCreateTime"`
 
 	Posts []Post `gorm:"foreignKey:user_id;references:id"`
@@ -30,23 +30,23 @@ func (User) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreateUserRequest struct {
-	FullName   string `json:"full_name" validate:"required"`
-	Username   string `json:"username" validate:"required"`
-	Avatar     string `json:"avatar"`
-	Prodi      string `json:"prodi" validate:"required"`
-	Nim        uint64 `json:"nim" validate:"required,numeric"`
+	FullName   string `json:"full_name" validate:"required,min=3,max=100"`
+	Username   string `json:"username" validate:"required,alphanum,min=5,max=20"`
+	Avatar     string `json:"avatar" validate:"omitempty,url"`
+	Prodi      string `json:"prodi" validate:"required,min=2,max=50"`
+	Nim        string `json:"nim" validate:"alphanum,required,min=6,max=20"`
 	Email      string `json:"email" validate:"required,email"`
-	Password   string `json:"password" validate:"required,min=6"`
+	Password   string `json:"password" validate:"required,min=8,max=30"`
 	PublicKey  string `json:"public_key" validate:"required"`
 	PrivateKey string `json:"private_key" validate:"required"`
 }
 
 type UpdateUserRequest struct {
-	ID       string `json:"id" validate:"required"`
-	Username string `json:"username" validate:"omitempty"`
-	Avatar   string `json:"avatar" validate:"omitempty"`
+	ID       string `json:"id" validate:"required,uuid"`
+	Username string `json:"username" validate:"omitempty,alphanum,min=5,max=20"`
+	Avatar   string `json:"avatar" validate:"omitempty,url"`
 	Email    string `json:"email" validate:"omitempty,email"`
-	Password string `json:"password" validate:"omitempty,min=6"`
+	Password string `json:"password" validate:"omitempty,min=8,max=30"`
 }
 
 type PrivKeyReq struct {
@@ -60,7 +60,7 @@ type UserResponse struct {
 	Username  string         `json:"username"`
 	Avatar    string         `json:"avatar"`
 	Prodi     string         `json:"prodi"`
-	Nim       uint64         `json:"nim"`
+	Nim       string         `json:"nim"`
 	Email     string         `json:"email"`
 	PublicKey string         `json:"public_key"`
 	CreatedAt time.Time      `json:"created_at"`

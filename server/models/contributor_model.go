@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Contribution struct {
-	UserID         string    `json:"user_id" gorm:"primaryKey"`
+	UserID         string    `json:"user_id"`
 	Username       string    `json:"username"`
 	TotalScore     uint64    `json:"total_score"`
 	PostsCount     uint64    `json:"posts_count"`

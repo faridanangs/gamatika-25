@@ -11,41 +11,26 @@ import (
 )
 
 type PostService struct {
-	db  *gorm.DB
-	val *validator.Validate
-	us  *UserService
+	db             *gorm.DB
+	val            *validator.Validate
+	us             *UserService
+	dbErrorHandler *helpers.DatabaseErrorHandler
 }
 
 func NewPostService(db *gorm.DB, val *validator.Validate, us *UserService) *PostService {
 	return &PostService{
-		db:  db,
-		val: val,
-		us:  us,
+		db:             db,
+		val:            val,
+		us:             us,
+		dbErrorHandler: helpers.NewDatabaseErrorHandler(),
 	}
 }
 
 // CreatePost - Create new post with validation and token verification
 func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString string) (*models.PostResponse, error) {
-	// Validate token and get user
 	userID, err := ps.us.ValidateUserToken(tokenString)
 	if err != nil {
 		return nil, err
-	}
-
-	// Validate request
-	if err := ps.val.Struct(req); err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Validation failed: " + err.Error(),
-		}
-	}
-
-	// Validate image count
-	if len(req.Images) > 4 {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Maximum 4 images allowed",
-		}
 	}
 
 	// Check if user exists
@@ -55,17 +40,23 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
 				Message: "User not found",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "User not found",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "user",
+							Message: "User not found",
+							Code:    "USER_NOT_FOUND",
+						},
+					},
+				},
 			}
 		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "User lookup")
 	}
 
-	// Generate post ID
 	postID := uuid.New().String()
-	// Create post
 	post := models.Post{
 		ID:           postID,
 		Title:        req.Title,
@@ -83,29 +74,17 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 
 	// Insert post
 	if err := ps.db.Create(&post).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to create post",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Post creation")
 	}
-	// Prepare response
+
 	return helpers.MapToPostResponse(post), nil
 }
 
 // UpdatePost - Update existing post with token verification
 func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString string) (*models.PostResponse, error) {
-	// Validate token and get user
 	userID, err := ps.us.ValidateUserToken(tokenString)
 	if err != nil {
 		return nil, err
-	}
-
-	// Validate request
-	if err := ps.val.Struct(req); err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Validation failed: " + err.Error(),
-		}
 	}
 
 	// Find post and check ownership
@@ -115,12 +94,20 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString stri
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
 				Message: "Post not found or you don't have permission to update this post",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "Post not found or you don't have permission to update this post",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "post",
+							Message: "Post not found or you don't have permission to update this post",
+							Code:    "POST_NOT_FOUND_OR_UNAUTHORIZED",
+						},
+					},
+				},
 			}
 		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find post",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Post lookup")
 	}
 
 	// Update fields if provided
@@ -136,10 +123,7 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString stri
 
 	// Save changes
 	if err := ps.db.Save(&post).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to update post",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Post update")
 	}
 
 	// Prepare response
@@ -148,7 +132,6 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString stri
 
 // DeletePost - Delete post with token verification
 func (ps *PostService) DeletePost(id string, tokenString string) error {
-	// Validate token and get user
 	userID, err := ps.us.ValidateUserToken(tokenString)
 	if err != nil {
 		return err
@@ -161,12 +144,20 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 			return &helpers.AppError{
 				Code:    fiber.StatusNotFound,
 				Message: "Post not found or you don't have permission to delete this post",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "Post not found or you don't have permission to delete this post",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "post",
+							Message: "Post not found or you don't have permission to delete this post",
+							Code:    "POST_NOT_FOUND_OR_UNAUTHORIZED",
+						},
+					},
+				},
 			}
 		}
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find post",
-		}
+		return ps.dbErrorHandler.HandleError(err, "Post lookup")
 	}
 
 	// Start transaction
@@ -180,27 +171,18 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 	// Delete all comments associated with the post
 	if err := tx.Where("post_id = ?", id).Delete(&models.Comment{}).Error; err != nil {
 		tx.Rollback()
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to delete post's comments",
-		}
+		return ps.dbErrorHandler.HandleTransactionError(err, "Comments deletion")
 	}
 
 	// Delete the post
 	if err := tx.Delete(&post).Error; err != nil {
 		tx.Rollback()
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to delete post",
-		}
+		return ps.dbErrorHandler.HandleTransactionError(err, "Post deletion")
 	}
 
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to commit transaction",
-		}
+		return ps.dbErrorHandler.HandleTransactionError(err, "Transaction commit")
 	}
 
 	return nil
@@ -209,7 +191,6 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 // GetPostByID - Get post by ID with author and comments
 func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 	var post models.Post
-	// Hanya ambil field yang diperlukan untuk author dan comments author
 	if err := ps.db.Preload("Author").
 		Preload("Comments").
 		Preload("Comments.Author").
@@ -218,12 +199,20 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
 				Message: "Post not found",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "Post not found",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "post",
+							Message: "Post not found",
+							Code:    "POST_NOT_FOUND",
+						},
+					},
+				},
 			}
 		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find post",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Post retrieval")
 	}
 	return helpers.MapToPostResponse(post), nil
 }
@@ -231,15 +220,11 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 // GetAllPosts - Get all posts with authors and comments
 func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
 	var posts []models.Post
-	// Hanya ambil field yang diperlukan untuk author dan comments author
 	if err := ps.db.Preload("Author").
 		Preload("Comments").
 		Preload("Comments.Author").
 		Find(&posts).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get posts",
-		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Posts retrieval")
 	}
 	responses := make([]models.PostResponse, len(posts))
 	for i, post := range posts {

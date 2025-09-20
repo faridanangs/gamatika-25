@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"errors"
+	"log"
+
 	"github.com/faridanangs/gamatika-25/helpers"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/faridanangs/gamatika-25/services"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -17,59 +21,89 @@ func NewUserController(userService *services.UserService) *UserController {
 	}
 }
 
-// CreateUser - Handle user creation request
 func (uc *UserController) CreateUser(c *fiber.Ctx) error {
 	var req models.CreateUserRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		log.Printf("Failed to parse request body: %v", err)
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
+	}
+
+	log.Printf("Received create user request: %+v", req)
+
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
 	}
 
 	user, err := uc.userService.CreateUser(req)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		log.Printf("Error creating user: %v", err)
+
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			// Check if Details contains a CustomErrorResponse
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			// Fallback to a generic error response
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		log.Printf("Unexpected error type: %T, Value: %v", err, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(user)
+	log.Printf("User created successfully: %+v", user)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"status":  "success",
+		"message": "User created successfully",
+		"data":    user,
+	})
 }
 
-// GetAllUsers - Handle get all users request
-func (uc *UserController) GetAllUsers(c *fiber.Ctx) error {
-	users, err := uc.userService.GetAllUsers()
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.JSON(users)
-}
-
-// GetUserByID - Handle get user by ID request
-func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	user, err := uc.userService.GetUserByID(id)
-	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
-		})
-	}
-
-	return c.JSON(user)
-}
-
-// UpdateUser - Handle user update request
 func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 	var req models.UpdateUserRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
 	}
 
@@ -78,21 +112,53 @@ func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Set ID from URL parameter
 	req.ID = c.Params("id")
+
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
+	}
 
 	user, err := uc.userService.UpdateUser(req, tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.JSON(user)
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "User updated successfully",
+		"data":    user,
+	})
 }
 
-// DeleteUser - Handle user deletion request
 func (uc *UserController) DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -103,47 +169,113 @@ func (uc *UserController) DeleteUser(c *fiber.Ctx) error {
 
 	err = uc.userService.DeleteUser(id, tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
 		"message": "User deleted successfully",
 	})
 }
 
-// LoginUser - Handle user login request
 func (uc *UserController) LoginUser(c *fiber.Ctx) error {
 	var req struct {
-		Email    string `json:"email" validate:"required"`
-		Password string `json:"password" validate:"required"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=6,max=30"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
+	}
+
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
 	}
 
 	user, token, err := uc.userService.LoginUser(req.Email, req.Password)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"user":  user,
-		"token": token,
+		"status":  "success",
+		"message": "Login successful",
+		"data": fiber.Map{
+			"user":  user,
+			"token": token,
+		},
 	})
 }
 
-// GetProfile - Handle get user profile request
 func (uc *UserController) GetProfile(c *fiber.Ctx) error {
-
 	tokenString, err := helpers.TokenString(c)
 	if err != nil {
 		return err
@@ -151,56 +283,264 @@ func (uc *UserController) GetProfile(c *fiber.Ctx) error {
 
 	userID, err := uc.userService.ValidateUserToken(tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	user, err := uc.userService.GetUserByID(userID)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.JSON(user)
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Profile retrieved successfully",
+		"data":    user,
+	})
+}
+
+func (uc *UserController) GetAllUsers(c *fiber.Ctx) error {
+	users, err := uc.userService.GetAllUsers()
+	if err != nil {
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Users retrieved successfully",
+		"data":    users,
+	})
+}
+
+func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	user, err := uc.userService.GetUserByID(id)
+	if err != nil {
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "User retrieved successfully",
+		"data":    user,
+	})
 }
 
 func (uc *UserController) GetCachedTopContributors(c *fiber.Ctx) error {
 	res, err := uc.userService.GetTopContributors()
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.JSON(res)
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Top contributors retrieved successfully",
+		"data":    res,
+	})
 }
 
-// GetUserContribution - Handle get user contribution request
 func (uc *UserController) GetUserContribution(c *fiber.Ctx) error {
 	userID := c.Params("id")
 
 	contribution, err := uc.userService.CalculateUserContribution(userID)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.JSON(contribution)
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "User contribution retrieved successfully",
+		"data":    contribution,
+	})
 }
 
-// controllers/user_controller.go
 func (uc *UserController) GetPrivateKey(c *fiber.Ctx) error {
 	var req models.PrivKeyReq
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
 	}
 
@@ -211,22 +551,81 @@ func (uc *UserController) GetPrivateKey(c *fiber.Ctx) error {
 
 	userID, err := uc.userService.ValidateUserToken(tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
+	}
+
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
 	}
 
 	privateKey, err := uc.userService.GetPrivateKeyWithPassword(userID, req)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	// Kembalikan private key
 	return c.JSON(fiber.Map{
-		"private_key": privateKey,
+		"status":  "success",
+		"message": "Private key retrieved successfully",
+		"data": fiber.Map{
+			"private_key": privateKey,
+		},
 	})
 }

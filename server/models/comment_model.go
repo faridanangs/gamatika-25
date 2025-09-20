@@ -30,15 +30,14 @@ func (Comment) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreateCommentRequest struct {
-	Content string `json:"content" validate:"required"`
-	Image   string `json:"image"`
+	Content string `json:"content" validate:"required,min=10"`
+	Image   string `json:"image" validate:"omitempty,max=255"`
 	PostID  string `json:"post_id" validate:"required"`
-	UserID  string `json:"user_id" validate:"omitempty"`
 }
 
 type UpdateCommentRequest struct {
-	ID      uint64 `json:"id" validate:"required,numeric"`
-	Content string `json:"content" validate:"omitempty"`
+	ID      uint64 `json:"id" validate:"required,numeric,min=1"`
+	Content string `json:"content" validate:"required,min=10"`
 	Updated bool   `json:"updated"`
 }
 

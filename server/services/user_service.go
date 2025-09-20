@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"sort"
 	"sync"
 	"time"
@@ -21,6 +20,7 @@ type UserService struct {
 	val                *validator.Validate
 	mu                 sync.RWMutex
 	cachedContributors []models.TopContributorsResponse
+	dbErrorHandler     *helpers.DatabaseErrorHandler
 }
 
 func NewUserService(db *gorm.DB, val *validator.Validate) *UserService {
@@ -28,37 +28,20 @@ func NewUserService(db *gorm.DB, val *validator.Validate) *UserService {
 		db:                 db,
 		val:                val,
 		cachedContributors: make([]models.TopContributorsResponse, 0),
+		dbErrorHandler:     helpers.NewDatabaseErrorHandler(),
 	}
 }
 
 // CreateUser - Create new user with validation
 func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserResponse, error) {
-	// Validate request
-	if err := us.val.Struct(&req); err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Validation failed: " + err.Error(),
-		}
-	}
 
-	// Check if username or email already exists
-	var existingUser models.User
-	if err := us.db.Where("username = ? OR email = ? OR nim = ?", req.Username, req.Email, req.Nim).First(&existingUser).Error; err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to check existing user",
-			}
-		}
-	} else {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusConflict,
-			Message: "Username or Email or Nim already exists",
-		}
-	}
-
-	// Hash password
 	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, &helpers.AppError{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to process password",
+		}
+	}
 
 	encryptedPrivateKey, err := utils.EncryptPrivateKeyWithPassword(req.PrivateKey, req.Password)
 	if err != nil {
@@ -68,16 +51,8 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 		}
 	}
 
-	if err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to hash password",
-		}
-	}
-
 	req.Avatar = "https://res.cloudinary.com/detetmaw8/image/upload/v1758013653/forum-comments/xzfg7jskt08evwbdh0n5.png"
 
-	// Create user
 	user := models.User{
 		ID:         uuid.NewString(),
 		FullName:   req.FullName,
@@ -91,15 +66,10 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 		PrivateKey: encryptedPrivateKey,
 	}
 
-	// Insert user
 	if err := us.db.Create(&user).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to create user",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "User creation")
 	}
 
-	// Prepare response
 	return us.mapToUserResponse(user), nil
 }
 
@@ -110,15 +80,6 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 		return nil, err
 	}
 
-	// Validate request
-	if err := us.val.Struct(req); err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Validation failed: " + err.Error(),
-		}
-	}
-
-	// Check if user is updating their own account
 	if req.ID != userID {
 		return nil, &helpers.AppError{
 			Code:    fiber.StatusForbidden,
@@ -126,79 +87,33 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 		}
 	}
 
-	// Find user
 	var user models.User
 	if err := us.db.Where("id = ?", req.ID).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "User lookup")
 	}
 
-	// Update fields if provided
 	if req.Username != "" {
-		// Check if username is already taken by another user
-		var existingUser models.User
-		if err := us.db.Where("username = ? AND id != ?", req.Username, user.ID).First(&existingUser).Error; err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return nil, &helpers.AppError{
-					Code:    fiber.StatusInternalServerError,
-					Message: "Failed to check existing username",
-				}
-			}
-		} else {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusConflict,
-				Message: "Username already exists",
-			}
-		}
 		user.Username = req.Username
 	}
-
 	if req.Email != "" {
-		var existingUser models.User
-		if err := us.db.Where("email = ? AND id != ?", req.Email, user.ID).First(&existingUser).Error; err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return nil, &helpers.AppError{
-					Code:    fiber.StatusInternalServerError,
-					Message: "Failed to check existing email",
-				}
-			}
-		} else {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusConflict,
-				Message: "Email already exists",
-			}
-		}
 		user.Email = req.Email
 	}
-
 	if req.Password != "" {
 		hashedPassword, err := utils.HashPassword(req.Password)
 		if err != nil {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to hash password",
+				Message: "Failed to process password",
 			}
 		}
 		user.Password = hashedPassword
 	}
-
 	if req.Avatar != "" {
 		user.Avatar = req.Avatar
 	}
 
 	if err := us.db.Save(&user).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to update user",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "User update")
 	}
 
 	return us.mapToUserResponse(user), nil
@@ -211,7 +126,6 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 		return err
 	}
 
-	// Check if user is deleting their own account
 	if id != userID {
 		return &helpers.AppError{
 			Code:    fiber.StatusForbidden,
@@ -219,7 +133,6 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 		}
 	}
 
-	// Start transaction
 	tx := us.db.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -227,55 +140,28 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 		}
 	}()
 
-	// Delete all posts associated with the user
 	if err := tx.Where("user_id = ?", id).Delete(&models.Post{}).Error; err != nil {
 		tx.Rollback()
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to delete user's posts",
-		}
+		return us.dbErrorHandler.HandleTransactionError(err, "Post deletion")
 	}
 
-	// Delete the user
 	if err := tx.Where("id = ?", id).Delete(&models.User{}).Error; err != nil {
 		tx.Rollback()
-		if err == gorm.ErrRecordNotFound {
-			return &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to delete user",
-		}
+		return us.dbErrorHandler.HandleTransactionError(err, "User deletion")
 	}
 
-	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
-		return &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to commit transaction",
-		}
+		return us.dbErrorHandler.HandleTransactionError(err, "Transaction commit")
 	}
 
 	return nil
 }
 
-// GetUserByID - Get user by ID with optimized field selection
+// GetUserByID - Get user by ID
 func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
 	var user models.User
 	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Where("id = ?", id).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "User retrieval")
 	}
 	return us.mapToUserResponse(user), nil
 }
@@ -284,10 +170,7 @@ func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
 func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
 	var users []models.User
 	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Find(&users).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get users",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "Users retrieval")
 	}
 	responses := make([]models.UserResponse, len(users))
 	for i, user := range users {
@@ -300,32 +183,21 @@ func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
 func (us *UserService) LoginUser(email, password string) (*models.UserResponse, string, error) {
 	var user models.User
 	if err := us.db.Where("username = ? OR email = ?", email, email).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, "", &helpers.AppError{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Invalid credentials",
-			}
-		}
-		return nil, "", &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to authenticate user",
-		}
+		return nil, "", us.dbErrorHandler.HandleError(err, "User authentication")
 	}
 
-	// Check password
 	if !utils.CheckPassword(password, user.Password) {
 		return nil, "", &helpers.AppError{
 			Code:    fiber.StatusUnauthorized,
-			Message: "Invalid credentials",
+			Message: "Invalid Password",
 		}
 	}
 
-	// Generate JWT token
 	token, err := middleware.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		return nil, "", &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to generate token",
+			Message: "Failed to generate authentication token",
 		}
 	}
 
@@ -334,7 +206,6 @@ func (us *UserService) LoginUser(email, password string) (*models.UserResponse, 
 
 // ValidateUserToken - Validate user token and check if user exists
 func (us *UserService) ValidateUserToken(tokenString string) (string, error) {
-	// Validate token
 	claims, err := middleware.ValidateJWT(tokenString)
 	if err != nil {
 		return "", &helpers.AppError{
@@ -343,47 +214,21 @@ func (us *UserService) ValidateUserToken(tokenString string) (string, error) {
 		}
 	}
 
-	// Check if user exists
 	var user models.User
 	if err := us.db.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return "", &helpers.AppError{
-				Code:    fiber.StatusUnauthorized,
-				Message: "User not found",
-			}
-		}
-		return "", &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+		return "", us.dbErrorHandler.HandleError(err, "Token validation")
 	}
 
 	return user.ID, nil
 }
 
+// GetPrivateKeyWithPassword - Get user's private key
 func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivKeyReq) (string, error) {
-	if err := us.val.Struct(req); err != nil {
-		return "", &helpers.AppError{
-			Code:    fiber.StatusBadRequest,
-			Message: "Validation failed: " + err.Error(),
-		}
-	}
-
 	var user models.User
 	if err := us.db.Where("id = ?", userID).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return "", &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-			}
-		}
-		return "", &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to find user",
-		}
+		return "", us.dbErrorHandler.HandleError(err, "User lookup")
 	}
 
-	// Verifikasi password
 	if !utils.CheckPassword(req.Password, user.Password) {
 		return "", &helpers.AppError{
 			Code:    fiber.StatusUnauthorized,
@@ -391,7 +236,6 @@ func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivK
 		}
 	}
 
-	// Dekripsi private key
 	privateKey, err := utils.DecryptPrivateKeyWithPassword(user.PrivateKey, req.Password)
 	if err != nil {
 		return "", &helpers.AppError{
@@ -403,45 +247,19 @@ func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivK
 	return privateKey, nil
 }
 
-// Helper function to map User to UserResponse
-func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse {
-	// Map posts to PostResponse with optimized field selection
-	postResponses := make([]models.PostResponse, len(user.Posts))
-	for i, post := range user.Posts {
-		postResponses[i] = *helpers.MapToPostResponse(post)
-	}
-
-	return &models.UserResponse{
-		ID:        user.ID,
-		FullName:  user.FullName,
-		Username:  user.Username,
-		Avatar:    user.Avatar,
-		Prodi:     user.Prodi,
-		Nim:       user.Nim,
-		Email:     user.Email,
-		PublicKey: user.PublicKey,
-		CreatedAt: user.CreatedAt,
-		Posts:     postResponses,
-	}
-}
-
+// CalculateUserContribution - Calculate user contribution metrics
 func (us *UserService) CalculateUserContribution(userID string) (*models.Contribution, error) {
 	var contribution models.Contribution
 	var user models.User
 
-	// Ambil user + posts
 	if err := us.db.Preload("Posts").Where("id = ?", userID).First(&user).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusNotFound,
-			Message: "User not found",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "User contribution calculation")
 	}
 
 	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 
 	var postsCount, commentsCount, likesReceived, sharesReceived uint64
 
-	// Hitung post dalam 7 hari terakhir
 	for _, post := range user.Posts {
 		if post.CreatedAt.After(sevenDaysAgo) {
 			postsCount++
@@ -450,24 +268,18 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 		}
 	}
 
-	// Ambil semua comment milik user ini
 	var comments []models.Comment
 	if err := us.db.Where("user_id = ?", userID).Find(&comments).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to fetch comments",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "Comments retrieval")
 	}
 
-	// Hitung comment dalam 7 hari terakhir
 	for _, comment := range comments {
 		if comment.CreatedAt.After(sevenDaysAgo) {
 			commentsCount++
 		}
 	}
 
-	// Hitung skor total
-	totalScore := (postsCount * 3) + (commentsCount * 1) + (likesReceived * 2) + (sharesReceived * 1)
+	totalScore := (postsCount * 2) + (commentsCount * 3) + (likesReceived * 2) + (sharesReceived * 2)
 
 	contribution = models.Contribution{
 		UserID:         user.ID,
@@ -483,35 +295,29 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 	return &contribution, nil
 }
 
+// GetTopContributors - Get top contributors
 func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, error) {
 	var users []models.User
 	var topContributors []models.TopContributorsResponse
 
-	// Ambil semua user dengan posts dan comments yang terkait
 	if err := us.db.Preload("Posts").Find(&users).Error; err != nil {
-		return nil, &helpers.AppError{
-			Code:    fiber.StatusInternalServerError,
-			Message: "Failed to get users",
-		}
+		return nil, us.dbErrorHandler.HandleError(err, "Top contributors retrieval")
 	}
 
 	var contributions []models.Contribution
 	for _, user := range users {
-		// Pastikan user memiliki ID
 		if user.ID == "" {
 			continue
 		}
 
 		contrib, err := us.CalculateUserContribution(user.ID)
 		if err != nil {
-			log.Printf("Error calculating contribution for user %s: %v", user.ID, err)
 			continue
 		}
 		contributions = append(contributions, *contrib)
 	}
 
 	if len(contributions) == 0 {
-		log.Println("No contributions calculated")
 		return topContributors, nil
 	}
 
@@ -519,12 +325,10 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 		return contributions[i].TotalScore > contributions[j].TotalScore
 	})
 
-	// Ambil top 3
 	for i := 0; i < 3 && i < len(contributions); i++ {
 		contrib := contributions[i]
 		var user models.User
 
-		// Cari user yang sesuai
 		for _, u := range users {
 			if u.ID == contrib.UserID {
 				user = u
@@ -532,7 +336,6 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 			}
 		}
 
-		// Pastikan user ditemukan
 		if user.ID == "" {
 			continue
 		}
@@ -557,15 +360,14 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 	return topContributors, nil
 }
 
+// StartTopContributorScheduler - Start background scheduler
 func (us *UserService) StartTopContributorScheduler() {
 	ticker := time.NewTicker(5 * time.Minute)
 
-	// Isi pertama kali saat service start
 	go func() {
 		us.updateCache()
 	}()
 
-	// Update berkala
 	go func() {
 		for range ticker.C {
 			us.updateCache()
@@ -573,26 +375,46 @@ func (us *UserService) StartTopContributorScheduler() {
 	}()
 }
 
+// updateCache - Update cached top contributors
 func (us *UserService) updateCache() {
 	contributors, err := us.GetTopContributors()
 	if err != nil {
-		log.Printf("Failed to update top contributors: %v", err)
 		return
 	}
 
 	if len(contributors) == 0 {
-		log.Println("No top contributors to cache")
 		return
 	}
-
-	log.Printf("Updated top contributors cache with %d entries", len(contributors))
 
 	us.mu.Lock()
 	us.cachedContributors = contributors
 	us.mu.Unlock()
 }
+
+// GetCachedTopContributors - Get cached top contributors
 func (us *UserService) GetCachedTopContributors() []models.TopContributorsResponse {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 	return us.cachedContributors
+}
+
+// mapToUserResponse - Helper function to map User to UserResponse
+func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse {
+	postResponses := make([]models.PostResponse, len(user.Posts))
+	for i, post := range user.Posts {
+		postResponses[i] = *helpers.MapToPostResponse(post)
+	}
+
+	return &models.UserResponse{
+		ID:        user.ID,
+		FullName:  user.FullName,
+		Username:  user.Username,
+		Avatar:    user.Avatar,
+		Prodi:     user.Prodi,
+		Nim:       user.Nim,
+		Email:     user.Email,
+		PublicKey: user.PublicKey,
+		CreatedAt: user.CreatedAt,
+		Posts:     postResponses,
+	}
 }

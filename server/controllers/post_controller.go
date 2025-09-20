@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"errors"
+
 	"github.com/faridanangs/gamatika-25/helpers"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/faridanangs/gamatika-25/services"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,29 +22,19 @@ func NewPostController(postService *services.PostService, commentService *servic
 	}
 }
 
-// Post routes
-func (pc *PostController) SetupRoutes(app *fiber.App) {
-
-	// Post routes
-	app.Post("/posts", pc.CreatePost)
-	app.Get("/posts", pc.GetAllPosts)
-	app.Get("/posts/:id", pc.GetPostByID)
-	app.Put("/posts/:id", pc.UpdatePost)
-	app.Delete("/posts/:id", pc.DeletePost)
-
-	// Comment routes
-	app.Post("/posts/:id/comments", pc.CreateComment)
-	app.Get("/comments", pc.GetAllComments)
-	app.Get("/comments/:id", pc.GetCommentByID)
-	app.Put("/comments/:id", pc.UpdateComment)
-	app.Delete("/comments/:id", pc.DeleteComment)
-}
-
 func (pc *PostController) CreatePost(c *fiber.Ctx) error {
 	var req models.CreatePostRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
 	}
 
@@ -50,75 +43,204 @@ func (pc *PostController) CreatePost(c *fiber.Ctx) error {
 		return err
 	}
 
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
+	}
+
 	post, err := pc.postService.CreatePost(req, tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(post)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Post created successfully",
+		"data":    post,
+	})
 }
 
 func (pc *PostController) GetPostByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	post, err := pc.postService.GetPostByID(id)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"post": post,
+		"status":  "success",
+		"message": "Post retrieved successfully",
+		"data":    post,
 	})
 }
 
 func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
 	posts, err := pc.postService.GetAllPosts()
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"posts": posts,
+		"status":  "success",
+		"message": "Posts retrieved successfully",
+		"data":    posts,
 	})
 }
 
 func (pc *PostController) UpdatePost(c *fiber.Ctx) error {
 	var req models.UpdatePostRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "request",
+					Message: "Invalid request body",
+					Code:    "INVALID_REQUEST_BODY",
+				},
+			},
 		})
 	}
+	req.ID = c.Params("id")
 
 	tokenString, err := helpers.TokenString(c)
 	if err != nil {
 		return err
 	}
 
-	// Get user ID from JWT middleware
-	req.ID = c.Params("id")
+	if helpers.HandleValidationErrors(validator.New(), &req, c) {
+		return nil
+	}
 
 	post, err := pc.postService.UpdatePost(req, tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
-	return c.JSON(post)
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Post updated successfully",
+		"data":    post,
+	})
 }
 
 func (pc *PostController) DeletePost(c *fiber.Ctx) error {
-
 	tokenString, err := helpers.TokenString(c)
 	if err != nil {
 		return err
@@ -128,13 +250,40 @@ func (pc *PostController) DeletePost(c *fiber.Ctx) error {
 
 	err = pc.postService.DeletePost(id, tokenString)
 	if err != nil {
-		appErr := err.(*helpers.AppError)
-		return c.Status(appErr.Code).JSON(fiber.Map{
-			"error": appErr.Message,
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []helpers.FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []helpers.FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
 		"message": "Post deleted successfully",
 	})
 }

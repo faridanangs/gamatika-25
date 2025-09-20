@@ -12,9 +12,9 @@ import (
 type Post struct {
 	gorm.Model
 	ID           string         `gorm:"type:string;primaryKey;column:id"`
-	Title        string         `gorm:"column:title;type:varchar(255);not null"`
+	Title        string         `gorm:"column:title;type:varchar(100);not null"`
 	Content      string         `gorm:"column:content;type:text;not null"`
-	Category     string         `gorm:"column:category;type:varchar(100)"`
+	Category     string         `gorm:"column:category;type:varchar(50)"`
 	Images       datatypes.JSON `gorm:"column:images;type:jsonb"`
 	LikeCount    uint64         `gorm:"column:like_count;default:0"`
 	CommentCount uint64         `gorm:"column:comment_count;default:0"`
@@ -36,16 +36,16 @@ func (Post) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreatePostRequest struct {
-	Title    string   `json:"title" validate:"required"`
-	Content  string   `json:"content" validate:"required"`
-	Category string   `json:"category" validate:"required"`
-	Images   []string `json:"images" validate:"max=4,required"`
+	Title    string   `json:"title" validate:"required,min=6,max=100"`
+	Content  string   `json:"content" validate:"required,min=10"`
+	Category string   `json:"category" validate:"required,min=5,max=50"`
+	Images   []string `json:"images" validate:"max=4,required,omitempty"`
 }
 
 type UpdatePostRequest struct {
 	ID      string `json:"id" validate:"required"`
-	Title   string `json:"title" validate:"omitempty"`
-	Content string `json:"content" validate:"omitempty"`
+	Title   string `json:"title" validate:"omitempty,min=10,max=100"`
+	Content string `json:"content" validate:"omitempty,min=10"`
 	Updated bool   `json:"updated" validate:"omitempty"`
 }
 
