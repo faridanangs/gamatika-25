@@ -1,190 +1,246 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-
-export const createComment = async (postId, token, newComment) => {
-  const resp = await fetch(
-    `http://localhost:8080/api/posts/${postId}/comments`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        content: newComment.content,
-        image: newComment.image,
-      }),
-    }
-  );
-
-  const data = await resp.json();
-
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: data.status,
-      ...data,
-    };
-  }
-
-  revalidatePath(`/dashboard/forum`, 'page');
-  revalidatePath(`/dashboard/profile`, 'page');
-  return {
-    success: true,
-    status: data.status,
-    ...data,
-  };
-};
+import { handleApiResponse } from './apiHandler';
 
 export const createPost = async (token, newPost) => {
-  const resp = await fetch(`http://localhost:8080/api/posts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: newPost.title,
-      content: newPost.content,
-      category: newPost.category,
-      images: newPost.images.map((img) => img.url),
-    }),
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newPost.title,
+          content: newPost.content,
+          category: newPost.category,
+          images: newPost.images.map((img) => img.url),
+        }),
+      }
+    );
 
-  const data = await resp.json();
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/forum`, 'page');
+    }
 
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: data.status,
-      ...data,
-    };
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
   }
-
-  revalidatePath(`/dashboard/forum`, 'page');
-  return {
-    success: true,
-    status: data.status,
-    ...data,
-  };
 };
 
 export const updatePost = async (token, newPost) => {
-  const resp = await fetch(`http://localhost:8080/api/posts/${newPost.id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: newPost.title,
-      content: newPost.content,
-    }),
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${newPost.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newPost.title,
+          content: newPost.content,
+        }),
+      }
+    );
 
-  const data = await resp.json();
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/forum`, 'page');
+    }
 
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: data.status,
-      ...data,
-    };
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
   }
-
-  revalidatePath(`/dashboard/profile`, 'page');
-  return {
-    success: true,
-    status: data.status,
-    ...data,
-  };
 };
 
 export const deletePost = async (token, postID) => {
-  const resp = await fetch(`http://localhost:8080/api/posts/${postID}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${postID}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const data = await resp.json();
-
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: data.status,
-      ...data,
-    };
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+    }
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
   }
-
-  revalidatePath(`/dashboard/profile`, 'page');
-  revalidatePath(`/dashboard/forum`, 'page');
-  revalidatePath(`/forum`, 'page');
-  return {
-    success: true,
-    status: data.status,
-    ...data,
-  };
 };
 
 export const updateUser = async (token, newUser) => {
-  const resp = await fetch(`http://localhost:8080/api/users/${newUser.id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      email: newUser.email,
-      username: newUser.username,
-      avatar: newUser.avatar,
-      password: newUser.password,
-    }),
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/${newUser.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: newUser.email,
+          username: newUser.username,
+          avatar: newUser.avatar,
+          password: newUser.password,
+        }),
+      }
+    );
 
-  const data = await resp.json();
+    const result = await handleApiResponse(resp);
 
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: data.status,
-      ...data,
-    };
-  }
-
-  revalidatePath(`/dashboard/profile`, 'page');
-  return {
-    success: true,
-    status: data.status,
-    ...data,
-  };
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+    }
+    return result;
+  } catch (error) {}
 };
 
 export const registerUser = async (userData) => {
-  const response = await fetch(`http://localhost:3000/api/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/auth/register`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      }
+    );
 
-  const data = await response.json();
+    console.log(resp, 'resp');
 
-  if (!response.ok) {
-    return {
-      success: false,
-      status: response.status,
-      ...data,
-    };
+    const result = await handleApiResponse(resp);
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    throw new Error('Network Error Occurred');
   }
+};
 
-  return {
-    success: true,
-    status: response.status,
-    ...data,
-  };
+export const createComment = async (postId, token, newComment) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${postId}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: newComment.content,
+          image: newComment.image,
+        }),
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+
+    if (result.success) {
+      revalidatePath(`/dashboard/forum`, 'page');
+      revalidatePath(`/dashboard/profile`, 'page');
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+export const deleteComment = async (token, id) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/comments/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/forum`, 'page');
+    }
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+export const updateComment = async (token, newComment) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/comments/${newComment.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: newComment.content,
+        }),
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/forum`, 'page');
+      revalidatePath(`/forum`, 'page');
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+export const likedToggle = async (token, id) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${id}/like`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/forum`, 'page');
+      revalidatePath(`/forum`, 'page');
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
 };

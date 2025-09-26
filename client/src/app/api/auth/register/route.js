@@ -1,4 +1,3 @@
-// app/api/auth/register/route.js
 import { ethers } from 'ethers';
 import { NextResponse } from 'next/server';
 import { handleApiResponse } from '@/lib/apiHandler';
@@ -9,8 +8,10 @@ export async function POST(request) {
     const { fullName, username, prodi, nim, email, password } =
       await request.json();
 
+    console.log(fullName, username, email, nim);
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API_URL}/users`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}users`,
       {
         method: 'POST',
         headers: {
@@ -23,7 +24,7 @@ export async function POST(request) {
           nim: nim,
           email,
           password,
-          public_key: wallet.address,
+          wallet_address: wallet.address,
           private_key: wallet.privateKey,
         }),
       }

@@ -37,20 +37,25 @@ export default function RegisterPage() {
       password: document.getElementById('password').value,
     };
 
-    const response = await registerUser(formData);
+    try {
+      const response = await registerUser(formData);
 
-    if (!response.success) {
-      response?.errors.map((e) => {
-        toast.error(e.message);
-      });
-      return;
+      if (!response.success) {
+        response?.errors.map((e) => {
+          toast.error(e.message);
+        });
+        return;
+      }
+
+      toast.success(response.message);
+
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    } catch (error) {
+      console.log(error.message, 'error kocak');
+      toast.error(error.message);
     }
-
-    toast.success(response.message);
-
-    setTimeout(() => {
-      router.push('/login');
-    }, 2000);
   };
 
   return (

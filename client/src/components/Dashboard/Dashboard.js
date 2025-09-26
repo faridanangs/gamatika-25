@@ -9,7 +9,6 @@ import LogoutButton from '@/components/LogoutButton';
 const menuItems = [
   { id: 'profile', label: 'Profil', icon: '👤', href: '/dashboard/profile' },
   { id: 'forum', label: 'Forum', icon: '📢', href: '/dashboard/forum' },
-  { id: 'jadwal', label: 'Jadwal', icon: '📅', href: '/dashboard/jadwal' },
   { id: 'materi', label: 'Materi', icon: '📚', href: '/dashboard/materi' },
   { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
   { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
@@ -24,7 +23,6 @@ export default function DashboardPage({ children }) {
 
   return (
     <div className="flex h-screen bg-card w-full mx-auto max-w-[110rem]">
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
@@ -32,7 +30,6 @@ export default function DashboardPage({ children }) {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border
@@ -42,7 +39,6 @@ export default function DashboardPage({ children }) {
       `}
       >
         <div className="flex flex-col h-full">
-          {/* Navigation */}
           <nav className="flex-1 p-4">
             <ul className="space-y-1">
               {menuItems.map((item) => (
@@ -67,16 +63,13 @@ export default function DashboardPage({ children }) {
             </ul>
           </nav>
 
-          {/* Bottom Actions */}
           <div className="p-4 border-t border-border">
             <LogoutButton />
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
         <header className="sticky top-0 z-10 bg-card ">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
@@ -86,7 +79,6 @@ export default function DashboardPage({ children }) {
               >
                 ☰
               </button>
-              {/* <h2 className="text-xl font-semibold">Dashboard</h2> */}
               <div className="">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
@@ -101,15 +93,12 @@ export default function DashboardPage({ children }) {
                 </div>
               </div>
             </div>
-            {/* Logo */}
             <div className="flex items-center gap-4">
               <ModeToggle />
-              {/* <Navbar /> */}
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6 dark:bg-card">
           {children}
         </main>

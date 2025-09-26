@@ -12,12 +12,18 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email dan password harus diisi');
+          throw new Error(
+            JSON.stringify({
+              message: 'Email dan password harus diisi',
+              fieldErrors: [],
+              success: false,
+            })
+          );
         }
 
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_SERVER_API_URL}/login`,
+            `${process.env.NEXT_PUBLIC_SERVER_API_URL}login`,
             {
               method: 'POST',
               headers: {
@@ -33,12 +39,13 @@ export const authOptions = {
           const result = await handleApiResponse(response);
 
           if (!result.success) {
-            const error = {
-              message: result.message,
-              fieldErrors: result.errors || [],
-              success: result.success,
-            };
-            throw new Error(JSON.stringify(error));
+            throw new Error(
+              JSON.stringify({
+                message: result.message,
+                fieldErrors: result.errors || [],
+                success: result.success,
+              })
+            );
           }
 
           return {
@@ -49,16 +56,30 @@ export const authOptions = {
             prodi: result.data.user.prodi,
             nim: result.data.user.nim,
             email: result.data.user.email,
-            publicKey: result.data.user.public_key,
+            walletAddress: result.data.user.wallet_address,
             token: result.data.token,
           };
         } catch (error) {
-          // Jika error berasal dari fetch (network error), lempar error asli
+          let errorToReturn;
+
           if (error instanceof TypeError) {
-            throw new Error('Terjadi kesalahan saat menghubungi server');
+            errorToReturn = JSON.stringify({
+              message:
+                'Unable to connect to the server. Please check your connection.',
+              fieldErrors: [],
+              success: false,
+            });
+          } else if (error.message) {
+            errorToReturn = error.message;
+          } else {
+            errorToReturn = JSON.stringify({
+              message: 'An unexpected error occurred',
+              fieldErrors: [],
+              success: false,
+            });
           }
-          // Jika error sudah dalam format JSON, lempar kembali
-          throw error;
+
+          throw new Error(errorToReturn);
         }
       },
     }),
@@ -82,7 +103,7 @@ export const authOptions = {
         token.prodi = user.prodi;
         token.nim = user.nim;
         token.email = user.email;
-        token.publicKey = user.publicKey;
+        token.walletAddress = user.walletAddress;
       }
       return token;
     },
@@ -96,7 +117,7 @@ export const authOptions = {
         session.user.prodi = token.prodi;
         session.user.nim = token.nim;
         session.user.email = token.email;
-        session.user.publicKey = token.publicKey;
+        session.user.walletAddress = token.walletAddress;
       }
       return session;
     },

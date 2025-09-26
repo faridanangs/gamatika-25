@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/faridanangs/gamatika-25/helpers"
@@ -39,36 +38,7 @@ func (pc *PostController) CreateComment(c *fiber.Ctx) error {
 
 	comment, err := pc.commentService.CreateComment(req, tokenString)
 	if err != nil {
-		var appErr *helpers.AppError
-		if errors.As(err, &appErr) {
-			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
-				return c.Status(appErr.Code).JSON(customErr)
-			}
-
-			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
-				Status:  "error",
-				Message: appErr.Message,
-				Errors: []helpers.FieldError{
-					{
-						Field:   "general",
-						Message: appErr.Message,
-						Code:    "GENERAL_ERROR",
-					},
-				},
-			})
-		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "An unexpected error occurred",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "system",
-					Message: "An unexpected error occurred",
-					Code:    "UNEXPECTED_ERROR",
-				},
-			},
-		})
+		return helpers.HelperErrNotNil(err, c)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -100,59 +70,17 @@ func (pc *PostController) UpdateComment(c *fiber.Ctx) error {
 		return err
 	}
 
+	id, _ := strconv.ParseUint(c.Params("id"), 10, 64)
+
+	req.ID = id
+
 	if helpers.HandleValidationErrors(validator.New(), &req, c) {
 		return nil
 	}
 
-	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "Invalid comment ID",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "id",
-					Message: "Invalid comment ID",
-					Code:    "INVALID_COMMENT_ID",
-				},
-			},
-		})
-	}
-
-	req.ID = id
-
 	comment, err := pc.commentService.UpdateComment(req, tokenString)
 	if err != nil {
-		var appErr *helpers.AppError
-		if errors.As(err, &appErr) {
-			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
-				return c.Status(appErr.Code).JSON(customErr)
-			}
-
-			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
-				Status:  "error",
-				Message: appErr.Message,
-				Errors: []helpers.FieldError{
-					{
-						Field:   "general",
-						Message: appErr.Message,
-						Code:    "GENERAL_ERROR",
-					},
-				},
-			})
-		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "An unexpected error occurred",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "system",
-					Message: "An unexpected error occurred",
-					Code:    "UNEXPECTED_ERROR",
-				},
-			},
-		})
+		return helpers.HelperErrNotNil(err, c)
 	}
 
 	return c.JSON(fiber.Map{
@@ -169,53 +97,11 @@ func (pc *PostController) DeleteComment(c *fiber.Ctx) error {
 		return err
 	}
 
-	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "Invalid comment ID",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "id",
-					Message: "Invalid comment ID",
-					Code:    "INVALID_COMMENT_ID",
-				},
-			},
-		})
-	}
+	id, _ := strconv.ParseUint(c.Params("id"), 10, 64)
 
 	err = pc.commentService.DeleteComment(id, tokenString)
 	if err != nil {
-		var appErr *helpers.AppError
-		if errors.As(err, &appErr) {
-			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
-				return c.Status(appErr.Code).JSON(customErr)
-			}
-
-			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
-				Status:  "error",
-				Message: appErr.Message,
-				Errors: []helpers.FieldError{
-					{
-						Field:   "general",
-						Message: appErr.Message,
-						Code:    "GENERAL_ERROR",
-					},
-				},
-			})
-		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "An unexpected error occurred",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "system",
-					Message: "An unexpected error occurred",
-					Code:    "UNEXPECTED_ERROR",
-				},
-			},
-		})
+		return helpers.HelperErrNotNil(err, c)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -225,53 +111,11 @@ func (pc *PostController) DeleteComment(c *fiber.Ctx) error {
 }
 
 func (pc *PostController) GetCommentByID(c *fiber.Ctx) error {
-	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "Invalid comment ID",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "id",
-					Message: "Invalid comment ID",
-					Code:    "INVALID_COMMENT_ID",
-				},
-			},
-		})
-	}
+	id, _ := strconv.ParseUint(c.Params("id"), 10, 64)
 
 	comment, err := pc.commentService.GetCommentByID(id)
 	if err != nil {
-		var appErr *helpers.AppError
-		if errors.As(err, &appErr) {
-			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
-				return c.Status(appErr.Code).JSON(customErr)
-			}
-
-			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
-				Status:  "error",
-				Message: appErr.Message,
-				Errors: []helpers.FieldError{
-					{
-						Field:   "general",
-						Message: appErr.Message,
-						Code:    "GENERAL_ERROR",
-					},
-				},
-			})
-		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "An unexpected error occurred",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "system",
-					Message: "An unexpected error occurred",
-					Code:    "UNEXPECTED_ERROR",
-				},
-			},
-		})
+		return helpers.HelperErrNotNil(err, c)
 	}
 
 	return c.JSON(fiber.Map{
@@ -284,36 +128,7 @@ func (pc *PostController) GetCommentByID(c *fiber.Ctx) error {
 func (pc *PostController) GetAllComments(c *fiber.Ctx) error {
 	comments, err := pc.commentService.GetAllComments()
 	if err != nil {
-		var appErr *helpers.AppError
-		if errors.As(err, &appErr) {
-			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
-				return c.Status(appErr.Code).JSON(customErr)
-			}
-
-			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
-				Status:  "error",
-				Message: appErr.Message,
-				Errors: []helpers.FieldError{
-					{
-						Field:   "general",
-						Message: appErr.Message,
-						Code:    "GENERAL_ERROR",
-					},
-				},
-			})
-		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&helpers.CustomErrorResponse{
-			Status:  "error",
-			Message: "An unexpected error occurred",
-			Errors: []helpers.FieldError{
-				{
-					Field:   "system",
-					Message: "An unexpected error occurred",
-					Code:    "UNEXPECTED_ERROR",
-				},
-			},
-		})
+		return helpers.HelperErrNotNil(err, c)
 	}
 
 	return c.JSON(fiber.Map{

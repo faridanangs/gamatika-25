@@ -766,7 +766,6 @@ const CVBuilder = () => {
   const [step, setStep] = useState(1);
   const componentRef = useRef();
 
-  // Pisahkan state menjadi state kecil
   const [personalInfo, setPersonalInfo] = useState({
     name: '',
     title: '',
@@ -777,21 +776,17 @@ const CVBuilder = () => {
     github: '',
     portfolio: '',
   });
-
   const [summary, setSummary] = useState('');
-
   const [skills, setSkills] = useState({
     technical: [],
     soft: [],
   });
-
   const [experience, setExperience] = useState([]);
   const [education, setEducation] = useState([]);
   const [projects, setProjects] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [languages, setLanguages] = useState([]);
 
-  // Handler untuk personal info
   const handlePersonalInfoChange = (field, value) => {
     setPersonalInfo((prev) => ({
       ...prev,
@@ -1034,7 +1029,6 @@ const CVBuilder = () => {
     setLanguages((prev) => prev.filter((lang) => lang.id !== id));
   };
 
-  // Fungsi untuk print PDF
   const printPDF = () => {
     const printContent = componentRef.current.cloneNode(true);
     const downloadButton = printContent.querySelector('.download-button');

@@ -1,15 +1,17 @@
-// app/api/auth/login/route.js
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
     const { email, password } = await request.json();
 
-    const apiResponse = await fetch(`${process.env.SERVER_API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    const apiResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      }
+    );
 
     if (!apiResponse.ok) {
       const errorData = await apiResponse.json();

@@ -10,21 +10,13 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { PostSkeleton } from '../PostSkeleton';
-import { createComment, createPost } from '@/lib/action';
+import { createComment, createPost, likedToggle } from '@/lib/action';
 
-export default function DashboardForumPage({ postsO }) {
+export default function DashboardForumPage({ postsO, user, token }) {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [token, setToken] = useState(null);
-  const { data: session, status } = useSession();
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      setToken(session.accessToken);
-    }
-  }, [session, status]);
 
   useEffect(() => {
     if (selectedCategory === 'Semua') {
@@ -43,19 +35,18 @@ export default function DashboardForumPage({ postsO }) {
     setPosts(sorted);
   }, [postsO]);
 
-  const handleLike = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            likes: post.liked ? post.likes - 1 : post.likes + 1,
-            liked: !post.liked,
-          };
-        }
-        return post;
-      })
-    );
+  const handleLike = async (id) => {
+    try {
+      const resp = await likedToggle(token, id);
+      if (!resp.success) {
+        resp?.errors.map((e) => {
+          toast.error(e.message);
+        });
+        return;
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   const handleShare = (postId) => {
@@ -71,27 +62,35 @@ export default function DashboardForumPage({ postsO }) {
   };
 
   const handleCreatePost = async (newPost) => {
-    setShowCreateModal(false);
-    const resp = await createPost(token, newPost);
-    if (!resp.success) {
-      resp?.errors.map((e) => {
-        toast.error(e.message);
-      });
-      return;
+    try {
+      setShowCreateModal(false);
+      const resp = await createPost(token, newPost);
+      if (!resp.success) {
+        resp?.errors.map((e) => {
+          toast.error(e.message);
+        });
+        return;
+      }
+      toast.success(resp.message);
+    } catch (error) {
+      toast.error(error.message);
     }
-    toast.success(resp.message);
   };
 
   const handleAddComment = async (postId, newComment) => {
-    const resp = await createComment(postId, token, newComment);
-    if (!resp.success) {
-      toast.error(resp.errors[0].message);
-      return;
+    try {
+      const resp = await createComment(postId, token, newComment);
+      if (!resp.success) {
+        toast.error(resp.errors[0].message);
+        return;
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
   return (
-    <div className="min-h-screen dark:bg-card transition-colors duration-300 w-full border-2 overflow-x-hidden">
+    <div className="min-h-screen dark:bg-card transition-colors duration-300 w-full overflow-x-hidden">
       <Head>
         <title>Forum Diskusi - Gamatika 25</title>
         <meta
@@ -148,6 +147,8 @@ export default function DashboardForumPage({ postsO }) {
                     comments={post?.comments}
                     onAddComment={handleAddComment}
                     isAuth={true}
+                    user={user}
+                    token={token}
                   />
                 ))
               ) : (

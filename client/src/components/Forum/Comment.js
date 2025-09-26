@@ -1,15 +1,17 @@
 'use client';
 import { useState, useRef } from 'react';
 import { ImageModal } from './ImageUpload';
-import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
+import { deleteComment } from '@/lib/action';
+import { formatReadableTime } from './ForumPost';
 
-export function Comment({ comment, isCurrentUser = false }) {
+export function Comment({ comment, user, token }) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -18,27 +20,41 @@ export function Comment({ comment, isCurrentUser = false }) {
     setShowImageModal(true);
   };
 
+  const handleDeleteComment = async () => {
+    try {
+      const isYes = confirm('Delete Comment!');
+      if (!isYes) return;
+
+      const resp = await deleteComment(token, comment.id);
+      if (!resp.success) {
+        toast.error(resp.message);
+        return;
+      }
+
+      toast.success(resp.message);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   return (
     <div
       className={cn(
-        'mb-4 pb-4 border-b border-gray-200 dark:border-gray-600 last:border-0 transition-all duration-300',
-        isCurrentUser && 'bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3'
+        'mb-4 pb-4 border-b border-gray-200 dark:border-gray-600 last:border-0 transition-all duration-300'
       )}
     >
       <div className="flex items-start">
         <div className="relative hidden md:inline-block">
           <Avatar className="w-10 h-10">
             <AvatarImage
-              src={
-                'https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png'
-              }
-              alt={comment?.author.name || 'User'}
+              src={comment?.author.avatar}
+              alt={comment?.author.username}
             />
             <AvatarFallback>
               {comment?.author.username?.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          {isCurrentUser && (
+          {user?.id === comment?.author.id && (
             <Badge className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-gray-800 p-0">
               <svg
                 className="w-3 h-3"
@@ -57,35 +73,33 @@ export function Comment({ comment, isCurrentUser = false }) {
           )}
         </div>
 
-        <div className="mx-3 flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <h4
-                className={cn(
-                  'font-semibold text-gray-800 dark:text-white',
-                  isCurrentUser && 'text-blue-600 dark:text-blue-400'
-                )}
-              >
-                {comment?.author.username}
-              </h4>
-              {isCurrentUser && (
-                <Badge
-                  variant="secondary"
-                  className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs"
+        <div className="flex-1">
+          <div className="flex justify-between mb-2">
+            <div className="flex mb-1 flex-col ml-4">
+              <div className="flex gap-2">
+                <h4
+                  className={cn('font-semibold text-gray-800 dark:text-white')}
                 >
-                  Anda
-                </Badge>
-              )}
+                  {comment?.author.username}
+                </h4>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {formatReadableTime(comment?.created_at)}
+              </span>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatDateTime(comment?.created_at)}
-            </span>
+            {user?.id === comment.author.id && (
+              <Button
+                size="sm"
+                onClick={handleDeleteComment}
+                className="hover:bg-transparent bg-transparent hover:text-[16px] duration-900 transition-all hover:cursor-pointer p-0"
+              >
+                🗑️
+              </Button>
+            )}
           </div>
-
-          <p className="text-gray-700 dark:text-gray-300 mt-2 leading-relaxed">
+          <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
             {comment?.content}
           </p>
-
           {comment?.image && (
             <div
               className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
@@ -127,18 +141,21 @@ export function CommentInput({ onAddComment, className }) {
       let imageUrl = null;
 
       if (image && content != '') {
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            file: {
-              base64: image.base64,
-              name: image.file.name,
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/upload`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
-          }),
-        });
+            body: JSON.stringify({
+              file: {
+                base64: image.base64,
+                name: image.file.name,
+              },
+            }),
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -157,6 +174,7 @@ export function CommentInput({ onAddComment, className }) {
       setContent('');
       setImage(null);
     } catch (error) {
+      console.error(error);
       alert(`Gagal mengupload gambar: ${error.message}`);
     } finally {
       setIsUploading(false);

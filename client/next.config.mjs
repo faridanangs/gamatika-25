@@ -7,6 +7,7 @@ const nextConfig = {
       'images.unsplash.com',
       'placehold.co',
       'res.cloudinary.com',
+      'ipfs.io',
     ],
   },
 };

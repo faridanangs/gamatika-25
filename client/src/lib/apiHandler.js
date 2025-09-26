@@ -1,4 +1,3 @@
-// lib/apiHandler.js
 export const handleApiError = async (response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -28,9 +27,11 @@ export const handleApiResponse = async (response) => {
   if (error) return error;
 
   const data = await response.json();
+
   return {
     success: true,
     status: response.status,
+    message: data.message,
     data: data.data || data,
   };
 };

@@ -1,24 +1,9 @@
-'use client';
-import { Button } from '@/components/ui/button';
-import { conGetNftByID, conMintNFT, conSetBaseURI } from '@/nft/action';
+import { TestPageComp } from '@/components/Test';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 
-export default function TestSession() {
-  const handleMintNFT = async () => {
-    await conMintNFT();
-  };
-  const handleGetTokenURI = async () => {
-    await conGetNftByID(1);
-  };
+export default async function TestPage() {
+  const session = await getServerSession(authOptions);
 
-  const handleSetBaseURI = async () => {
-    await conSetBaseURI();
-  };
-
-  return (
-    <div className="w-full h-screen flex items-center justify-center flex-col gap-2">
-      <Button onClick={handleMintNFT}>mint nft</Button>
-      <Button onClick={handleGetTokenURI}>get token uri</Button>
-      <Button onClick={handleSetBaseURI}>set base uri</Button>
-    </div>
-  );
+  return <TestPageComp session={session} />;
 }

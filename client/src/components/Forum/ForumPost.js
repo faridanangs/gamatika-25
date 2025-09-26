@@ -1,8 +1,7 @@
 'use client';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Comment, CommentInput } from './Comment';
-import { ImageModal } from './ImageUpload';
 import {
   Dialog,
   DialogContent,
@@ -20,16 +19,42 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatDateTime } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import { id } from 'date-fns/locale';
 import { categories } from '@/data/mockForum';
 import Link from 'next/link';
+
+// Format waktu yang lebih mudah dibaca
+export const formatReadableTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return 'Baru saja';
+  if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`;
+  if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
+  if (diffInDays < 7) return `${diffInDays} hari yang lalu`;
+
+  return formatDistanceToNow(date, {
+    addSuffix: true,
+    locale: id,
+  });
+};
 
 export function ForumPost({
   post,
@@ -39,6 +64,8 @@ export function ForumPost({
   onAddComment,
   className,
   isAuth,
+  user,
+  token,
 }) {
   const [showComments, setShowComments] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -74,17 +101,14 @@ export function ForumPost({
       <CardHeader className="pb-4">
         <div className="flex items-start">
           <Avatar className="w-10 h-10">
-            <AvatarImage
-              src="https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png"
-              alt={post?.author.name}
-            />
+            <AvatarImage src={post?.author.avatar} alt={post?.author.name} />
             <AvatarFallback>{post?.author.username?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="ml-2 flex-1">
             <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
               <span className="font-medium">{post?.author.username}</span>
               <span className="text-xs">
-                {formatDateTime(post?.created_at)}
+                {formatReadableTime(post?.created_at)}
               </span>
             </div>
           </div>
@@ -106,67 +130,64 @@ export function ForumPost({
         </p>
 
         {post?.images.length > 0 && (
-          <div className="mb-4 rounded-2xl overflow-hidden">
+          <div className="mb-4 rounded-2xl">
             <div className="relative group">
-              <Image
-                alt={`Post image ${selectedImageIndex + 1}`}
-                src={post?.images[selectedImageIndex]}
-                width={800}
-                height={600}
-                unoptimized
-                className="w-full h-auto object-contain border dark:border-gray-700"
-              />
+              <div className="relative w-full max-h-fit h-full max-w-fit overflow-hidden mx-auto">
+                <Image
+                  alt={`Post image ${selectedImageIndex + 1}`}
+                  src={post?.images[selectedImageIndex] || post?.images[0]}
+                  width={800}
+                  height={700}
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
 
               {/* Navigation buttons */}
               {post?.images.length > 1 && (
                 <>
-                  <button
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-whiter"
                     onClick={handlePrevImage}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-whiter"
                     onClick={handleNextImage}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </Button>
                 </>
               )}
-
-              {/* Image counter */}
-              {post?.images.length > 1 && (
-                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                  {selectedImageIndex + 1} / {post?.images.length}
-                </div>
-              )}
             </div>
-
-            {post?.images.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto py-2 px-1">
-                {post?.images.map((image, index) => (
-                  <div
-                    key={index}
-                    className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 transition-all ${
-                      index === selectedImageIndex
-                        ? 'border-blue-500 ring-2 ring-blue-300'
-                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
-                    onClick={() => handleImageClick(index)}
-                  >
-                    <Image
-                      alt={`Thumbnail ${index + 1}`}
-                      src={image}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
@@ -175,6 +196,7 @@ export function ForumPost({
             <Button
               variant="ghost"
               size="sm"
+              disabled={isAuth ? false : true}
               onClick={() => onLike(post?.id)}
               className={`flex items-center space-x-1 ${
                 post?.liked
@@ -292,36 +314,25 @@ export function ForumPost({
               </Button>
             </div>
             <ScrollArea
-              className={` w-full rounded-md dark:border-gray-700 md:p-4 p-1 ${'h-auto max-h-[calc(100vh-200px)] overflow-y-scroll'}`}
+              className={`w-full rounded-md dark:border-gray-700 md:p-4 p-1 h-[calc(100vh-200px)] overflow-y-scroll`}
             >
               {comments.map((comment, i) => (
-                <Comment key={i} comment={comment} />
+                <Comment key={i} comment={comment} user={user} token={token} />
               ))}
               {isAuth ? (
                 <CommentInput onAddComment={handleAddComment} />
               ) : (
-                <Link className="block" href={`/login`}>
-                  <p className="text-sm text-center text-red-400 hover:underline">
-                    Jika ingin berkomentar, login terlebih dahulu
-                  </p>
-                </Link>
+                <CommentAuthPrompt />
               )}
             </ScrollArea>
           </div>
         )}
       </CardContent>
-      <ImageModal
-        images={post?.images || []}
-        currentImageIndex={selectedImageIndex}
-        isOpen={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        onPrev={handlePrevImage}
-        onNext={handleNextImage}
-      />
     </Card>
   );
 }
 
+// Komponen lainnya tetap sama...
 export function CreatePostButton({ onClick }) {
   return (
     <Button
@@ -362,18 +373,21 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
     try {
       let uploadedImages = [];
       if (images.length > 0) {
-        const response = await fetch('/api/uploads', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            files: images.map((img) => ({
-              base64: img.base64,
-              name: img.file.name,
-            })),
-          }),
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/uploads`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              files: images.map((img) => ({
+                base64: img.base64,
+                name: img.file.name,
+              })),
+            }),
+          }
+        );
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Upload failed');
@@ -391,7 +405,6 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
         })),
       };
       await onCreate(postData);
-      // Reset form
       setTitle('');
       setContent('');
       setCategory('Kalkulus');
@@ -596,3 +609,43 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
     </div>
   );
 }
+
+import { MessageCircle, LogIn } from 'lucide-react';
+
+const CommentAuthPrompt = () => {
+  return (
+    <Card className="w-full border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-900/50">
+      <CardHeader className="text-center pb-4">
+        <div className="flex justify-center mb-3">
+          <div className="relative">
+            <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-full blur-md opacity-70"></div>
+            <div className="relative p-3 rounded-full bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900">
+              <MessageCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </div>
+
+        <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center justify-center gap-2">
+          Login untuk Berkomentar
+        </CardTitle>
+
+        <CardDescription className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+          Dengan login, Anda juga akan mendapatkan akses ke fitur eksklusif
+          lainnya
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <Button
+          asChild
+          className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+        >
+          <Link href="/login">
+            <LogIn className="h-4 w-4" />
+            Login Sekarang
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};

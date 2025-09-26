@@ -10,7 +10,7 @@ const World = dynamic(
   }
 );
 
-export function GlobeDemo() {
+export function Globe() {
   const globeConfig = {
     pointSize: 4,
     globeColor: '#062056',

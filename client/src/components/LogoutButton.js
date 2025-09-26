@@ -34,12 +34,11 @@ export default function LogoutButton() {
       {isLoggingOut ? (
         <>
           <span className="animate-spin">⏳</span>
-          <span>Mengeluarkan...</span>
         </>
       ) : (
         <>
           <span>🚪</span>
-          <span>Keluar</span>
+          <span>LogOut</span>
         </>
       )}
     </button>

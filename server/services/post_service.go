@@ -169,13 +169,19 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 	}()
 
 	// Delete all comments associated with the post
-	if err := tx.Where("post_id = ?", id).Delete(&models.Comment{}).Error; err != nil {
+	if err := tx.Where("post_id = ?", id).Unscoped().Delete(&models.Comment{}).Error; err != nil {
 		tx.Rollback()
 		return ps.dbErrorHandler.HandleTransactionError(err, "Comments deletion")
 	}
 
+	// Delete all likes associated with the post
+	if err := tx.Where("post_id = ?", id).Unscoped().Delete(&models.PostLike{}).Error; err != nil {
+		tx.Rollback()
+		return ps.dbErrorHandler.HandleTransactionError(err, "Likes deletion")
+	}
+
 	// Delete the post
-	if err := tx.Delete(&post).Error; err != nil {
+	if err := tx.Unscoped().Delete(&post).Error; err != nil {
 		tx.Rollback()
 		return ps.dbErrorHandler.HandleTransactionError(err, "Post deletion")
 	}
@@ -194,6 +200,8 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 	if err := ps.db.Preload("Author").
 		Preload("Comments").
 		Preload("Comments.Author").
+		Preload("Likes").
+		Preload("Likes.Author").
 		Where("id = ?", id).First(&post).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
@@ -223,6 +231,8 @@ func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
 	if err := ps.db.Preload("Author").
 		Preload("Comments").
 		Preload("Comments.Author").
+		Preload("Likes").
+		Preload("Likes.Author").
 		Find(&posts).Error; err != nil {
 		return nil, ps.dbErrorHandler.HandleError(err, "Posts retrieval")
 	}
@@ -231,4 +241,63 @@ func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
 		responses[i] = *helpers.MapToPostResponse(post)
 	}
 	return responses, nil
+}
+
+func (ps *PostService) ToggleLike(postID string, tokenString string) (*models.PostResponse, error) {
+	userID, err := ps.us.ValidateUserToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	var post models.Post
+	if err := ps.db.Where("id = ?", postID).First(&post).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "Post not found",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "Post not found",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "post",
+							Message: "Post not found",
+							Code:    "POST_NOT_FOUND",
+						},
+					},
+				},
+			}
+		}
+		return nil, ps.dbErrorHandler.HandleError(err, "Post lookup")
+	}
+
+	var existingLike models.PostLike
+	err = ps.db.Where("post_id = ? AND user_id = ?", postID, userID).First(&existingLike).Error
+
+	if err == nil {
+		if err := ps.db.Unscoped().Delete(&existingLike).Error; err != nil {
+			return nil, ps.dbErrorHandler.HandleError(err, "Unlike operation")
+		}
+
+		post.LikeCount--
+	} else if err == gorm.ErrRecordNotFound {
+		newLike := models.PostLike{
+			PostID: postID,
+			UserID: userID,
+		}
+
+		if err := ps.db.Create(&newLike).Error; err != nil {
+			return nil, ps.dbErrorHandler.HandleError(err, "Like operation")
+		}
+
+		post.LikeCount++
+	} else {
+		return nil, ps.dbErrorHandler.HandleError(err, "Like check")
+	}
+
+	if err := ps.db.Save(&post).Error; err != nil {
+		return nil, ps.dbErrorHandler.HandleError(err, "Post update")
+	}
+
+	return helpers.MapToPostResponse(post), nil
 }

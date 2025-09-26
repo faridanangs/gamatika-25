@@ -1,18 +1,22 @@
 'use server';
 
+import { handleApiResponse } from '@/lib/apiHandler';
+
 export async function getAllConribs() {
-  const res = await fetch('http://localhost:8080/users/top-contributors', {
-    cache: 'no-store',
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}users/top-contributors`,
+      {
+        cache: 'no-store',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-  if (!res.ok) {
-    console.error('Failed fetch data contirbs from server');
-    return;
+    return handleApiResponse(resp);
+  } catch (error) {
+    throw new Error(error || 'Network Error Occurred');
   }
-
-  return await res.json();
 }

@@ -166,7 +166,7 @@ function TopContributors({ props }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
       <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-        Top Contributor{' '}
+        Top Contributors{' '}
         <p className="text-[14px] text-gray-400">(setiap 7 hari)</p>
       </h2>
       <div className="space-y-4">
@@ -188,10 +188,6 @@ function TopContributors({ props }) {
               <h3 className="font-semibold text-gray-800 dark:text-white">
                 {contributor?.user.username}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {contributor?.breakdown.posts} posts •{' '}
-                {contributor?.breakdown.comments} comments
-              </p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 {contributor?.score} poin
               </p>

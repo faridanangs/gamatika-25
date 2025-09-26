@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"sort"
 	"sync"
 	"time"
@@ -24,12 +25,19 @@ type UserService struct {
 }
 
 func NewUserService(db *gorm.DB, val *validator.Validate) *UserService {
-	return &UserService{
+	us := &UserService{
 		db:                 db,
 		val:                val,
 		cachedContributors: make([]models.TopContributorsResponse, 0),
 		dbErrorHandler:     helpers.NewDatabaseErrorHandler(),
 	}
+
+	us.updateCache()
+
+	us.StartTopContributorScheduler()
+
+	return us
+
 }
 
 // CreateUser - Create new user with validation
@@ -54,23 +62,23 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 	req.Avatar = "https://res.cloudinary.com/detetmaw8/image/upload/v1758013653/forum-comments/xzfg7jskt08evwbdh0n5.png"
 
 	user := models.User{
-		ID:         uuid.NewString(),
-		FullName:   req.FullName,
-		Username:   req.Username,
-		Avatar:     req.Avatar,
-		Prodi:      req.Prodi,
-		Nim:        req.Nim,
-		Email:      req.Email,
-		Password:   hashedPassword,
-		PublicKey:  req.PublicKey,
-		PrivateKey: encryptedPrivateKey,
+		ID:            uuid.NewString(),
+		FullName:      req.FullName,
+		Username:      req.Username,
+		Avatar:        req.Avatar,
+		Prodi:         req.Prodi,
+		Nim:           req.Nim,
+		Email:         req.Email,
+		Password:      hashedPassword,
+		WalletAddress: req.WalletAddress,
+		PrivateKey:    encryptedPrivateKey,
 	}
 
 	if err := us.db.Create(&user).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "User creation")
 	}
 
-	return us.mapToUserResponse(user), nil
+	return helpers.MapToUserResponse(user), nil
 }
 
 // UpdateUser - Update existing user with ownership check
@@ -112,11 +120,31 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 		user.Avatar = req.Avatar
 	}
 
+	if len(req.Achievements) != 0 {
+		var existingAchievements []string
+		if user.Achievements != nil {
+			if err := json.Unmarshal(user.Achievements, &existingAchievements); err != nil {
+				return nil, us.dbErrorHandler.HandleError(err, "Unmarshal existing achievements")
+			}
+		}
+
+		newAchievements := append(existingAchievements, req.Achievements...)
+
+		updatedData, err := json.Marshal(newAchievements)
+		if err != nil {
+			return nil, us.dbErrorHandler.HandleError(err, "Marshal updated achievements")
+		}
+
+		if err := us.db.Model(&user).Update("achievements", updatedData).Error; err != nil {
+			return nil, us.dbErrorHandler.HandleError(err, "Update Achievements")
+		}
+	}
+
 	if err := us.db.Save(&user).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "User update")
 	}
 
-	return us.mapToUserResponse(user), nil
+	return helpers.MapToUserResponse(user), nil
 }
 
 // DeleteUser - Delete user with ownership check
@@ -140,12 +168,12 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 		}
 	}()
 
-	if err := tx.Where("user_id = ?", id).Delete(&models.Post{}).Error; err != nil {
+	if err := tx.Where("user_id = ?", id).Unscoped().Delete(&models.Post{}).Error; err != nil {
 		tx.Rollback()
 		return us.dbErrorHandler.HandleTransactionError(err, "Post deletion")
 	}
 
-	if err := tx.Where("id = ?", id).Delete(&models.User{}).Error; err != nil {
+	if err := tx.Where("id = ?", id).Unscoped().Delete(&models.User{}).Error; err != nil {
 		tx.Rollback()
 		return us.dbErrorHandler.HandleTransactionError(err, "User deletion")
 	}
@@ -160,21 +188,31 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 // GetUserByID - Get user by ID
 func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
 	var user models.User
-	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Where("id = ?", id).First(&user).Error; err != nil {
+	if err := us.db.Preload("Posts").
+		Preload("Posts.Author").
+		Preload("Posts.Comments").
+		Preload("Posts.Comments.Author").
+		Preload("Posts.Likes").
+		Preload("Posts.Likes.Author").Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "User retrieval")
 	}
-	return us.mapToUserResponse(user), nil
+	return helpers.MapToUserResponse(user), nil
 }
 
 // GetAllUsers - Get all users
 func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
 	var users []models.User
-	if err := us.db.Preload("Posts").Preload("Posts.Comments").Preload("Posts.Author").Preload("Posts.Comments.Author").Find(&users).Error; err != nil {
+	if err := us.db.Preload("Posts").
+		Preload("Posts.Author").
+		Preload("Posts.Comments").
+		Preload("Posts.Comments.Author").
+		Preload("Posts.Likes").
+		Preload("Posts.Likes.Author").Find(&users).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "Users retrieval")
 	}
 	responses := make([]models.UserResponse, len(users))
 	for i, user := range users {
-		responses[i] = *us.mapToUserResponse(user)
+		responses[i] = *helpers.MapToUserResponse(user)
 	}
 	return responses, nil
 }
@@ -201,7 +239,7 @@ func (us *UserService) LoginUser(email, password string) (*models.UserResponse, 
 		}
 	}
 
-	return us.mapToUserResponse(user), token, nil
+	return helpers.MapToUserResponse(user), token, nil
 }
 
 // ValidateUserToken - Validate user token and check if user exists
@@ -336,10 +374,6 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 			}
 		}
 
-		if user.ID == "" {
-			continue
-		}
-
 		topContributors = append(topContributors, models.TopContributorsResponse{
 			Rank: uint64(i + 1),
 			User: models.AuthorResponse{
@@ -362,11 +396,8 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 
 // StartTopContributorScheduler - Start background scheduler
 func (us *UserService) StartTopContributorScheduler() {
-	ticker := time.NewTicker(5 * time.Minute)
-
-	go func() {
-		us.updateCache()
-	}()
+	us.updateCache()
+	ticker := time.NewTicker(7 * 24 * time.Hour)
 
 	go func() {
 		for range ticker.C {
@@ -375,7 +406,6 @@ func (us *UserService) StartTopContributorScheduler() {
 	}()
 }
 
-// updateCache - Update cached top contributors
 func (us *UserService) updateCache() {
 	contributors, err := us.GetTopContributors()
 	if err != nil {
@@ -389,6 +419,7 @@ func (us *UserService) updateCache() {
 	us.mu.Lock()
 	us.cachedContributors = contributors
 	us.mu.Unlock()
+
 }
 
 // GetCachedTopContributors - Get cached top contributors
@@ -396,25 +427,4 @@ func (us *UserService) GetCachedTopContributors() []models.TopContributorsRespon
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 	return us.cachedContributors
-}
-
-// mapToUserResponse - Helper function to map User to UserResponse
-func (us *UserService) mapToUserResponse(user models.User) *models.UserResponse {
-	postResponses := make([]models.PostResponse, len(user.Posts))
-	for i, post := range user.Posts {
-		postResponses[i] = *helpers.MapToPostResponse(post)
-	}
-
-	return &models.UserResponse{
-		ID:        user.ID,
-		FullName:  user.FullName,
-		Username:  user.Username,
-		Avatar:    user.Avatar,
-		Prodi:     user.Prodi,
-		Nim:       user.Nim,
-		Email:     user.Email,
-		PublicKey: user.PublicKey,
-		CreatedAt: user.CreatedAt,
-		Posts:     postResponses,
-	}
 }

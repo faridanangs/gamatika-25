@@ -3,11 +3,10 @@
 
 const { buildModule } = require('@nomicfoundation/hardhat-ignition/modules');
 
-const JAN_1ST_2030 = 1893456000;
-const ONE_GWEI = 1_000_000_000n;
-
 module.exports = buildModule('Gamatika', (m) => {
-  const gmtk = m.contract('GMTKNFT');
+  const gmtk = m.contract('GMTKNFT', [
+    '0xcaB108CA64Fa6860750a4418A5b7c7B86288d6fe',
+  ]);
 
   return { gmtk };
 });

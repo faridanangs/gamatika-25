@@ -1,43 +1,45 @@
 'use server';
 
-export const getUserByID = async (token, userID) => {
-  const res = await fetch(`http://localhost:8080/api/users/${userID}`, {
-    cache: 'no-store',
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
+import { handleApiResponse } from '@/lib/apiHandler';
 
-  return await res.json();
+export const getUserByID = async (token, userID) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/${userID}`,
+      {
+        cache: 'no-store',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleApiResponse(resp);
+  } catch (error) {
+    throw new Error(error || 'Network Error Occurred');
+  }
 };
 
 export const getUserProfile = async (token) => {
-  const resp = await fetch(`http://localhost:8080/api/users/profile`, {
-    cache: 'no-store',
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/profile`,
+      {
+        cache: 'no-store',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const data = await resp.json();
-
-  if (!resp.ok) {
-    return {
-      success: false,
-      status: resp.status,
-      ...data,
-    };
+    return handleApiResponse(resp);
+  } catch (error) {
+    throw new Error(error || 'Network Error Occurred');
   }
-
-  return {
-    success: true,
-    status: resp.status,
-    ...data,
-  };
 };
 
 export default getUserProfile;

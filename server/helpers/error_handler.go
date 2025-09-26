@@ -441,18 +441,18 @@ func (h *DatabaseErrorHandler) extractFieldNameFromColumn(column, constraint str
 // Get field code for error messages
 func (h *DatabaseErrorHandler) getFieldCode(fieldName string) string {
 	fieldCodeMap := map[string]string{
-		"email":       "EMAIL",
-		"username":    "USERNAME",
-		"nim":         "NIM",
-		"full_name":   "FULL_NAME",
-		"prodi":       "PRODI",
-		"public_key":  "PUBLIC_KEY",
-		"private_key": "PRIVATE_KEY",
-		"avatar":      "AVATAR",
-		"password":    "PASSWORD",
-		"id":          "ID",
-		"user_id":     "USER_ID",
-		"post_id":     "POST_ID",
+		"email":          "EMAIL",
+		"username":       "USERNAME",
+		"nim":            "NIM",
+		"full_name":      "FULL_NAME",
+		"prodi":          "PRODI",
+		"wallet_address": "WALLET_ADDRESS",
+		"private_key":    "PRIVATE_KEY",
+		"avatar":         "AVATAR",
+		"password":       "PASSWORD",
+		"id":             "ID",
+		"user_id":        "USER_ID",
+		"post_id":        "POST_ID",
 	}
 
 	if code, exists := fieldCodeMap[strings.ToLower(fieldName)]; exists {
@@ -492,29 +492,30 @@ func (h *DatabaseErrorHandler) HandleTransactionError(err error, operation strin
 // Get field code for error messages
 func getFieldCode(field string) string {
 	fieldCodeMap := map[string]string{
-		"FullName":    "FULL_NAME",
-		"Username":    "USERNAME",
-		"Email":       "EMAIL",
-		"Password":    "PASSWORD",
-		"Nim":         "NIM",
-		"Prodi":       "PRODI",
-		"PublicKey":   "PUBLIC_KEY",
-		"PrivateKey":  "PRIVATE_KEY",
-		"Title":       "TITLE",
-		"Content":     "CONTENT",
-		"Images":      "IMAGES",
-		"username":    "USERNAME",
-		"email":       "EMAIL",
-		"nim":         "NIM",
-		"full_name":   "FULL_NAME",
-		"prodi":       "PRODI",
-		"public_key":  "PUBLIC_KEY",
-		"private_key": "PRIVATE_KEY",
-		"avatar":      "AVATAR",
-		"password":    "PASSWORD",
-		"id":          "ID",
-		"user_id":     "USER_ID",
-		"post_id":     "POST_ID",
+		"FullName":       "FULL_NAME",
+		"Username":       "USERNAME",
+		"Email":          "EMAIL",
+		"Password":       "PASSWORD",
+		"Nim":            "NIM",
+		"Prodi":          "PRODI",
+		"WalletAddress":  "WALLET_ADDRESS",
+		"PrivateKey":     "PRIVATE_KEY",
+		"Title":          "TITLE",
+		"Content":        "CONTENT",
+		"Images":         "IMAGES",
+		"username":       "USERNAME",
+		"email":          "EMAIL",
+		"nim":            "NIM",
+		"full_name":      "FULL_NAME",
+		"prodi":          "PRODI",
+		"wallet_address": "WALLET_ADDRESS",
+		"private_key":    "PRIVATE_KEY",
+		"avatar":         "AVATAR",
+		"password":       "PASSWORD",
+		"id":             "ID",
+		"user_id":        "USER_ID",
+		"post_id":        "POST_ID",
+		"Achievements":   "ACHIEVEMENTS",
 	}
 
 	if code, exists := fieldCodeMap[field]; exists {
@@ -526,33 +527,85 @@ func getFieldCode(field string) string {
 // Function to convert field names to more readable format
 func getReadableFieldName(field string) string {
 	fieldMap := map[string]string{
-		"FullName":    "Full Name",
-		"Username":    "Username",
-		"Email":       "Email",
-		"Password":    "Password",
-		"Nim":         "Student ID",
-		"Prodi":       "Study Program",
-		"PublicKey":   "Public Key",
-		"PrivateKey":  "Private Key",
-		"Title":       "Title",
-		"Content":     "Content",
-		"Images":      "Images",
-		"username":    "Username",
-		"email":       "Email",
-		"nim":         "Student ID",
-		"full_name":   "Full Name",
-		"prodi":       "Study Program",
-		"public_key":  "Public Key",
-		"private_key": "Private Key",
-		"avatar":      "Avatar",
-		"password":    "Password",
-		"id":          "ID",
-		"user_id":     "User ID",
-		"post_id":     "Post ID",
+		"FullName":       "Full Name",
+		"Username":       "Username",
+		"Email":          "Email",
+		"Password":       "Password",
+		"Nim":            "Student ID",
+		"Prodi":          "Study Program",
+		"WalletAddress":  "Wallet Address",
+		"PrivateKey":     "Private Key",
+		"Title":          "Title",
+		"Content":        "Content",
+		"Images":         "Images",
+		"username":       "Username",
+		"email":          "Email",
+		"nim":            "Student ID",
+		"full_name":      "Full Name",
+		"prodi":          "Study Program",
+		"wallet_address": "Wallet Address",
+		"private_key":    "Private Key",
+		"avatar":         "Avatar",
+		"password":       "Password",
+		"id":             "ID",
+		"user_id":        "User ID",
+		"post_id":        "Post ID",
+		"Achievements":   "Achievements",
 	}
 
 	if readableName, exists := fieldMap[field]; exists {
 		return readableName
 	}
 	return field
+}
+
+func HelperErrNotNil(err error, c *fiber.Ctx) error {
+	if err != nil {
+		var appErr *AppError
+		if errors.As(err, &appErr) {
+			if customErr, ok := appErr.Details.(*CustomErrorResponse); ok {
+				return c.Status(appErr.Code).JSON(customErr)
+			}
+
+			return c.Status(appErr.Code).JSON(&CustomErrorResponse{
+				Status:  "error",
+				Message: appErr.Message,
+				Errors: []FieldError{
+					{
+						Field:   "general",
+						Message: appErr.Message,
+						Code:    "GENERAL_ERROR",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(&CustomErrorResponse{
+			Status:  "error",
+			Message: "An unexpected error occurred",
+			Errors: []FieldError{
+				{
+					Field:   "system",
+					Message: "An unexpected error occurred",
+					Code:    "UNEXPECTED_ERROR",
+				},
+			},
+		})
+	}
+
+	return nil
+}
+
+func HelperInvalidReqBody(err error, c *fiber.Ctx) error {
+	return c.Status(fiber.StatusBadRequest).JSON(&CustomErrorResponse{
+		Status:  "error",
+		Message: "Invalid request body",
+		Errors: []FieldError{
+			{
+				Field:   "request",
+				Message: "Invalid request body",
+				Code:    "INVALID_REQUEST_BODY",
+			},
+		},
+	})
 }

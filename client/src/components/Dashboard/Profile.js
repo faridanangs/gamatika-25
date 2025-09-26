@@ -1,15 +1,9 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, use } from 'react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
-import { formatDateTime } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import {
-  createComment,
-  deletePost,
-  updatePost,
-  updateUser,
-} from '@/lib/action';
+import { deletePost, updatePost, updateUser } from '@/lib/action';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
@@ -20,405 +14,20 @@ import {
   CardTitle,
 } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
-import { getPrivateKey } from '@/data/getPrivateKey';
-import { CommentInput } from '../Forum/Comment';
-
-const createPlaceholderSVG = (text, width = 150, height = 150) => {
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <rect width="${width}" height="${height}" fill="#f3f4f6"/>
-    <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${text}</text>
-  </svg>`;
-};
-
-const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
-  const [title, setTitle] = useState(post.title);
-  const [content, setContent] = useState(post.content);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const handleSave = () => {
-    onSave({
-      id: post.id,
-      title,
-      content,
-    });
-  };
-
-  const handleDelete = () => {
-    onDeletePost(post.id);
-  };
-
-  const handlePrevImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? post.images.length - 1 : prev - 1
-    );
-  };
-  const handleNextImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === post.images.length - 1 ? 0 : prev + 1
-    );
-  };
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Edit Postingan</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Judul</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Masukkan judul postingan"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Konten</label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Masukkan konten postingan"
-              rows={4}
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
-          </Button>
-          <Button onClick={handleSave}>Simpan</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const PostDetailModal = ({ post, onClose, token, onCommentAdded }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [comments, setComments] = useState(post.comments || []);
-  const [newComment, setNewComment] = useState('');
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const commentsStartRef = useRef(null);
-
-  useEffect(() => {
-    commentsStartRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [comments]);
-
-  const handlePrevImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? post.images.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === post.images.length - 1 ? 0 : prev + 1
-    );
-  };
-
-  const handleAddComment = async (commentData) => {
-    const resp = await createComment(post.id, token, commentData);
-    if (!resp.success) {
-      toast.error(resp.errors[0].message);
-      return;
-    }
-
-    setComments((prev) => [resp.data, ...prev]);
-    setNewComment('');
-
-    if (onCommentAdded) {
-      onCommentAdded(post.id, resp.data);
-    }
-  };
-
-  const handleImageClick = (image) => {
-    setSelectedImage(image);
-    setShowImageModal(true);
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-xl">{post.title}</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage
-                  src={post.author?.avatar}
-                  alt={post.author?.username}
-                />
-                <AvatarFallback>{post?.author?.username?.[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{post?.author?.username}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDateTime(post?.created_at)}
-                    </p>
-                  </div>
-                  <Badge variant="secondary">{post?.category}</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {post?.content}
-              </p>
-            </div>
-
-            {post?.images && post.images.length > 0 && (
-              <div className="space-y-4">
-                <div className="relative rounded-lg overflow-hidden border">
-                  <Image
-                    src={post.images[currentImageIndex]}
-                    alt={`Gambar ${currentImageIndex + 1}`}
-                    width={800}
-                    height={600}
-                    className="w-full object-contain"
-                  />
-                  {post.images.length > 1 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                        onClick={handlePrevImage}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                        onClick={handleNextImage}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <div className="flex justify-center space-x-1">
-                  {post.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-2 h-2 rounded-full ${
-                        index === currentImageIndex
-                          ? 'bg-primary'
-                          : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div ref={commentsStartRef} />
-
-            <div className="border-t pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">Komentar ({comments.length})</h4>
-              </div>
-
-              <div className="space-y-4 mb-20">
-                {comments.map((comment, i) => (
-                  <Card
-                    key={comment.id || i}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="pt-4">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10 hidden md:inline-block">
-                          <AvatarImage
-                            src={comment?.author?.avatar}
-                            alt={comment?.author?.username}
-                          />
-                          <AvatarFallback>
-                            {comment?.author?.username?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="font-medium">
-                              {comment?.author?.username}
-                            </p>
-                            <span className="text-sm text-muted-foreground">
-                              {formatDateTime(comment?.created_at)}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                            {comment?.content}
-                          </p>
-                          {comment?.image && (
-                            <div
-                              className="rounded-lg overflow-hidden border cursor-pointer hover:shadow-md transition-shadow"
-                              onClick={() => handleImageClick(comment.image)}
-                            >
-                              <Image
-                                src={comment.image}
-                                alt={`Comment image`}
-                                width={400}
-                                height={300}
-                                className="w-full h-48 object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {comments.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Belum ada komentar. Jadilah yang pertama berkomentar!
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Input komentar tetap di bagian bawah */}
-        <div className="flex-shrink-0 border-t p-4 bg-background">
-          <CommentInput onAddComment={handleAddComment} />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const PrivateKeyModal = ({ isOpen, onClose, onVerify, token }) => {
-  const [password, setPassword] = useState('');
-  const [privateKey, setPrivateKey] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const handleVerify = async () => {
-    setIsLoading(true);
-    setError('');
-    const resp = await getPrivateKey(token, password);
-    if (!resp.success) {
-      toast.error(resp.errors[0].message);
-      setIsLoading(false);
-      return;
-    }
-    setPrivateKey(resp.data.private_key);
-    onVerify(true);
-    setIsLoading(false);
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(privateKey);
-    toast.success('Private key copied!');
-    setPrivateKey('');
-    onClose(true);
-    setPassword('');
-  };
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-[90%] dark:bg-gray-800">
-        <DialogHeader>
-          <DialogTitle>Lihat Private Key</DialogTitle>
-        </DialogHeader>
-        {privateKey ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2 dark:text-white">
-                Private Key Anda:
-              </p>
-              <div className="flex items-center justify-between gap-1">
-                <code className="text-sm font-mono dark:bg-gray-800 bg-white p-2 rounded border break-all">
-                  {privateKey}
-                </code>
-                <Button variant="outline" size="icon" onClick={copyToClipboard}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect
-                      x="9"
-                      y="9"
-                      width="13"
-                      height="13"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </Button>
-              </div>
-            </div>
-            <p className="text-xs text-red-400">
-              *Simpan private key dengan aman. Jangan berikan kepada siapa pun.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Masukkan Password
-              </label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan password Anda"
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={onClose}>
-                Batal
-              </Button>
-              <Button onClick={handleVerify} disabled={isLoading || !password}>
-                {isLoading ? 'Memverifikasi...' : 'Verifikasi'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-};
+import {
+  EditCommenttModal,
+  EditPostModal,
+  PostDetailModal,
+  PrivateKeyModal,
+} from '../Profile/PostModalProfile';
+import { conGetNFTByOwner } from '@/nft/action';
+import { Lock } from 'lucide-react';
+import { ProfileSkeletonComp } from '../skeleton/ProfileSkeleton';
+import AchievementSection from '../Profile/Achievement';
+import { formatReadableTime } from '../Forum/ForumPost';
 
 export default function ProfilePageComp({ user, token }) {
   const [nfts, setNfts] = useState([]);
@@ -433,6 +42,11 @@ export default function ProfilePageComp({ user, token }) {
   const [privateKeyVerified, setPrivateKeyVerified] = useState(false);
   const postsPerPage = 6;
   const route = useRouter();
+
+  useEffect(() => {
+    fetchAchievements();
+    fetchUserNFTs();
+  }, []);
 
   const calculateLevel = () => {
     const totalContributions =
@@ -462,43 +76,6 @@ export default function ProfilePageComp({ user, token }) {
   const levelInfo = calculateLevel();
   const leaderboardPosition = 7;
 
-  const activityTimeline = [
-    {
-      id: 1,
-      type: 'post',
-      title: `Membuat postingan "${
-        user?.posts?.[0]?.title || 'Postingan Baru'
-      }"`,
-      time: formatDateTime(user?.posts?.[0]?.created_at || new Date()),
-      icon: '📝',
-    },
-    {
-      id: 2,
-      type: 'comment',
-      title: `Komentar di postingan "${
-        user?.posts?.[1]?.title || 'Postingan Lain'
-      }"`,
-      time: formatDateTime(
-        user?.posts?.[1]?.created_at || new Date(Date.now() - 86400000)
-      ),
-      icon: '💬',
-    },
-    {
-      id: 3,
-      type: 'solve',
-      title: 'Selesaikan soal Integral Tak Tentu',
-      time: formatDateTime(new Date(Date.now() - 172800000)),
-      icon: '✅',
-    },
-    {
-      id: 4,
-      type: 'like',
-      title: 'Memberi like pada 5 postingan',
-      time: formatDateTime(new Date(Date.now() - 259200000)),
-      icon: '❤️',
-    },
-  ];
-
   const quickActions = [
     {
       id: 1,
@@ -515,25 +92,12 @@ export default function ProfilePageComp({ user, token }) {
   ];
 
   const fetchUserNFTs = async () => {
-    const mockNFTs = [
-      {
-        id: 'nft-1',
-        name: 'Top Contributor',
-        description: 'Diterima untuk 50+ kontribusi',
-        image: createPlaceholderSVG('NFT 1'),
-        earnedAt: new Date().toISOString(),
-        rarity: 'Rare',
-      },
-      {
-        id: 'nft-2',
-        name: 'Problem Solver',
-        description: 'Diterima untuk menyelesaikan 100+ soal',
-        image: createPlaceholderSVG('NFT 2'),
-        earnedAt: new Date().toISOString(),
-        rarity: 'Legendary',
-      },
-    ];
-    setNfts(mockNFTs);
+    try {
+      const resp = await conGetNFTByOwner(user?.wallet_address);
+      setNfts(resp);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const fetchAchievements = async () => {
@@ -552,20 +116,6 @@ export default function ProfilePageComp({ user, token }) {
         earned: true,
         rarity: 'Legendary',
       },
-      {
-        id: 3,
-        name: 'Excellent Rating',
-        icon: '⭐',
-        earned: true,
-        rarity: 'Common',
-      },
-      {
-        id: 4,
-        name: 'Quick Learner',
-        icon: '🚀',
-        earned: false,
-        rarity: 'Epic',
-      },
     ];
     setAchievements(mockAchievements);
   };
@@ -575,13 +125,17 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const handleSaveProfile = async () => {
-    const resp = await updateUser(token, editData);
-    if (!resp.success) {
-      toast.error(resp?.errors[0].message);
-      return;
+    try {
+      const resp = await updateUser(token, editData);
+      if (!resp.success) {
+        toast.error(resp?.errors[0].message);
+        return;
+      }
+      toast.success(resp.message);
+      setShowEditModal(false);
+    } catch (error) {
+      toast.error(error.message);
     }
-    toast.success(resp.message);
-    setShowEditModal(false);
   };
 
   const handleEditPost = (post) => {
@@ -593,25 +147,34 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const handleSavePost = async (updatedPost) => {
-    setEditingPost(null);
-    const resp = await updatePost(token, updatedPost);
-    console.log(resp);
-    if (!resp.success) {
-      toast.error(resp.errors[0].message);
-      return;
+    try {
+      setEditingPost(null);
+      const resp = await updatePost(token, updatedPost);
+      if (!resp.success) {
+        toast.error(resp.errors[0].message);
+        return;
+      }
+      toast.success(resp.message);
+    } catch (error) {
+      toast.error(error.message);
     }
-    toast.success(resp.message);
   };
 
   const handleDeletePost = async (id) => {
-    setEditingPost(null);
-    alert('Delete post!');
-    const resp = await deletePost(token, id);
-    if (!resp.success) {
-      toast.error(resp.message);
-      return;
+    try {
+      setEditingPost(null);
+      const isYes = confirm('Delete post!');
+      if (isYes) {
+        const resp = await deletePost(token, id);
+        if (!resp.success) {
+          toast.error(resp.message);
+          return;
+        }
+        toast.success(resp.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
-    toast.success(resp.message);
   };
 
   const sortedPosts = user?.posts
@@ -638,10 +201,9 @@ export default function ProfilePageComp({ user, token }) {
     setPrivateKeyVerified(verified);
   };
 
-  useEffect(() => {
-    fetchAchievements();
-    fetchUserNFTs();
-  }, []);
+  if (!user) {
+    return ProfileSkeletonComp();
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -679,12 +241,14 @@ export default function ProfilePageComp({ user, token }) {
                 </svg>
               </Button>
             </div>
-            <div className="text-center md:text-left flex-1">
+            <div className="md:text-left flex-1">
               <h1 className="text-2xl md:text-3xl font-bold">
                 {user?.full_name}
               </h1>
               <p className="text-muted-foreground mt-1">@{user?.username}</p>
-              <p className="text-muted-foreground mt-1">{user?.prodi}</p>
+              <p className="text-muted-foreground mt-1 text-[13px] ">
+                {user?.prodi}
+              </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant="destructive">Level {levelInfo.level}</Badge>
                 <Badge variant="outline">
@@ -707,17 +271,18 @@ export default function ProfilePageComp({ user, token }) {
               <p className="font-medium">{userStats.totalPosts}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Public Key</p>
+              <p className="text-sm text-muted-foreground">Wallet Address</p>
               <div className="flex items-center gap-2">
-                <code className="text-sm font-mono bg-gray-100 p-1 dark:bg-gray-800 rounded truncate">
-                  {user?.public_key}
+                <code className="text-[10px] md:text-[11px] font-mono bg-gray-100 p-1 dark:bg-gray-800 rounded truncate">
+                  {user?.wallet_address}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    navigator.clipboard.writeText(user?.public_key || '')
-                  }
+                  onClick={() => {
+                    navigator.clipboard.writeText(user?.wallet_address || '');
+                    toast.success('Wallet Address copied!');
+                  }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -768,9 +333,6 @@ export default function ProfilePageComp({ user, token }) {
             <TabsTrigger value="overview" className="whitespace-nowrap">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="activity" className="whitespace-nowrap">
-              Activity
-            </TabsTrigger>
             <TabsTrigger value="achievements" className="whitespace-nowrap">
               Achievements
             </TabsTrigger>
@@ -818,10 +380,10 @@ export default function ProfilePageComp({ user, token }) {
                               </svg>
                             </Button>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {formatDateTime(post.created_at)}
+                          <p className="text-sm text-muted-foreground mb-2 dark:text-gray-400">
+                            {formatReadableTime(post.created_at)}
                           </p>
-                          <p className="text-gray-700 mt-1 line-clamp-2">
+                          <p className="text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">
                             {post.content}
                           </p>
                           <div className="mt-2 flex items-center gap-2 text-sm">
@@ -910,7 +472,6 @@ export default function ProfilePageComp({ user, token }) {
                     })}
                   </div>
 
-                  {/* Tombol Next */}
                   <Button
                     variant="outline"
                     onClick={goToNextPage}
@@ -937,125 +498,78 @@ export default function ProfilePageComp({ user, token }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Riwayat Kontribusi</CardTitle>
-              <CardDescription>
-                Aktivitas terkait Anda di platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {activityTimeline.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-4 p-4 border rounded-lg"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xl">
-                      {activity.icon}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="achievements" className="space-y-6">
-          {/* NFT Collection */}
-          <Card>
+          <Card className="w-full">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Koleksi NFT</CardTitle>
-                <Badge variant="secondary">{nfts.length} NFT</Badge>
+              <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div className="space-y-2">
+                  <CardTitle className="text-xl sm:text-2xl">
+                    Koleksi NFT
+                  </CardTitle>
+                  <CardDescription className="text-sm sm:text-base max-w-2xl">
+                    NFT yang Anda dapatkan dari berkontribusi
+                  </CardDescription>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className="self-start sm:self-auto text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
+                >
+                  {nfts.length} NFT
+                </Badge>
               </div>
-              <CardDescription>
-                NFT yang Anda dapatkan dari berkontribusi
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {nfts.map((nft) => (
-                  <Card key={nft.id}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden">
-                          <div
-                            className="w-full h-full"
-                            dangerouslySetInnerHTML={{ __html: nft.image }}
-                          />
+              {nfts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4">
+                  {nfts.map((nft, i) => (
+                    <Card
+                      key={i}
+                      className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full"
+                    >
+                      <CardContent className="p-3 sm:p-4 flex-grow flex flex-col">
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+                            <Image
+                              src={`${
+                                process.env.NEXT_PUBLIC_IPFS_GATEWAY
+                              }${nft.image.slice(7)}`}
+                              alt={nft.name}
+                              fill
+                              className="object-cover transition-transform duration-300 hover:scale-105"
+                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              priority={i < 3}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="font-semibold text-sm sm:text-base line-clamp-1">
+                              {nft.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                              {nft.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{nft.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {nft.description}
-                          </p>
-                          <Badge
-                            variant={
-                              nft.rarity === 'Legendary'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                            className="mt-2"
-                          >
-                            {nft.rarity}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {nfts.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Belum ada NFT. Lanjutkan berkontribusi untuk mendapatkan
-                    NFT!
-                  </div>
-                )}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center text-muted-foreground px-4">
+                  <div className="mb-3 sm:mb-4 text-4xl sm:text-5xl">🏆</div>
+                  <h3 className="text-lg sm:text-xl font-medium mb-1">
+                    Belum ada NFT
+                  </h3>
+                  <p className="max-w-xs sm:max-w-md text-sm sm:text-base">
+                    Lanjutkan berkontribusi untuk mendapatkan NFT!
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Badges */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Penghargaan</CardTitle>
-              <CardDescription>Penghargaan yang Anda dapatkan</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {achievements.map((achievement) => (
-                  <Card
-                    key={achievement.id}
-                    className={`flex flex-col items-center p-4 ${
-                      achievement.earned ? 'border-primary' : 'opacity-50'
-                    }`}
-                  >
-                    <div className="text-3xl mb-2">{achievement.icon}</div>
-                    <p className="text-sm font-medium text-center">
-                      {achievement.name}
-                    </p>
-                    <Badge
-                      variant={
-                        achievement.rarity === 'Legendary'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className="mt-2"
-                    >
-                      {achievement.rarity}
-                    </Badge>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Penghargaan */}
+          <AchievementSection user={user} />
         </TabsContent>
       </Tabs>
 
@@ -1105,6 +619,7 @@ export default function ProfilePageComp({ user, token }) {
           post={viewingPost}
           onClose={() => setViewingPost(null)}
           token={token}
+          user={user}
           onCommentAdded={(postId, newComment) => {
             setViewingPost((prev) => {
               if (!prev) return prev;

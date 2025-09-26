@@ -1,4 +1,3 @@
-// app/login/page.js
 'use client';
 import { useState } from 'react';
 import Head from 'next/head';
@@ -40,8 +39,9 @@ export default function LoginPage() {
 
       if (res?.error) {
         try {
+          // Try to parse as JSON first
           const errorData = JSON.parse(res.error);
-          toast.error(errorData.error || 'Login Gagal');
+          toast.error(errorData.message || 'Login failed');
 
           if (errorData.fieldErrors && errorData.fieldErrors.length > 0) {
             const fieldErrors = {};
@@ -51,16 +51,16 @@ export default function LoginPage() {
             setErrors(fieldErrors);
           }
         } catch (parseError) {
-          toast.error(errors?.resource || 'Login gagal');
+          toast.error(res.error);
         }
       } else {
-        toast.success('Login berhasil!');
+        toast.success('Login successful!');
         setTimeout(() => {
           router.push('/dashboard/profile');
         }, 600);
       }
     } catch (error) {
-      toast.error('Terjadi kesalahan');
+      toast.error('An unexpected error occurred during login');
     } finally {
       setIsLoading(false);
     }

@@ -104,13 +104,11 @@ func (cs *CommentService) CreateComment(req models.CreateCommentRequest, tokenSt
 
 // UpdateComment - Update existing comment with token verification
 func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest, tokenString string) (*models.CommentResponse, error) {
-	// Validate token and get user
 	userID, err := cs.us.ValidateUserToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Find comment and check ownership
 	var comment models.Comment
 	if err := cs.db.Where("id = ? AND user_id = ?", req.ID, userID).First(&comment).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -133,7 +131,6 @@ func (cs *CommentService) UpdateComment(req models.UpdateCommentRequest, tokenSt
 		return nil, cs.dbErrorHandler.HandleError(err, "Comment lookup")
 	}
 
-	// Update fields if provided
 	if req.Content != "" {
 		comment.Content = req.Content
 	}
@@ -185,7 +182,7 @@ func (cs *CommentService) DeleteComment(id uint64, tokenString string) error {
 	}
 
 	// Delete the comment
-	if err := cs.db.Delete(&comment).Error; err != nil {
+	if err := cs.db.Unscoped().Delete(&comment).Error; err != nil {
 		return cs.dbErrorHandler.HandleError(err, "Comment deletion")
 	}
 

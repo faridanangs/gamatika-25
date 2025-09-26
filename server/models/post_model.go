@@ -27,7 +27,8 @@ type Post struct {
 	UserID string `gorm:"type:string;not null;index;column:user_id"`
 	Author User   `gorm:"foreignKey:user_id;references:id"`
 
-	Comments []Comment `gorm:"foreignKey:post_id;references:id"`
+	Comments []Comment  `gorm:"foreignKey:post_id;references:id"`
+	Likes    []PostLike `gorm:"foreignKey:post_id;references:id"`
 }
 
 func (Post) TableName() string {
@@ -44,26 +45,27 @@ type CreatePostRequest struct {
 
 type UpdatePostRequest struct {
 	ID      string `json:"id" validate:"required"`
-	Title   string `json:"title" validate:"omitempty,min=10,max=100"`
+	Title   string `json:"title" validate:"omitempty,min=6,max=100"`
 	Content string `json:"content" validate:"omitempty,min=10"`
 	Updated bool   `json:"updated" validate:"omitempty"`
 }
 
 // ==================== RESPONSE DTO ====================
 type PostResponse struct {
-	ID           string            `json:"id"`
-	Title        string            `json:"title"`
-	Content      string            `json:"content"`
-	Category     string            `json:"category"`
-	Images       []string          `json:"images"`
-	LikeCount    uint64            `json:"like_count"`
-	CommentCount uint64            `json:"comment_count"`
-	ShareCount   uint64            `json:"share_count"`
-	Updated      bool              `json:"updated"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
-	Author       AuthorResponse    `json:"author"`
-	Comments     []CommentResponse `json:"comments"`
+	ID           string             `json:"id"`
+	Title        string             `json:"title"`
+	Content      string             `json:"content"`
+	Category     string             `json:"category"`
+	Images       []string           `json:"images"`
+	LikeCount    uint64             `json:"like_count"`
+	CommentCount uint64             `json:"comment_count"`
+	ShareCount   uint64             `json:"share_count"`
+	Updated      bool               `json:"updated"`
+	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+	Author       AuthorResponse     `json:"author"`
+	Comments     []CommentResponse  `json:"comments"`
+	Likes        []PostLikeResponse `json:"likes"`
 }
 
 type AuthorResponse struct {
@@ -72,7 +74,26 @@ type AuthorResponse struct {
 	Avatar   string `json:"avatar"`
 }
 
-// Helper method untuk mendapatkan images dari JSON
+type PostLike struct {
+	gorm.Model
+	ID      int       `gorm:"primaryKey;autoIncerement;column:id"`
+	PostID  string    `gorm:"type:string;not null;index;column:post_id"`
+	UserID  string    `gorm:"type:string;not null;index;column:user_id"`
+	LikedAt time.Time `gorm:"column:liked_at;autoCreateTime"`
+
+	Author User `gorm:"foreignKey:user_id;references:id"`
+}
+
+func (PostLike) TableName() string {
+	return "post_likes"
+}
+
+type PostLikeResponse struct {
+	ID      int            `json:"id"`
+	LikedAt time.Time      `json:"liked_at"`
+	Author  AuthorResponse `json:"author"`
+}
+
 func (p *Post) GetImages() []string {
 	var images []string
 	if p.Images != nil {
@@ -81,7 +102,6 @@ func (p *Post) GetImages() []string {
 	return images
 }
 
-// Helper method untuk set images ke JSON
 func (p *Post) SetImages(images []string) {
 	data, _ := json.Marshal(images)
 	p.Images = datatypes.JSON(data)

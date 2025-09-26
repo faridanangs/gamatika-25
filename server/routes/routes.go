@@ -29,6 +29,7 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 
 		// Post routes
 		protected.Post("/posts", postController.CreatePost)
+		protected.Post("/posts/:id/like", postController.ToggleLike)
 		protected.Get("/posts/:id", postController.GetPostByID)
 		protected.Put("/posts/:id", postController.UpdatePost)
 		protected.Delete("/posts/:id", postController.DeletePost)

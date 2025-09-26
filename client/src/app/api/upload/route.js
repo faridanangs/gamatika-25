@@ -48,7 +48,6 @@ export async function POST(request) {
       uploadStream.end(buffer);
     });
 
-    // 6. Return response sukses
     return NextResponse.json({
       success: true,
       image: {
@@ -59,7 +58,6 @@ export async function POST(request) {
   } catch (error) {
     console.error('Upload error:', error);
 
-    // 7. Return error response yang lebih informatif
     return NextResponse.json(
       {
         success: false,

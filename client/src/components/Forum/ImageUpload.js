@@ -17,10 +17,13 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
           formData.append('images', file);
         });
 
-        const response = await fetch('/api/auth/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/auth/upload`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
