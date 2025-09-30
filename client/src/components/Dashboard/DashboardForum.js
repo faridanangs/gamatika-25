@@ -92,7 +92,7 @@ export default function DashboardForumPage({ postsO, user, token }) {
   return (
     <div className="min-h-screen dark:bg-card transition-colors duration-300 w-full overflow-x-hidden">
       <Head>
-        <title>Forum Diskusi - Gamatika 25</title>
+        <title>Forum Diskusi - Delta Civitas</title>
         <meta
           name="description"
           content="Forum diskusi untuk belajar matematika bersama"

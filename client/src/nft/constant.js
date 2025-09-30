@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-export const GMTKNFTAddress = '0xb554C2eF80090C522E175c7608B666D53db32f4A';
+export const GMTKNFTAddress = '0x9bbFf36eb093f4747998Eaa7f8DD4c95B632a28f';
 export const polygonProvider = new ethers.JsonRpcProvider(
   'https://polygon-rpc.com'
 );
@@ -408,6 +408,19 @@ export const ABI = [
       },
     ],
     name: 'balanceOf',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getAllNFTs',
     outputs: [
       {
         internalType: 'uint256',

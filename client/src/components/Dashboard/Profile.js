@@ -212,10 +212,7 @@ export default function ProfilePageComp({ user, token }) {
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24">
-                <AvatarImage
-                  src="https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png"
-                  alt={user.full_name}
-                />
+                <AvatarImage src={user.avatar} alt={user.full_name} />
                 <AvatarFallback>
                   {(user?.full_name || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>

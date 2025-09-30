@@ -9,6 +9,8 @@ export async function middleware(req) {
 
   const { pathname } = req.nextUrl;
 
+  console.log(token);
+
   if (pathname.startsWith('/dashboard') && !token) {
     return NextResponse.redirect(new URL('/login', req.url));
   }

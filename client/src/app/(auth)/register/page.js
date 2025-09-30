@@ -85,7 +85,7 @@ export default function RegisterPage() {
                 Buat Akun
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Daftar ke Gamatika
+                Daftar ke DeltaCivitas
               </p>
             </div>
 

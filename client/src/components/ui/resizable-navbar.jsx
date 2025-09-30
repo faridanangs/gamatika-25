@@ -6,7 +6,7 @@ import {
   AnimatePresence,
   useScroll,
   useMotionValueEvent,
-} from 'motion/react';
+} from 'framer-motion';
 import Link from 'next/link';
 
 import React, { useRef, useState } from 'react';
@@ -179,16 +179,11 @@ export const NavbarLogo = () => {
   return (
     <Link
       href="/"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+      className="relative z-20 mr-2 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
     >
-      <img
-        src="https://assets.aceternity.com/logo-dark.png"
-        alt="logo"
-        width={30}
-        height={30}
-      />
-      <span className="font-medium text-black dark:text-white">
-        Gamatika 25
+      <img src="/deltacivitas-icon.png" alt="logo" width={50} height={50} />
+      <span className="text-lg text-black dark:text-white font-bold">
+        DeltaCivitas
       </span>
     </Link>
   );

@@ -281,7 +281,7 @@ const ExperienceForm = ({
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Experience
+          <p className="hidden md:inline">Experience</p>
         </Button>
       </div>
     </CardHeader>
@@ -355,7 +355,6 @@ const ExperienceForm = ({
                   className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 >
                   <Plus className="w-4 h-4" />
-                  Achievement
                 </Button>
               </div>
               <div className="space-y-2">
@@ -398,7 +397,7 @@ const EducationForm = ({ education, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Education
+          <p className="hidden md:inline">Education</p>
         </Button>
       </div>
     </CardHeader>
@@ -500,7 +499,7 @@ const ProjectsForm = ({
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Project
+          <p className="hidden md:inline">Project</p>
         </Button>
       </div>
     </CardHeader>
@@ -575,7 +574,6 @@ const ProjectsForm = ({
                   className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 >
                   <Plus className="w-4 h-4" />
-                  Technology
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -625,7 +623,7 @@ const CertificationsForm = ({ certifications, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Certification
+          <p className="hidden md:inline">Certification</p>
         </Button>
       </div>
     </CardHeader>
@@ -699,7 +697,7 @@ const LanguagesForm = ({ languages, onChange, onAdd, onRemove }) => (
         </CardTitle>
         <Button onClick={onAdd} className="flex items-center gap-1">
           <Plus className="w-4 h-4" />
-          Language
+          <p className="hidden md:inline">Language</p>
         </Button>
       </div>
     </CardHeader>
@@ -1742,8 +1740,8 @@ const CVBuilder = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen  dark:bg-card text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold">Professional CV Generator</h1>
           <p className="text-gray-600 dark:text-gray-400">

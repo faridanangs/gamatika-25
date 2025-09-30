@@ -8,8 +8,6 @@ export async function POST(request) {
     const { fullName, username, prodi, nim, email, password } =
       await request.json();
 
-    console.log(fullName, username, email, nim);
-
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SERVER_API_URL}users`,
       {

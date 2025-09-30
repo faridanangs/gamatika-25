@@ -77,6 +77,7 @@ export const deletePost = async (token, postID) => {
     const result = await handleApiResponse(resp);
     if (result.success) {
       revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/admin`, 'page');
     }
     return result;
   } catch (error) {
@@ -110,6 +111,29 @@ export const updateUser = async (token, newUser) => {
     }
     return result;
   } catch (error) {}
+};
+
+export const deleteUser = async (token, userID) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/${userID}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/admin`, 'page');
+    }
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
 };
 
 export const registerUser = async (userData) => {

@@ -185,3 +185,21 @@ textarea {
   background: linear-gradient(to right, #374151 8%, #1f2937 18%, #374151 33%);
   background-size: 200px 100%;
 }
+
+@keyframes bubble {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(var(--x), var(--y)) scale(1.1);
+  }
+  100% {
+    transform: translate(calc(var(--x) * 2), calc(var(--y) * 2)) scale(1);
+  }
+}
+
+.animate-bubble {
+  --x: 0;
+  --y: 0;
+  animation: bubble var(--duration, 3s) infinite ease-in-out;
+}

@@ -9,7 +9,12 @@ import LogoutButton from '@/components/LogoutButton';
 const menuItems = [
   { id: 'profile', label: 'Profil', icon: '👤', href: '/dashboard/profile' },
   { id: 'forum', label: 'Forum', icon: '📢', href: '/dashboard/forum' },
-  { id: 'materi', label: 'Materi', icon: '📚', href: '/dashboard/materi' },
+  {
+    id: 'E-Book & Jurnal',
+    label: 'E-Book & Jurnal',
+    icon: '📚',
+    href: '/dashboard/materi',
+  },
   { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
   { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
 ];
@@ -81,11 +86,14 @@ export default function DashboardPage({ children }) {
               </button>
               <div className="">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                    ∑
-                  </div>
+                  <img
+                    src="/deltacivitas-icon.png"
+                    alt="logo"
+                    width={50}
+                    height={50}
+                  />
                   <div>
-                    <h1 className="text-xl font-bold">GAMATIKA 25</h1>
+                    <h1 className="text-xl font-bold">Delta Civitas</h1>
                     <p className="text-xs text-muted-foreground">
                       Dashboard Science
                     </p>

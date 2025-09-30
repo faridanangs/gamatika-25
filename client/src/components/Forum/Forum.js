@@ -5,6 +5,9 @@ import { categories } from '@/data/mockForum';
 import { ForumPost } from './ForumPost';
 import { PostSkeleton } from '../PostSkeleton';
 import { TopContributorsSkeleton } from '../TopContibSkeleton';
+import { Button } from '../ui/button';
+import toast from 'react-hot-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 export default function ForumPage({ postsO, contribsO }) {
   const [posts, setPosts] = useState([]);
@@ -31,9 +34,9 @@ export default function ForumPage({ postsO, contribsO }) {
   }, [postsO, contribsO]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 pt-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 transition-colors duration-300 pt-10">
       <Head>
-        <title>Forum Diskusi - Gamatika 25</title>
+        <title>Forum Diskusi - Delta Civitas</title>
         <meta
           name="description"
           content="Forum diskusi untuk belajar sciences bersama"
@@ -123,10 +126,9 @@ export default function ForumPage({ postsO, contribsO }) {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-bold mb-4">Forum Diskusi Gamatika</h3>
-              <p className="text-gray-400 dark:text-gray-500">
-                Platform diskusi untuk belajar matematika bersama angkatan 25
-              </p>
+              <h3 className="text-lg font-bold mb-4">
+                Forum Diskusi Delta Civitas
+              </h3>
             </div>
             <div>
               <h3 className="text-lg font-bold mb-4">Aturan Forum</h3>
@@ -140,16 +142,16 @@ export default function ForumPage({ postsO, contribsO }) {
             <div>
               <h3 className="text-lg font-bold mb-4">Kontak</h3>
               <ul className="text-gray-400 dark:text-gray-500 space-y-2">
-                <li>Email: forum@gamatika25.com</li>
+                <li>Email: forum@deltacivitas.com</li>
                 <li>WhatsApp: 0812-3456-7890</li>
-                <li>Instagram: @forum_gamatika25</li>
+                <li>Instagram: @forum_deltacivitas</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-700 dark:border-gray-800 mt-8 pt-6 text-center text-gray-400 dark:text-gray-500">
             <p>
-              &copy; {new Date().getFullYear()} Forum Diskusi Angkatan 25
-              Gamatika. All rights reserved.
+              &copy; {new Date().getFullYear()} Forum Diskusi Delta Civitas. All
+              rights reserved.
             </p>
           </div>
         </div>
@@ -158,28 +160,32 @@ export default function ForumPage({ postsO, contribsO }) {
   );
 }
 
-function TopContributors({ props }) {
+export function TopContributors({ props, isText = true, isAddress = false }) {
   if (props.length == 0) {
     return <TopContributorsSkeleton />;
   }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
-      <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-        Top Contributors{' '}
-        <p className="text-[14px] text-gray-400">(setiap 7 hari)</p>
-      </h2>
+      {isText && (
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          Top Contributors{' '}
+          <p className="text-[14px] text-gray-400">(setiap 7 hari)</p>
+        </h2>
+      )}
       <div className="space-y-4">
         {props?.map((contributor, index) => (
           <div key={index} className="flex items-center">
             <div className="relative">
-              <img
-                src="https://res.cloudinary.com/detetmaw8/image/upload/v1757921861/forum-gamatika/otbxpefnhnflbthutosi.png"
-                alt={contributor?.user.username}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              <Avatar className="w-14 h-14">
+                <AvatarImage
+                  src={contributor?.user.avatar}
+                  alt={contributor?.user.full_name}
+                />
+                <AvatarFallback>
+                  {(contributor?.user.full_name || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
                 {contributor?.rank}
               </div>
@@ -192,6 +198,41 @@ function TopContributors({ props }) {
                 {contributor?.score} poin
               </p>
             </div>
+            {isAddress && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      contributor?.user.wallet_address || ''
+                    );
+                    toast.success('Wallet Address copied!');
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="9"
+                      y="9"
+                      width="13"
+                      height="13"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>

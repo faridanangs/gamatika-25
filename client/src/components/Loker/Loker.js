@@ -69,11 +69,11 @@ export default function LokerPage() {
         <title>Ingfo Loker Cok</title>
         <meta
           name="description"
-          content="Temukan peluang karir untuk angkatan 25 Gamatika"
+          content="Temukan peluang karir di Delta Civitas"
         />
       </Head>
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 dark:from-blue-700 to-indigo-700 dark:to-indigo-800 text-white py-16 transition-colors duration-300">
+      <section className="bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 dark:text-white py-18 transition-colors duration-300">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-4">Ingfo Loker Cok</h1>
           <p className="text-xl mb-6">
@@ -188,18 +188,18 @@ export default function LokerPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-bold mb-4">
-                Ingfo Loker Gamatika 25
+                Ingfo Loker Delta Civitas
               </h3>
               <p className="text-gray-400 dark:text-gray-500">
-                Gamatika Career Hub — wadah informasi lowongan kerja untuk semua
-                mahasiswa dan fresh graduate, baik full-time, part-time, remote,
-                maupun onsite.
+                Delta Civitas Career Hub — wadah informasi lowongan kerja untuk
+                semua mahasiswa dan fresh graduate, baik full-time, part-time,
+                remote, maupun onsite.
               </p>
             </div>
             <div>
               <h3 className="text-lg font-bold mb-4">Kontak</h3>
               <ul className="text-gray-400 dark:text-gray-500 space-y-2">
-                <li>Email: info@gamatika25.com</li>
+                <li>Email: info@deltacivitas.com</li>
                 <li>Telepon: 021-1234567</li>
                 <li>Alamat: Jakarta, Indonesia</li>
               </ul>
@@ -248,7 +248,7 @@ export default function LokerPage() {
           </div>
           <div className="border-t border-gray-700 dark:border-gray-800 mt-8 pt-6 text-center text-gray-400 dark:text-gray-500">
             <p>
-              &copy; {new Date().getFullYear()} Ingfo Loker Gamatika 25. All
+              &copy; {new Date().getFullYear()} Ingfo Loker Delta Civitas. All
               rights reserved.
             </p>
           </div>

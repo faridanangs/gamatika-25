@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 const World = dynamic(
@@ -31,7 +31,7 @@ export function Globe() {
     maxRings: 3,
     initialPosition: { lat: 22.3193, lng: 114.1694 },
     autoRotate: true,
-    autoRotateSpeed: 0.5,
+    autoRotateSpeed: 0.9,
   };
   const colors = ['#06b6d4', '#3b82f6', '#6366f1'];
   const sampleArcs = [
@@ -398,34 +398,9 @@ export function Globe() {
   ];
 
   return (
-    <div className="flex flex-row items-center justify-center py-15 h-screen md:h-auto dark:bg-black bg-white relative w-full">
-      <div className="max-w-7xl mx-auto w-full relative overflow-hidden h-full md:h-[40rem] px-4">
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 1,
-          }}
-          className="div relative z-30"
-        >
-          <h2 className="text-center text-xl md:text-4xl md:mt-4 font-bold text-black dark:text-white">
-            “Mathematics 2025”
-          </h2>
-          <p className="text-center text-base md:text-lg font-normal text-neutral-700 dark:text-neutral-200 max-w-md mt-2 mx-auto">
-            Membangun komunitas mahasiswa matematika yang solid, berbagi ilmu
-            tanpa batas.
-          </p>
-        </motion.div>
-        {/* <div className="absolute w-full bottom-0 inset-x-0 h-40 bg-gradient-to-b pointer-events-none select-none from-transparent dark:to-black to-white z-40" /> */}
-        <div className="absolute w-full md:-bottom-15 h-72 md:h-full z-10">
-          <World data={sampleArcs} globeConfig={globeConfig} />
-        </div>
+    <div className="relative w-full h-96 lg:h-[500px]">
+      <div className="absolute inset-0">
+        <World data={sampleArcs} globeConfig={globeConfig} />
       </div>
     </div>
   );

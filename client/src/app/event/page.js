@@ -79,14 +79,11 @@ export default function PengumumanPage() {
     <div className="w-full bg-gray-900 ">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 max-w-7xl mx-auto">
         <Head>
-          <title>Pengumuman - Gamatika</title>
-          <meta
-            name="description"
-            content="Pengumuman resmi Program Studi Matematika"
-          />
+          <title>Pengumuman - Delta Civitas</title>
+          <meta name="description" content="Pengumuman resmi  Delta Civitas" />
         </Head>
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 shadow-md z-10 pt-10">
+        <header className="bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 shadow-md z-10 pt-15">
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
@@ -94,7 +91,7 @@ export default function PengumumanPage() {
                   Pengumuman Resmi
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300 mt-1">
-                  Program Studi Matematika
+                  Fakultas MIPA
                 </p>
               </div>
             </div>
@@ -397,10 +394,8 @@ export default function PengumumanPage() {
           <div className="container mx-auto px-4">
             <div className="text-center">
               <p className="text-gray-400">
-                &copy; {new Date().getFullYear()} Gamatika. All rights reserved.
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                Program Studi Matematika | Universitas XYZ
+                &copy; {new Date().getFullYear()} Delta Civitas. All rights
+                reserved.
               </p>
             </div>
           </div>

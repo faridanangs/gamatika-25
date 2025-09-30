@@ -132,7 +132,7 @@ export function ForumPost({
         {post?.images.length > 0 && (
           <div className="mb-4 rounded-2xl">
             <div className="relative group">
-              <div className="relative w-full max-h-fit h-full max-w-fit overflow-hidden mx-auto">
+              <div className="relative lg:w-[70%] max-h-fit h-full max-w-fit overflow-hidden mx-auto border-[1px] border-gray-800 dark:border-gray-400 rounded-sm dark:shadow-sm">
                 <Image
                   alt={`Post image ${selectedImageIndex + 1}`}
                   src={post?.images[selectedImageIndex] || post?.images[0]}

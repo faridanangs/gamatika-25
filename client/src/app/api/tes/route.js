@@ -25,7 +25,7 @@ export async function GET() {
     const testResult = await cloudinary.uploader.upload(
       `data:image/png;base64,${testImage.toString('base64')}`,
       {
-        folder: 'forum-gamatika',
+        folder: 'forum-deltacivitas',
         public_id: 'test-upload',
       }
     );

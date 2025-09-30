@@ -4,13 +4,16 @@ export function EventSkeleton() {
   return (
     <div className="w-full bg-gray-900">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 max-w-7xl mx-auto">
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-800 shadow-md z-10 pt-10">
+        <header className="bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 shadow-md z-10 pt-15">
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
-                <Skeleton className="h-8 w-48 mb-2 animate-shimmer" />
-                <Skeleton className="h-4 w-64 animate-shimmer" />
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+                  Pengumuman Resmi
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300 mt-1">
+                  Fakultas MIPA
+                </p>
               </div>
             </div>
           </div>

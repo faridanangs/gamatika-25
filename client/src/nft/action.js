@@ -1,7 +1,6 @@
 'use client';
 import { ethers } from 'ethers';
 import { ABI, GMTKNFTAddress, polygonAmoyProvider } from './constant';
-import toast from 'react-hot-toast';
 
 const handleError = (error) => {
   // Error dari JSON-RPC (MetaMask, provider)
@@ -88,7 +87,6 @@ export const conMintNFT = async (address) => {
     const contract = await contractConfigWithSigner();
     const tx = await contract.mintNFT(address);
     await tx.wait();
-    return tx;
   } catch (error) {
     const errorMessage = handleError(error);
     throw new Error(errorMessage);
@@ -137,6 +135,20 @@ export const conGetNFTByOwner = async (address) => {
     );
 
     return await Promise.all(fetchNFTInIPFS);
+  } catch (error) {
+    const errorMessage = handleError(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const conGetAllNFTs = async () => {
+  try {
+    const contract = await contractConfigWithoutSigner();
+    const tx = await contract.getAllNFTs();
+
+    if (!tx || tx.length === 0) return 0;
+
+    return tx;
   } catch (error) {
     const errorMessage = handleError(error);
     throw new Error(errorMessage);
