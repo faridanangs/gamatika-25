@@ -1,9 +1,8 @@
-# 🎓 Gamatika 25 - Portal Digital MIPA Universitas XYZ
+# 🎓 Delta Civitas - Portal Digital MIPA
 
-> Platform digital terintegrasi untuk seluruh mahasiswa Fakultas MIPA (Matematika dan Ilmu Pengetahuan Alam) Universitas XYZ
+> Platform digital terintegrasi untuk seluruh mahasiswa Fakultas MIPA (Matematika dan Ilmu Pengetahuan Alam)
 
-![Gamatika Logo](https://via.placeholder.com/150x150?text=Gamatika)  
-_[Ganti dengan logo yang sesungguhnya]_
+![Gamatika Logo](https://github.com/faridanangs/gamatika-25/blob/main/client/public/deltacivitas-icon.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node.js-18.x-green.svg)](https://nodejs.org/)
