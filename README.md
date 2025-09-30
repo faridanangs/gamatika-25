@@ -91,7 +91,7 @@ Proyek ini dibangun menggunakan arsitektur modern dengan pemisahan antara fronte
 
 1.  **Clone repository ini:**
     ```bash
-    git clone [https://github.com/faridanangs/gamatika-25.git](https://github.com/faridanangs/gamatika-25.git)
+    git clone https://github.com/faridanangs/gamatika-25.git
     cd gamatika-25
     ```
 
