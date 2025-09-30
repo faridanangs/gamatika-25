@@ -149,37 +149,24 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 
 // DeleteUser - Delete user with ownership check
 func (us *UserService) DeleteUser(id string, tokenString string) error {
-	userID, err := us.ValidateUserToken(tokenString)
+
+	claims, err := middleware.ValidateJWT(tokenString)
 	if err != nil {
-		return err
+		return &helpers.AppError{
+			Code:    fiber.StatusUnauthorized,
+			Message: "Invalid or expired token",
+		}
 	}
 
-	if id != userID {
+	if id != claims.UserID && claims.Role != "admin" {
 		return &helpers.AppError{
 			Code:    fiber.StatusForbidden,
 			Message: "You can only delete your own account",
 		}
 	}
 
-	tx := us.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	if err := tx.Where("user_id = ?", id).Unscoped().Delete(&models.Post{}).Error; err != nil {
-		tx.Rollback()
-		return us.dbErrorHandler.HandleTransactionError(err, "Post deletion")
-	}
-
-	if err := tx.Where("id = ?", id).Unscoped().Delete(&models.User{}).Error; err != nil {
-		tx.Rollback()
+	if err := us.db.Where("id = ?", id).Unscoped().Delete(&models.User{}).Error; err != nil {
 		return us.dbErrorHandler.HandleTransactionError(err, "User deletion")
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return us.dbErrorHandler.HandleTransactionError(err, "Transaction commit")
 	}
 
 	return nil
@@ -231,7 +218,7 @@ func (us *UserService) LoginUser(email, password string) (*models.UserResponse, 
 		}
 	}
 
-	token, err := middleware.GenerateJWT(user.ID, user.Username)
+	token, err := middleware.GenerateJWT(user.ID, user.Username, user.Role)
 	if err != nil {
 		return nil, "", &helpers.AppError{
 			Code:    fiber.StatusInternalServerError,
@@ -377,9 +364,10 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 		topContributors = append(topContributors, models.TopContributorsResponse{
 			Rank: uint64(i + 1),
 			User: models.AuthorResponse{
-				ID:       user.ID,
-				Username: user.Username,
-				Avatar:   user.Avatar,
+				ID:            user.ID,
+				Username:      user.Username,
+				Avatar:        user.Avatar,
+				WalletAddress: user.WalletAddress,
 			},
 			Score: contrib.TotalScore,
 			Breakdown: models.ContributionBreakdown{

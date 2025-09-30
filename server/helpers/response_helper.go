@@ -5,9 +5,10 @@ import "github.com/faridanangs/gamatika-25/models"
 // Helper function to map User to AuthorResponse
 func MapToAuthorResponse(user models.User) models.AuthorResponse {
 	return models.AuthorResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Avatar:   user.Avatar,
+		ID:            user.ID,
+		Username:      user.Username,
+		Avatar:        user.Avatar,
+		WalletAddress: user.WalletAddress,
 	}
 }
 
@@ -73,6 +74,7 @@ func MapToUserResponse(user models.User) *models.UserResponse {
 		ID:            user.ID,
 		FullName:      user.FullName,
 		Username:      user.Username,
+		Role:          user.Role,
 		Avatar:        user.Avatar,
 		Prodi:         user.Prodi,
 		Nim:           user.Nim,

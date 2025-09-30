@@ -24,11 +24,10 @@ type Post struct {
 	UpdatedAt    time.Time      `gorm:"column:updated_at;autoUpdateTime"`
 
 	// Relations
-	UserID string `gorm:"type:string;not null;index;column:user_id"`
-	Author User   `gorm:"foreignKey:user_id;references:id"`
-
-	Comments []Comment  `gorm:"foreignKey:post_id;references:id"`
-	Likes    []PostLike `gorm:"foreignKey:post_id;references:id"`
+	UserID   string     `gorm:"type:string;not null;index;column:user_id"`
+	Author   User       `gorm:"foreignKey:user_id;references:id;constraint:OnDelete:CASCADE"`
+	Comments []Comment  `gorm:"foreignKey:post_id;references:id;constraint:OnDelete:CASCADE"`
+	Likes    []PostLike `gorm:"foreignKey:post_id;references:id;constraint:OnDelete:CASCADE"`
 }
 
 func (Post) TableName() string {
@@ -37,16 +36,16 @@ func (Post) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreatePostRequest struct {
-	Title    string   `json:"title" validate:"required,min=6,max=100"`
-	Content  string   `json:"content" validate:"required,min=10"`
+	Title    string   `json:"title" validate:"required,min=4,max=100"`
+	Content  string   `json:"content" validate:"required,min=6"`
 	Category string   `json:"category" validate:"required,min=5,max=50"`
 	Images   []string `json:"images" validate:"max=4,required,omitempty"`
 }
 
 type UpdatePostRequest struct {
 	ID      string `json:"id" validate:"required"`
-	Title   string `json:"title" validate:"omitempty,min=6,max=100"`
-	Content string `json:"content" validate:"omitempty,min=10"`
+	Title   string `json:"title" validate:"omitempty,min=4,max=100"`
+	Content string `json:"content" validate:"omitempty,min=6"`
 	Updated bool   `json:"updated" validate:"omitempty"`
 }
 
@@ -69,29 +68,10 @@ type PostResponse struct {
 }
 
 type AuthorResponse struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Avatar   string `json:"avatar"`
-}
-
-type PostLike struct {
-	gorm.Model
-	ID      int       `gorm:"primaryKey;autoIncerement;column:id"`
-	PostID  string    `gorm:"type:string;not null;index;column:post_id"`
-	UserID  string    `gorm:"type:string;not null;index;column:user_id"`
-	LikedAt time.Time `gorm:"column:liked_at;autoCreateTime"`
-
-	Author User `gorm:"foreignKey:user_id;references:id"`
-}
-
-func (PostLike) TableName() string {
-	return "post_likes"
-}
-
-type PostLikeResponse struct {
-	ID      int            `json:"id"`
-	LikedAt time.Time      `json:"liked_at"`
-	Author  AuthorResponse `json:"author"`
+	ID            string `json:"id"`
+	Username      string `json:"username"`
+	Avatar        string `json:"avatar"`
+	WalletAddress string `json:"wallet_address"`
 }
 
 func (p *Post) GetImages() []string {

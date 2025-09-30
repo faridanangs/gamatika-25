@@ -20,8 +20,8 @@ type Comment struct {
 	PostID string `gorm:"type:string;not null;index;column:post_id"`
 	UserID string `gorm:"type:string;not null;index;column:user_id"`
 
-	Post   Post `gorm:"foreignKey:post_id;references:id"`
-	Author User `gorm:"foreignKey:user_id;references:id"`
+	Post   Post `gorm:"foreignKey:post_id;references:id;constraint:OnDelete:CASCADE"`
+	Author User `gorm:"foreignKey:user_id;references:id;constraint:OnDelete:CASCADE"`
 }
 
 func (Comment) TableName() string {
@@ -30,13 +30,13 @@ func (Comment) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreateCommentRequest struct {
-	Content string `json:"content" validate:"required,min=10"`
+	Content string `json:"content" validate:"required,min=2"`
 	Image   string `json:"image" validate:"omitempty,max=255"`
 	PostID  string `json:"post_id" validate:"required"`
 }
 
 type UpdateCommentRequest struct {
-	ID      uint64 `json:"id" validate:"required,numeric,min=1"`
+	ID      uint64 `json:"id" validate:"required,numeric,min=2"`
 	Content string `json:"content" validate:"required,min=10"`
 	Updated bool   `json:"updated"`
 }

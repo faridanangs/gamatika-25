@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/faridanangs/gamatika-25/helpers"
+	"github.com/faridanangs/gamatika-25/middleware"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -132,14 +133,17 @@ func (ps *PostService) UpdatePost(req models.UpdatePostRequest, tokenString stri
 
 // DeletePost - Delete post with token verification
 func (ps *PostService) DeletePost(id string, tokenString string) error {
-	userID, err := ps.us.ValidateUserToken(tokenString)
+	claims, err := middleware.ValidateJWT(tokenString)
 	if err != nil {
-		return err
+		return &helpers.AppError{
+			Code:    fiber.StatusUnauthorized,
+			Message: "Invalid or expired token",
+		}
 	}
 
 	// Find post and check ownership
 	var post models.Post
-	if err := ps.db.Where("id = ? AND user_id = ?", id, userID).First(&post).Error; err != nil {
+	if err := ps.db.Preload("Author").Where("id = ? AND user_id = ?", id, claims.UserID).First(&post).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -160,35 +164,15 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 		return ps.dbErrorHandler.HandleError(err, "Post lookup")
 	}
 
-	// Start transaction
-	tx := ps.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	if post.Author.ID != claims.UserID && claims.Role != "admin" {
+		return &helpers.AppError{
+			Code:    fiber.StatusForbidden,
+			Message: "You can only delete your own post",
 		}
-	}()
-
-	// Delete all comments associated with the post
-	if err := tx.Where("post_id = ?", id).Unscoped().Delete(&models.Comment{}).Error; err != nil {
-		tx.Rollback()
-		return ps.dbErrorHandler.HandleTransactionError(err, "Comments deletion")
 	}
 
-	// Delete all likes associated with the post
-	if err := tx.Where("post_id = ?", id).Unscoped().Delete(&models.PostLike{}).Error; err != nil {
-		tx.Rollback()
-		return ps.dbErrorHandler.HandleTransactionError(err, "Likes deletion")
-	}
-
-	// Delete the post
-	if err := tx.Unscoped().Delete(&post).Error; err != nil {
-		tx.Rollback()
+	if err := ps.db.Unscoped().Delete(&post).Error; err != nil {
 		return ps.dbErrorHandler.HandleTransactionError(err, "Post deletion")
-	}
-
-	// Commit transaction
-	if err := tx.Commit().Error; err != nil {
-		return ps.dbErrorHandler.HandleTransactionError(err, "Transaction commit")
 	}
 
 	return nil

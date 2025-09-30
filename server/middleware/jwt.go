@@ -15,14 +15,16 @@ var jwtSecret = []byte("your-secret-key-here")
 type JWTClaims struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // Generate JWT token
-func GenerateJWT(userID, username string) (string, error) {
+func GenerateJWT(userID, username, role string) (string, error) {
 	claims := JWTClaims{
 		UserID:   userID,
 		Username: username,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

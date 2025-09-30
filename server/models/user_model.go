@@ -13,6 +13,7 @@ type User struct {
 	ID            string    `gorm:"type:string;primaryKey;column:id"`
 	FullName      string    `gorm:"column:full_name;not null;type:varchar(100)"`
 	Username      string    `gorm:"uniqueIndex;column:username;not null;type:varchar(20)"`
+	Role          string    `gorm:"column:role;not null,type:varchar(5);default:user"`
 	Avatar        string    `gorm:"column:avatar;type:varchar(500);not null"`
 	Prodi         string    `gorm:"column:prodi;type:varchar(50);not null"`
 	Nim           string    `gorm:"column:nim;not null;uniqueIndex;type:varchar(30)"`
@@ -23,7 +24,7 @@ type User struct {
 	CreatedAt     time.Time `gorm:"column:created_at;autoCreateTime"`
 
 	Achievements datatypes.JSON `gorm:"column:achievements;types:jsonb"`
-	Posts        []Post         `gorm:"foreignKey:user_id;references:id"`
+	Posts        []Post         `gorm:"foreignKey:user_id;references:id;constraint:OnDelete:CASCADE"`
 }
 
 func (User) TableName() string {
@@ -61,6 +62,7 @@ type UserResponse struct {
 	ID            string         `json:"id"`
 	FullName      string         `json:"full_name"`
 	Username      string         `json:"username"`
+	Role          string         `json:"role"`
 	Avatar        string         `json:"avatar"`
 	Prodi         string         `json:"prodi"`
 	Nim           string         `json:"nim"`

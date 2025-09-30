@@ -176,12 +176,10 @@ func (cs *CommentService) DeleteComment(id uint64, tokenString string) error {
 		return cs.dbErrorHandler.HandleError(err, "Comment lookup")
 	}
 
-	// Update comment count in post
 	if err := cs.db.Model(&models.Post{}).Where("id = ?", comment.PostID).Update("comment_count", gorm.Expr("comment_count - 1")).Error; err != nil {
 		return cs.dbErrorHandler.HandleError(err, "Comment count update")
 	}
 
-	// Delete the comment
 	if err := cs.db.Unscoped().Delete(&comment).Error; err != nil {
 		return cs.dbErrorHandler.HandleError(err, "Comment deletion")
 	}
