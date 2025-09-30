@@ -99,4 +99,8 @@ contract GMTKNFT is ERC721, Ownable {
     function getNFT(address owner_) public view returns (uint256[] memory) {
         return ownerNFT[owner_];
     }
+
+    function getAllNFTs() public view returns (uint256) {
+        return _nextTokenId - 1;
+    }
 }
