@@ -1,8 +1,8 @@
-# 🎓 Gamatika 25 - Portal Digital MIPA Universitas XYZ
+# 🎓 DeltaCivitas - Portal Digital MIPA Universitas XYZ
 
 > Platform digital terintegrasi untuk seluruh mahasiswa Fakultas MIPA (Matematika dan Ilmu Pengetahuan Alam) Universitas XYZ
 
-![Gamatika Logo](https://via.placeholder.com/150x150?text=Gamatika)  
+![DeltaCivitas Logo](https://via.placeholder.com/150x150?text=DeltaCivitas)  
 _[Ganti dengan logo yang sesungguhnya]_
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -25,7 +25,7 @@ _[Ganti dengan logo yang sesungguhnya]_
 
 ## 📖 About
 
-Gamatika 25 adalah portal digital komprehensif yang dirancang khusus untuk mahasiswa seluruh program studi di Fakultas MIPA Universitas XYZ. Platform ini menyediakan akses terpadu ke berbagai sumber pembelajaran, jadwal akademik, materi perkuliahan, forum interdisiplin, informasi karir, dan sistem pendukungan pembelajaran berbasis AI.
+DeltaCivitas adalah portal digital komprehensif yang dirancang khusus untuk mahasiswa seluruh program studi di Fakultas MIPA Universitas XYZ. Platform ini menyediakan akses terpadu ke berbagai sumber pembelajaran, jadwal akademik, materi perkuliahan, forum interdisiplin, informasi karir, dan sistem pendukungan pembelajaran berbasis AI.
 
 ### 🎯 Visi
 
