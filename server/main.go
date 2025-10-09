@@ -14,14 +14,17 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/joho/godotenv"
 )
 
 // Golang
 func main() {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "your-secret-key-here"
+	if err := godotenv.Load(); err != nil {
+		log.Panic(err)
 	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+
 	middleware.SetJWTSecret(jwtSecret)
 
 	app := fiber.New(fiber.Config{})

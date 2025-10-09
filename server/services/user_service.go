@@ -13,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/josestg/getenv"
 	"gorm.io/gorm"
 )
 
@@ -59,12 +60,13 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 		}
 	}
 
-	req.Avatar = "https://res.cloudinary.com/detetmaw8/image/upload/v1758013653/forum-comments/xzfg7jskt08evwbdh0n5.png"
+	req.Avatar = getenv.String("AVATAR", "https://res.cloudinary.com/detetmaw8/image/upload/v1758013653/forum-comments/xzfg7jskt08evwbdh0n5.png")
 
 	user := models.User{
 		ID:            uuid.NewString(),
 		FullName:      req.FullName,
 		Username:      req.Username,
+		Role:          req.Role,
 		Avatar:        req.Avatar,
 		Prodi:         req.Prodi,
 		Nim:           req.Nim,
@@ -131,6 +133,7 @@ func (us *UserService) UpdateUser(req models.UpdateUserRequest, tokenString stri
 		newAchievements := append(existingAchievements, req.Achievements...)
 
 		updatedData, err := json.Marshal(newAchievements)
+
 		if err != nil {
 			return nil, us.dbErrorHandler.HandleError(err, "Marshal updated achievements")
 		}

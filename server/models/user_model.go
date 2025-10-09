@@ -36,6 +36,7 @@ type CreateUserRequest struct {
 	FullName      string `json:"full_name" validate:"required,min=3,max=100"`
 	Username      string `json:"username" validate:"required,alphanum,min=5,max=20"`
 	Avatar        string `json:"avatar" validate:"omitempty,url"`
+	Role          string `json:"role" validate:"omitempty,min=5,max=5"`
 	Prodi         string `json:"prodi" validate:"required,min=2,max=50"`
 	Nim           string `json:"nim" validate:"alphanum,required,min=6,max=20"`
 	Email         string `json:"email" validate:"required,email"`
