@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 export const DetailJournalModal = ({ showDetail, journal, closeDetail }) => {
   if (!showDetail || !journal) return null;
@@ -351,18 +352,17 @@ export const JournalList = ({
               setCurrentPage(prevPage);
             }}
             disabled={apiResponse.page === 1}
-            className={`flex items-center px-4 py-2 rounded-lg ${
+            className={`flex items-center  px-4 py-2 rounded-lg ${
               apiResponse.page === 1
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
-            <ChevronLeft className="mr-2" size={16} />
+            <ChevronLeft size={16} />
           </button>
 
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            Halaman {apiResponse.page} dari {Math.ceil(apiResponse.total / 6)}(
-            {apiResponse.total} total hasil)
+            Page {apiResponse.page} dari {Math.ceil(apiResponse.total / 6)}
           </div>
 
           <button
@@ -374,13 +374,13 @@ export const JournalList = ({
               setCurrentPage(nextPage);
             }}
             disabled={apiResponse.page >= Math.ceil(apiResponse.total / 6)}
-            className={`flex items-center px-4 py-2 rounded-lg ${
+            className={`flex items-center  px-4 py-2 rounded-lg ${
               apiResponse.page >= Math.ceil(apiResponse.total / 6)
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
-            <ChevronRight className="ml-2" size={16} />
+            <ChevronRight size={16} />
           </button>
         </div>
       )}

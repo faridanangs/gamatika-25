@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 
 import React, { useRef, useState } from 'react';
+import { Button } from './button';
 
 export const Navbar = ({ children, className }) => {
   const ref = useRef(null);
@@ -84,21 +85,31 @@ export const NavItems = ({ items, className, onItemClick }) => {
       )}
     >
       {items.map((item, idx) => (
-        <a
-          onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
-          className="relative px-4 py-2 text-black dark:text-neutral-300"
+        <Button
           key={`link-${idx}`}
-          href={item.link}
+          disabled={item.link == '/loker' ? true : false}
+          className="bg-transparent m-0 p-0 hover:bg-transparent relative"
         >
-          {hovered === idx && (
-            <motion.div
-              layoutId="hovered"
-              className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800"
-            />
+          {item.link == '/loker' && (
+            <p className="bg-gradient-to-br from-[#b58d6b] to-[#da736d] rounded-lg font-bold text-white absolute -top-3 px-2 py-[1px] right-0">
+              soon
+            </p>
           )}
-          <span className="relative z-20">{item.name}</span>
-        </a>
+          <Link
+            onMouseEnter={() => setHovered(idx)}
+            onClick={onItemClick}
+            className="relative px-4 py-2 text-black dark:text-neutral-300"
+            href={item.link}
+          >
+            {hovered === idx && (
+              <motion.div
+                layoutId="hovered"
+                className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800"
+              />
+            )}
+            <span className="relative z-20">{item.name}</span>
+          </Link>
+        </Button>
       ))}
     </motion.div>
   );
@@ -179,7 +190,7 @@ export const NavbarLogo = () => {
   return (
     <Link
       href="/"
-      className="relative z-20 mr-2 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
     >
       <img src="/deltacivitas-icon.png" alt="logo" width={50} height={50} />
       <span className="text-lg text-black dark:text-white font-bold">

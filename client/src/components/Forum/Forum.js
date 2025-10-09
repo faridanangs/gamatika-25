@@ -54,7 +54,7 @@ export default function ForumPage({ postsO, contribsO }) {
                   Diskusi Sciences
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Bertukar pengetahuan dan memecahkan masalah bersama
+                  Forum anak MIPA: dari obrolan receh sampai riset serius.
                 </p>
               </div>
             </div>

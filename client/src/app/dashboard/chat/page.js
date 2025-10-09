@@ -8,6 +8,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { UploadIcon, SendIcon, PauseIcon, PlayIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import toast from 'react-hot-toast';
 
 // Konfigurasi AI
 const ai = new GoogleGenAI({
@@ -417,8 +418,7 @@ export default function ChatPage() {
 
       return response.text;
     } catch (error) {
-      console.error('Gemini API Error:', error);
-      return 'Maaf, terjadi kesalahan. Silakan coba lagi.';
+      throw new Error('Maaf, terjadi kesalahan. Silakan coba lagi.');
     }
   };
 
@@ -441,47 +441,51 @@ export default function ChatPage() {
     setIsTyping(true);
     setIsTypingPaused(false);
 
-    const imageDatas =
-      uploadedFiles.length > 0
-        ? await Promise.all(
-            uploadedFiles.map((file) => fileToBase64(file.file))
-          )
-        : null;
+    try {
+      const imageDatas =
+        uploadedFiles.length > 0
+          ? await Promise.all(
+              uploadedFiles.map((file) => fileToBase64(file.file))
+            )
+          : null;
 
-    const aiResponse = await sendMessageToAI(inputValue, imageDatas);
+      const aiResponse = await sendMessageToAI(inputValue, imageDatas);
 
-    const aiMessage = {
-      id: messages.length + 2,
-      text: '',
-      sender: 'ai',
-      timestamp: new Date(),
-    };
+      const aiMessage = {
+        id: messages.length + 2,
+        text: '',
+        sender: 'ai',
+        timestamp: new Date(),
+      };
 
-    setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
 
-    const words = aiResponse.split(' ');
-    let currentText = '';
-    let currentIndex = 0;
+      const words = aiResponse.split(' ');
+      let currentText = '';
+      let currentIndex = 0;
 
-    const typeNextWord = () => {
-      if (currentIndex < words.length) {
-        if (!isTypingPaused) {
-          currentText += words[currentIndex] + ' ';
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1].text = currentText;
-            return updated;
-          });
-          currentIndex++;
+      const typeNextWord = () => {
+        if (currentIndex < words.length) {
+          if (!isTypingPaused) {
+            currentText += words[currentIndex] + ' ';
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1].text = currentText;
+              return updated;
+            });
+            currentIndex++;
+          }
+          setTimeout(typeNextWord, 30);
+        } else {
+          setIsTyping(false);
+          setIsTypingPaused(false);
         }
-        setTimeout(typeNextWord, 30);
-      } else {
-        setIsTyping(false);
-        setIsTypingPaused(false);
-      }
-    };
+      };
 
-    typeNextWord();
+      typeNextWord();
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   return (

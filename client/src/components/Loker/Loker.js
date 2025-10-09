@@ -6,8 +6,9 @@ import { FilterBar } from './FilterBar';
 import { JobCard } from './JobCard';
 import { JobDetailModal } from './JobDetailModal';
 import { JobCardSkeleton, JobListSkeleton } from '../JobCardSkeleton';
+import getDataJobs from '@/data/getDataJobs';
 export default function LokerPage() {
-  const [jobs] = useState(mockJobs);
+  const [jobs, setJobs] = useState(mockJobs);
   const [selectedJob, setSelectedJob] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
@@ -26,6 +27,16 @@ export default function LokerPage() {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   };
+
+  // useEffect(() => {
+  //   const getJobs = async () => {
+  //     const resp = await getDataJobs();
+  //     console.log(resp, 'resp');
+  //     setJobs(resp);
+  //   };
+
+  //   getJobs();
+  // }, []);
 
   useEffect(() => {
     setMounted(true);

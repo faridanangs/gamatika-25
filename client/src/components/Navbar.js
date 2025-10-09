@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/resizable-navbar';
 import { useState } from 'react';
 import { ModeToggle } from './ModeToggle';
+import { Button } from './ui/button';
 
 export function NavbarHeader() {
   const navItems = [
@@ -54,14 +55,24 @@ export function NavbarHeader() {
             onClose={() => setIsMobileMenuOpen(false)}
           >
             {navItems.map((item, idx) => (
-              <a
+              <Button
                 key={`mobile-link-${idx}`}
-                href={item.link}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-neutral-600 dark:text-neutral-300"
+                disabled={item.link == '/loker' ? true : false}
+                className="bg-transparent m-0 px-2 hover:bg-transparent relative"
               >
-                <span className="block">{item.name}</span>
-              </a>
+                {item.link == '/loker' && (
+                  <p className="bg-gradient-to-br from-[#b58d6b] to-[#da736d] rounded-lg font-bold text-white absolute -right-12 flex items-center justify-center px-2 py-[1px] top-0">
+                    soon
+                  </p>
+                )}
+                <a
+                  href={item.link}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="relative text-neutral-600 dark:text-neutral-300"
+                >
+                  <span className="block">{item.name}</span>
+                </a>
+              </Button>
             ))}
             <div className="flex w-full flex-col gap-4">
               <ModeToggle />

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 export const DetailBookModal = ({ showDetail, book, closeDetail }) => {
   if (!showDetail || !book) return null;
@@ -275,11 +276,11 @@ export const EbookList = ({
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
-            <ChevronLeft className="mr-2" size={16} />
+            <ChevronLeft size={16} />
           </button>
 
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            Halaman {currentPage} dari {totalPages}
+            Page {currentPage} dari {totalPages}
           </div>
 
           <button
@@ -293,7 +294,7 @@ export const EbookList = ({
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
-            <ChevronRight className="ml-2" size={16} />
+            <ChevronRight size={16} />
           </button>
         </div>
       )}

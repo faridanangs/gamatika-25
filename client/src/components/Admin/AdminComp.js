@@ -218,7 +218,7 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
               <div className="ml-4">
                 <p className="text-gray-500 dark:text-gray-400">Total User</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalUsers}
+                  {stats.totalUsers - 1}
                 </p>
               </div>
             </div>

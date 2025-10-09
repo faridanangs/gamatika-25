@@ -100,12 +100,13 @@ const HomePage = () => {
     },
     {
       id: 2,
-      title: 'Info Loker',
+      title: 'Ingfo Loker',
       description:
         'Temukan pekerjaan part-time, remote, dan lokasi dekat kampus',
       icon: Briefcase,
       color: 'from-green-500 to-emerald-500',
       gradient: 'from-green-600/10 to-emerald-600/10',
+      feature: 'Comming Soon',
     },
     {
       id: 3,
@@ -304,10 +305,18 @@ const HomePage = () => {
                 onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => setActiveFeature(index)}
               >
-                <div
-                  className={`bg-gradient-to-r ${feature.color} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}
-                >
-                  <feature.icon className="text-white" size={28} />
+                <div className="flex items-start justify-between ">
+                  <div
+                    className={`bg-gradient-to-r ${feature.color} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}
+                  >
+                    <feature.icon className="text-white" size={28} />
+                  </div>
+                  {feature.feature && (
+                    <div className="px-3 py-1 bg-gradient-to-br from-[#b58d6b] to-[#da736d] rounded-lg font-bold text-white">
+                      {' '}
+                      {feature.feature}
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   {feature.title}

@@ -74,7 +74,6 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const levelInfo = calculateLevel();
-  const leaderboardPosition = 7;
 
   const quickActions = [
     {
@@ -209,7 +208,7 @@ export default function ProfilePageComp({ user, token }) {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 border border-gray-100">
-          <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+          <div className="flex flex-row items-start md:items-end gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24">
                 <AvatarImage src={user.avatar} alt={user.full_name} />
@@ -248,9 +247,6 @@ export default function ProfilePageComp({ user, token }) {
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant="destructive">Level {levelInfo.level}</Badge>
-                <Badge variant="outline">
-                  #{leaderboardPosition} Top Contributor
-                </Badge>
               </div>
             </div>
           </div>

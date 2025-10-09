@@ -108,7 +108,7 @@ export default function DashboardForumPage({ postsO, user, token }) {
                   Diskusi Sciences
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Bertukar pengetahuan dan memecahkan masalah bersama
+                  Forum anak MIPA: dari obrolan receh sampai riset serius.
                 </p>
               </div>
               <CreatePostButton onClick={() => setShowCreateModal(true)} />
