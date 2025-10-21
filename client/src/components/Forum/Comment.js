@@ -159,7 +159,7 @@ export function CommentInput({ onAddComment, className }) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Upload failed');
+          return toast.error(errorData?.error || 'Upload failed');
         }
 
         const data = await response.json();
@@ -174,8 +174,7 @@ export function CommentInput({ onAddComment, className }) {
       setContent('');
       setImage(null);
     } catch (error) {
-      console.error(error);
-      alert(`Gagal mengupload gambar: ${error.message}`);
+      alert(`upload image failed: ${error?.message}`);
     } finally {
       setIsUploading(false);
     }

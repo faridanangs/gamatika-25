@@ -58,6 +58,9 @@ export async function getEBooks(selectedCourse) {
       case 'Biologi Sel':
         query = 'cell biology';
         break;
+      case 'Pancasila':
+        query = 'pancasila';
+        break;
       default:
         query = 'mathematics science';
     }

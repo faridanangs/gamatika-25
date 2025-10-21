@@ -10,6 +10,7 @@ export const mipaCourses = [
   'Statistika',
   'Fisika Modern',
   'Kimia Organik',
+  'Pancasila',
   'Biologi Molekuler',
   'Matematika Terapan',
   'Fisika Komputasi',

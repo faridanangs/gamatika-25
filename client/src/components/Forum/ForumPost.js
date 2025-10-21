@@ -360,7 +360,7 @@ export function CreatePostButton({ onClick }) {
 export default function CreatePostModal({ isOpen, onClose, onCreate }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('Kalkulus');
+  const [category, setCategory] = useState('Matematika');
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -390,7 +390,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
         );
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Upload failed');
+          return toast.error(errorData.error || 'Upload failed');
         }
         const data = await response.json();
         uploadedImages = data.images;
@@ -407,11 +407,10 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
       await onCreate(postData);
       setTitle('');
       setContent('');
-      setCategory('Kalkulus');
+      setCategory('Matematika');
       setImages([]);
       onClose();
     } catch (error) {
-      console.error('Error creating post:', error);
       alert(`Gagal membuat postingan: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -445,7 +444,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
             <Select
               value={category}
               onValueChange={setCategory}
-              defaultValue="Kalkulus"
+              defaultValue="Matematika"
             >
               <SelectTrigger className="dark:bg-gray-700 dark:text-white">
                 <SelectValue placeholder="Pilih kategori" />

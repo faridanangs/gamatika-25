@@ -410,6 +410,8 @@ export const JournalFilterAndSearch = ({
         return 'Matematika Diskrit';
       case 'Statistika':
         return 'Statistika';
+      case 'Pancasila':
+        return 'pancasila';
       case 'Fisika Modern':
         return 'Fisika Modern';
       case 'Blockchain':

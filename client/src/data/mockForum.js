@@ -1,8 +1,9 @@
 export const categories = [
   'Semua',
-  'Kalkulus',
-  'Aljabar',
-  'Statistika',
-  'Geometri',
-  'Matematika Terapan',
+  'Matematika',
+  'ilmu Lingkungan',
+  'Fisika',
+  'Biologi',
+  'Kimia',
+  'Informatika',
 ];

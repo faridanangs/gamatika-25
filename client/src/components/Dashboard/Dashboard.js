@@ -17,6 +17,18 @@ const menuItems = [
   },
   { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
   { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
+  {
+    id: 'artikel',
+    label: 'Buat Artikel',
+    icon: '📰',
+    href: '/dashboard/artikel',
+  },
+  // {
+  //   id: 'langganan',
+  //   label: 'Berlangganan',
+  //   icon: '🈺',
+  //   href: '/dashboard/langganan',
+  // },
 ];
 
 export default function DashboardPage({ children }) {

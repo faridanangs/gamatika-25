@@ -134,14 +134,6 @@ export const DetailBookModal = ({ showDetail, book, closeDetail }) => {
                 >
                   Lihat di OpenLibrary
                 </a>
-                <a
-                  href={book.preview_url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Preview
-                </a>
               </div>
             </div>
           </div>
@@ -319,6 +311,8 @@ export const EbookFilterAndSearch = ({ search, setSearch, selectedCourse }) => {
         return 'Matematika Diskrit';
       case 'Statistika':
         return 'Statistika';
+      case 'Pancasila':
+        return 'pancasila';
       case 'Fisika Modern':
         return 'Fisika Modern';
       case 'Kimia Organik':
