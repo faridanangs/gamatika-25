@@ -1,7 +1,7 @@
 import ErrorPage from '@/components/ErrorPage';
 import ForumPage from '@/components/Forum/Forum';
 import { getAllConribs } from '@/data/getAllContribs';
-import { getAllPosts } from '@/data/getAllPosts';
+import { getAllPosts } from '@/data/getPostsData';
 import React from 'react';
 
 const Forum = async () => {

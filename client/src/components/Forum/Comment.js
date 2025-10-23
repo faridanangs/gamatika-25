@@ -208,9 +208,9 @@ export function CommentInput({ onAddComment, className }) {
 
   return (
     <div
-      className={` dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm ${className} `}
+      className={` dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm ${className} border-2 sticky bottom-0 z-10`}
     >
-      <div className="flex space-x-3">
+      <div className="flex space-x-3 ">
         <div className="flex-1">
           <textarea
             value={content}

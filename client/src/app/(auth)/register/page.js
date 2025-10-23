@@ -41,19 +41,23 @@ export default function RegisterPage() {
       const response = await registerUser(formData);
 
       if (!response.success) {
-        response?.errors.map((e) => {
-          toast.error(e.message);
-        });
-        return;
+        if (response.status == 500) {
+          toast.error(response.message);
+          return;
+        } else {
+          response?.errors?.map((e) => {
+            toast.error(e.message);
+          });
+          return;
+        }
       }
 
       toast.success(response.message);
 
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
+      }, 1000);
     } catch (error) {
-      console.log(error.message, 'error kocak');
       toast.error(error.message);
     }
   };

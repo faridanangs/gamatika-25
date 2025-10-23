@@ -1,6 +1,6 @@
 import ProfilePageComp from '@/components/Dashboard/Profile';
 import ErrorPage from '@/components/ErrorPage';
-import getUserProfile from '@/data/getUserByID';
+import { getUserProfile } from '@/data/getUserData';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import React from 'react';

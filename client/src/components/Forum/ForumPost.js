@@ -30,11 +30,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Share2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { categories } from '@/data/mockForum';
+import { categories } from '@/data/mockCategories';
 import Link from 'next/link';
 
 // Format waktu yang lebih mudah dibaca
@@ -59,7 +59,6 @@ export const formatReadableTime = (dateString) => {
 export function ForumPost({
   post,
   onLike,
-  onShare,
   comments,
   onAddComment,
   className,
@@ -94,6 +93,19 @@ export function ForumPost({
     setSelectedImageIndex((prevIndex) =>
       prevIndex === (post?.images.length || 0) - 1 ? 0 : prevIndex + 1
     );
+  };
+
+  const handleShare = (id) => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title,
+        text: post?.content?.substring(0, 20) + '...',
+        url: `${window.location.href}/${id}`,
+      });
+    } else {
+      alert('Link disalin ke clipboard!');
+      navigator.clipboard.writeText(window.location.href);
+    }
   };
 
   return (
@@ -245,23 +257,10 @@ export function ForumPost({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onShare(post?.id)}
+              onClick={() => handleShare(post.id)}
               className="flex items-center space-x-1 text-gray-500 hover:text-green-500"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 010-5.368m-9.032 5.368a9.001 9.001 0 01-5.368-9.032m9.032 9.032a9.001 9.001 0 015.368-9.032"
-                />
-              </svg>
-              <span>{post?.share_count}</span>
+              <Share2 />
             </Button>
           </div>
 
@@ -314,7 +313,7 @@ export function ForumPost({
               </Button>
             </div>
             <ScrollArea
-              className={`w-full rounded-md dark:border-gray-700 md:p-4 p-1 h-[calc(100vh-200px)] overflow-y-scroll`}
+              className={`w-full rounded-md relative dark:border-gray-700 md:p-4 p-1 h-[calc(100vh)] overflow-y-scroll`}
             >
               {comments.map((comment, i) => (
                 <Comment key={i} comment={comment} user={user} token={token} />

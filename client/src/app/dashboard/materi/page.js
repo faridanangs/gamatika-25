@@ -12,12 +12,12 @@ import {
   DetailBookModal,
   EbookFilterAndSearch,
   EbookList,
-} from '@/components/Materi/DetailEbook';
+} from '@/components/Dashboard/Materi/DetailEbook';
 import {
   DetailJournalModal,
   JournalFilterAndSearch,
   JournalList,
-} from '@/components/Materi/DetailJournal';
+} from '@/components/Dashboard/Materi/DetailJournal';
 import { mipaCourses } from '@/data/mockMateri';
 import { getJurnals } from '@/data/getJurnal';
 import { getEBooks } from '@/data/getEBook';
@@ -102,7 +102,7 @@ const TipsResources = () => {
       <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
         Tips & Resources
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
           <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
             Cara Efektif Belajar
@@ -176,7 +176,6 @@ export default function MateriPage() {
         setBooks(transformedBooks);
         setTotalPages(Math.ceil(transformedBooks.length / 6));
       } catch (error) {
-        console.error('Error fetching books:', error);
         setBooks([]);
         setTotalPages(1);
       } finally {
@@ -207,7 +206,6 @@ export default function MateriPage() {
           setJournalTotalPages(Math.ceil(data.total / 6));
         }
       } catch (error) {
-        console.error('Error fetching journals:', error);
         setError(error.message);
         setJournals([]);
         setJournalTotalPages(1);
@@ -315,7 +313,6 @@ export default function MateriPage() {
           <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
           <div className="p-6">
-            {/* E-Book Tab */}
             {activeTab === 'ebook' && (
               <>
                 <EbookFilterAndSearch

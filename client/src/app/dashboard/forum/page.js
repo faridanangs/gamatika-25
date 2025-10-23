@@ -1,6 +1,6 @@
 import DashboardForumPage from '@/components/Dashboard/DashboardForum';
 import ErrorPage from '@/components/ErrorPage';
-import { getAllPosts } from '@/data/getAllPosts';
+import { getAllPosts } from '@/data/getPostsData';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import React from 'react';

@@ -19,7 +19,7 @@ export function NavbarHeader() {
     { name: 'Home', link: '/' },
     { name: 'Forum Diskusi', link: '/forum' },
     { name: 'Ingfo Loker Cok', link: '/loker' },
-    { name: 'Pengumuman', link: '/event' },
+    { name: 'Blogs', link: '/blogs' },
   ];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

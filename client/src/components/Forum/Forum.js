@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { categories } from '@/data/mockForum';
+import { categories } from '@/data/mockCategories';
 import { ForumPost } from './ForumPost';
-import { PostSkeleton } from '../PostSkeleton';
+import { PostSkeleton } from '../skeleton/PostSkeleton';
 import { TopContributorsSkeleton } from '../TopContibSkeleton';
 import { Button } from '../ui/button';
 import toast from 'react-hot-toast';

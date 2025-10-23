@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '../../ui/button';
 
 export const DetailBookModal = ({ showDetail, book, closeDetail }) => {
   if (!showDetail || !book) return null;
@@ -154,7 +154,7 @@ export const EbookList = ({
 }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -188,7 +188,7 @@ export const EbookList = ({
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {currentBooks.map((book) => (
           <div
             key={book.key}

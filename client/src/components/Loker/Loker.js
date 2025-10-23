@@ -5,7 +5,7 @@ import { mockJobs } from '../../data/mockJobs';
 import { FilterBar } from './FilterBar';
 import { JobCard } from './JobCard';
 import { JobDetailModal } from './JobDetailModal';
-import { JobCardSkeleton, JobListSkeleton } from '../JobCardSkeleton';
+import { JobCardSkeleton, JobListSkeleton } from '../skeleton/JobCardSkeleton';
 import getDataJobs from '@/data/getDataJobs';
 export default function LokerPage() {
   const [jobs, setJobs] = useState(mockJobs);

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { categories, mockPosts } from '@/data/mockForum';
+import { categories, mockPosts } from '@/data/mockCategories';
 import CreatePostModal, {
   CreatePostButton,
   ForumPost,
@@ -9,7 +9,7 @@ import CreatePostModal, {
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { PostSkeleton } from '../PostSkeleton';
+import { PostSkeleton } from '../skeleton/PostSkeleton';
 import { createComment, createPost, likedToggle } from '@/lib/action';
 
 export default function DashboardForumPage({ postsO, user, token }) {
@@ -47,18 +47,6 @@ export default function DashboardForumPage({ postsO, user, token }) {
     } catch (error) {
       toast.error(error.message);
     }
-  };
-
-  const handleShare = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return { ...post, shares: post.shares + 1 };
-        }
-        return post;
-      })
-    );
-    alert('Postingan telah dibagikan!');
   };
 
   const handleCreatePost = async (newPost) => {
@@ -143,7 +131,6 @@ export default function DashboardForumPage({ postsO, user, token }) {
                     key={i}
                     post={post}
                     onLike={handleLike}
-                    onShare={handleShare}
                     comments={post?.comments}
                     onAddComment={handleAddComment}
                     isAuth={true}

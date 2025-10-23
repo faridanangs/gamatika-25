@@ -3,18 +3,23 @@ import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { formatDateTime } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Card, CardContent } from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../ui/dialog';
+import { Card, CardContent } from '../../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Button } from '../ui/button';
-import { CommentInput } from '../Forum/Comment';
-import { getPrivateKey } from '@/data/getPrivateKey';
+import { Badge } from '../../ui/badge';
+import { Input } from '../../ui/input';
+import { Textarea } from '../../ui/textarea';
+import { Button } from '../../ui/button';
+import { CommentInput } from '../../Forum/Comment';
 import { createComment, deleteComment } from '@/lib/action';
-import { formatReadableTime } from '../Forum/ForumPost';
+import { formatReadableTime } from '../../Forum/ForumPost';
+import { getPrivateKey } from '@/data/getUserData';
 
 export const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   const [title, setTitle] = useState(post.title);

@@ -1,5 +1,5 @@
 import SubscriptionPage from '@/components/Dashboard/Langganan';
-import getUserProfile from '@/data/getUserByID';
+import { getUserProfile } from '@/data/getUserData';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import React from 'react';

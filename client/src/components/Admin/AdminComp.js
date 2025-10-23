@@ -13,7 +13,7 @@ import {
   MessageCircle,
   XCircle,
 } from 'lucide-react';
-import { deletePost, deleteUser } from '@/lib/action';
+import { deletePost, deleteUser, deleteArtikel } from '@/lib/action';
 import toast from 'react-hot-toast';
 import { conGetAllNFTs, conMintNFT, getAllNFTs } from '@/nft/action';
 import {
@@ -25,37 +25,59 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Area,
+  AreaChart,
 } from 'recharts';
 import { TopContributors } from '../Forum/Forum';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Button } from '@/components/ui/button';
+import { UserPostAndArtikelComp } from './AdminUserPostAndArtikelComp';
 
-const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
+const AdminComp = ({
+  initialUsers,
+  initialPosts,
+  initialContribs,
+  token,
+  initialArtikels,
+}) => {
   const [users, setUsers] = useState(initialUsers);
   const [posts, setPosts] = useState(initialPosts);
+  const [artikels, setArtikels] = useState(initialArtikels);
   const [nfts, setNfts] = useState('0');
   const [contribs, setContribs] = useState(initialContribs);
   const [stats, setStats] = useState({
     totalPosts: 0,
     totalUsers: 0,
     totalNFTs: 0,
+    totalArtikels: 0,
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [searchPostTerm, setSearchPostTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // State untuk form mint NFT
+  const [searchArtikelTerm, setSearchArtikelTerm] = useState('');
   const [recipient, setRecipient] = useState('');
+
+  // Pagination states for posts
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 10;
+
+  // Pagination states for artikels
+  const [currentArtikelPage, setCurrentArtikelPage] = useState(1);
+  const artikelsPerPage = 10;
+
+  // Pagination states for users
+  const [currentUserPage, setCurrentUserPage] = useState(1);
+  const usersPerPage = 10;
 
   // Update stats ketika data berubah
   useEffect(() => {
     setStats({
       totalPosts: posts?.length || 0,
       totalUsers: users?.length || 0,
+      totalArtikels: artikels?.length || 0,
       totalNFTs: nfts,
     });
-  }, [users, posts, nfts]);
+  }, [users, posts, nfts, artikels]);
 
-  // Simulasi loading data
   useEffect(() => {
     const nfts = async () => {
       const nftsCount = await conGetAllNFTs();
@@ -65,59 +87,80 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
     nfts();
   }, []);
 
-  // Hitung data pertumbuhan berdasarkan data yang ada
   const growthData = useMemo(() => {
-    if (!users || !posts) return [];
+    if (!users || !posts || !artikels) return [];
 
-    // Fungsi untuk format tanggal menjadi bulan dan tahun
-    const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('id-ID', {
+    const now = new Date();
+    const months = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('id-ID', {
         month: 'short',
         year: 'numeric',
       });
-    };
+      months.push({
+        name: monthName,
+        date: date,
+        users: 0,
+        posts: 0,
+        artikels: 0,
+      });
+    }
 
-    // Dapatkan semua bulan unik dari users dan posts
-    const months = new Set();
     users.forEach((user) => {
-      months.add(formatDate(user.created_at));
+      const userDate = new Date(user.created_at);
+      const monthIndex = months.findIndex(
+        (m) =>
+          m.date.getMonth() === userDate.getMonth() &&
+          m.date.getFullYear() === userDate.getFullYear()
+      );
+      if (monthIndex !== -1) {
+        months[monthIndex].users += 1;
+      }
     });
+
     posts.forEach((post) => {
-      months.add(formatDate(post.created_at));
+      const postDate = new Date(post.created_at);
+      const monthIndex = months.findIndex(
+        (m) =>
+          m.date.getMonth() === postDate.getMonth() &&
+          m.date.getFullYear() === postDate.getFullYear()
+      );
+      if (monthIndex !== -1) {
+        months[monthIndex].posts += 1;
+      }
     });
 
-    const sortedMonths = Array.from(months).sort((a, b) => {
-      const [aMonth, aYear] = a.split('-');
-      const [bMonth, bYear] = b.split('-');
-      const yearDiff = parseInt(aYear) - parseInt(bYear);
-      if (yearDiff !== 0) return yearDiff;
-      return aMonth.localeCompare(bMonth);
+    artikels.forEach((artikel) => {
+      const artikelDate = new Date(artikel.created_at);
+      const monthIndex = months.findIndex(
+        (m) =>
+          m.date.getMonth() === artikelDate.getMonth() &&
+          m.date.getFullYear() === artikelDate.getFullYear()
+      );
+      if (monthIndex !== -1) {
+        months[monthIndex].artikels += 1;
+      }
     });
 
-    // Hitung jumlah user per bulan
-    const userCounts = {};
-    sortedMonths.forEach((month) => {
-      userCounts[month] = users.filter((user) => {
-        return formatDate(user.created_at) === month;
-      }).length;
-    });
+    let cumulativeUsers = 0;
+    let cumulativePosts = 0;
+    let cumulativeArtikels = 0;
 
-    // Hitung jumlah post per bulan
-    const postCounts = {};
-    sortedMonths.forEach((month) => {
-      postCounts[month] = posts.filter((post) => {
-        return formatDate(post.created_at) === month;
-      }).length;
-    });
+    return months.map((month) => {
+      cumulativeUsers += month.users;
+      cumulativePosts += month.posts;
+      cumulativeArtikels += month.artikels;
 
-    // Gabungkan data
-    return sortedMonths.map((month) => ({
-      month,
-      users: userCounts[month],
-      posts: postCounts[month],
-    }));
-  }, [users, posts]);
+      return {
+        month: month.name,
+        users: cumulativeUsers,
+        posts: cumulativePosts,
+        artikels: cumulativeArtikels,
+      };
+    });
+  }, [users, posts, artikels]);
 
   const filteredUsers = users.filter(
     (user) =>
@@ -131,13 +174,73 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
       post.author.username.toLowerCase().includes(searchPostTerm.toLowerCase())
   );
 
+  const filteredArtikels = artikels.filter(
+    (artikel) =>
+      artikel.title.toLowerCase().includes(searchArtikelTerm.toLowerCase()) ||
+      artikel.author?.username
+        .toLowerCase()
+        .includes(searchArtikelTerm.toLowerCase())
+  );
+
+  // Pagination for users
+  const totalUsersPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const currentUsers = filteredUsers.slice(
+    (currentUserPage - 1) * usersPerPage,
+    currentUserPage * usersPerPage
+  );
+  const goToNextUserPage = () => {
+    if (currentUserPage < totalUsersPages) {
+      setCurrentUserPage(currentUserPage + 1);
+    }
+  };
+  const goToPrevUserPage = () => {
+    if (currentUserPage > 1) {
+      setCurrentUserPage(currentUserPage - 1);
+    }
+  };
+
+  // Pagination for posts
+  const totalPostsPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const currentPosts = filteredPosts.slice(
+    (currentPage - 1) * postsPerPage,
+    currentPage * postsPerPage
+  );
+  const goToNextPage = () => {
+    if (currentPage < totalPostsPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Pagination for artikels
+  const totalArtikelsPages = Math.ceil(
+    filteredArtikels.length / artikelsPerPage
+  );
+  const currentArtikels = filteredArtikels.slice(
+    (currentArtikelPage - 1) * artikelsPerPage,
+    currentArtikelPage * artikelsPerPage
+  );
+  const goToNextArtikelPage = () => {
+    if (currentArtikelPage < totalArtikelsPages) {
+      setCurrentArtikelPage(currentArtikelPage + 1);
+    }
+  };
+  const goToPrevArtikelPage = () => {
+    if (currentArtikelPage > 1) {
+      setCurrentArtikelPage(currentArtikelPage - 1);
+    }
+  };
+
   const handleDeleteUser = async (userId) => {
     try {
       const resp = await deleteUser(token, userId);
       if (!resp.success) {
         toast.error(resp.message);
       } else {
-        // Update state users setelah berhasil dihapus
         setUsers(users.filter((user) => user.id !== userId));
         toast.success(resp.message);
       }
@@ -146,14 +249,12 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
     }
   };
 
-  // Handle delete post
   const handleDeletePost = async (postId) => {
     try {
       const resp = await deletePost(token, postId);
       if (!resp.success) {
         toast.error(resp.message);
       } else {
-        // Update state posts setelah berhasil dihapus
         setPosts(posts.filter((post) => post.id !== postId));
         toast.success(resp.message);
       }
@@ -162,7 +263,20 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
     }
   };
 
-  // Handle mint NFT
+  const handleDeleteArtikel = async (artikelId) => {
+    try {
+      const resp = await deleteArtikel(token, artikelId);
+      if (!resp.success) {
+        toast.error(resp.message);
+      } else {
+        setArtikels(artikels.filter((artikel) => artikel.id !== artikelId));
+        toast.success(resp.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const handleMintNFT = async () => {
     try {
       await conMintNFT(recipient);
@@ -187,7 +301,7 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
             <div className="flex items-center">
               <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -240,6 +354,25 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
               </div>
             </div>
           </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <FileText
+                  className="text-orange-600 dark:text-orange-400"
+                  size={24}
+                />
+              </div>
+              <div className="ml-4">
+                <p className="text-gray-500 dark:text-gray-400">
+                  Total Artikel
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.totalArtikels}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Top Contributors */}
@@ -251,154 +384,36 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
           <TopContributors props={contribs} isText={false} isAddress={true} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* User Management */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <Users className="text-blue-500 mr-2" /> Kelola User
-            </h2>
-
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Cari user..."
-                  className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search
-                  className="absolute left-3 top-3.5 text-gray-400"
-                  size={20}
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Postingan
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage
-                              src={user.avatar}
-                              alt={user.full_name}
-                            />
-                            <AvatarFallback>
-                              {(user.full_name || 'U').charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {user.username}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {user.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {user.posts?.length || 0} postingan
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 flex items-center"
-                        >
-                          <Trash2 className="mr-1" size={16} /> Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Post Management */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <FileText className="text-green-500 mr-2" /> Kelola Postingan
-            </h2>
-
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Cari postingan..."
-                  className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={searchPostTerm}
-                  onChange={(e) => setSearchPostTerm(e.target.value)}
-                />
-                <Search
-                  className="absolute left-3 top-3.5 text-gray-400"
-                  size={20}
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Judul
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Penulis
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredPosts.map((post) => (
-                    <tr key={post.id}>
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {post.title}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(post.created_at).toLocaleDateString(
-                            'id-ID'
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {post.author.username}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 flex items-center"
-                        >
-                          <Trash2 className="mr-1" size={16} /> Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* Management Sections - Stacked Vertically */}
+        <UserPostAndArtikelComp
+          searchArtikelTerm={searchArtikelTerm}
+          searchPostTerm={searchPostTerm}
+          setSearchTerm={setSearchTerm}
+          searchTerm={searchTerm}
+          currentUsers={currentUsers}
+          handleDeleteArtikel={handleDeleteArtikel}
+          handleDeletePost={handleDeletePost}
+          handleDeleteUser={handleDeleteUser}
+          goToNextArtikelPage={goToNextArtikelPage}
+          goToNextPage={goToNextPage}
+          goToNextUserPage={goToNextUserPage}
+          goToPrevArtikelPage={goToPrevArtikelPage}
+          goToPrevPage={goToPrevPage}
+          goToPrevUserPage={goToPrevUserPage}
+          currentArtikelPage={currentArtikelPage}
+          currentArtikels={currentArtikels}
+          currentPage={currentPage}
+          currentPosts={currentPosts}
+          currentUserPage={currentUserPage}
+          setCurrentArtikelPage={setCurrentArtikelPage}
+          setCurrentPage={setCurrentPage}
+          setCurrentUserPage={setCurrentUserPage}
+          setSearchArtikelTerm={setSearchArtikelTerm}
+          setSearchPostTerm={setSearchPostTerm}
+          totalArtikelsPages={totalArtikelsPages}
+          totalPostsPages={totalPostsPages}
+          totalUsersPages={totalUsersPages}
+        />
 
         {/* Mint NFT */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 my-8">
@@ -406,7 +421,7 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
             <Award className="text-purple-500 mr-2" /> Mint NFT
           </h2>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Penerima
@@ -419,7 +434,7 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
               />
             </div>
 
-            <div className="md:col-span-1 md:col-start-3 flex items-end">
+            <div className="flex items-end">
               <button
                 onClick={handleMintNFT}
                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
@@ -430,35 +445,58 @@ const AdminComp = ({ initialUsers, initialPosts, initialContribs, token }) => {
           </div>
         </div>
 
-        {/* Grafik Pertumbuhan */}
+        {/* Grafik Pertumbuhan - Updated with Wave Effect */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
             <Calendar className="text-indigo-500 mr-2" /> Pertumbuhan Platform
+            (1 Tahun Terakhir)
           </h2>
 
           <div className="h-80">
             {growthData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={growthData}>
+                <AreaChart
+                  data={growthData}
+                  margin={{
+                    top: 10,
+                    right: 30,
+                    left: 0,
+                    bottom: 0,
+                  }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="users"
+                    stackId="1" // SAMA untuk semua
                     stroke="#8884d8"
-                    activeDot={{ r: 8 }}
+                    fill="#8884d8"
+                    fillOpacity={0.6}
                     name="User"
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="posts"
+                    stackId="1" // SAMA untuk semua
                     stroke="#82ca9d"
+                    fill="#82ca9d"
+                    fillOpacity={0.6}
                     name="Post"
                   />
-                </LineChart>
+                  <Area
+                    type="monotone"
+                    dataKey="artikels"
+                    stackId="1" // SAMA untuk semua
+                    stroke="#ff7300"
+                    fill="#ff7300"
+                    fillOpacity={0.6}
+                    name="Artikel"
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">

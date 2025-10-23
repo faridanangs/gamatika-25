@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { handleApiResponse } from './apiHandler';
+import axios from 'axios';
+import { redirect, RedirectType } from 'next/navigation';
 
+// Post
 export const createPost = async (token, newPost) => {
   try {
     const resp = await fetch(
@@ -85,6 +88,33 @@ export const deletePost = async (token, postID) => {
   }
 };
 
+export const likedToggle = async (token, id) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${id}/like`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/forum`, 'page');
+      revalidatePath(`/forum`, 'page');
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+// User
 export const updateUser = async (token, newUser) => {
   try {
     const resp = await fetch(
@@ -149,17 +179,15 @@ export const registerUser = async (userData) => {
       }
     );
 
-    console.log(resp, 'resp');
-
     const result = await handleApiResponse(resp);
 
     return result;
   } catch (error) {
-    console.log(error);
     throw new Error('Network Error Occurred');
   }
 };
 
+// Comment
 export const createComment = async (postId, token, newComment) => {
   try {
     const resp = await fetch(
@@ -243,12 +271,43 @@ export const updateComment = async (token, newComment) => {
   }
 };
 
-export const likedToggle = async (token, id) => {
+// Artikel
+export const createArtikel = async (token, newArtikel) => {
   try {
     const resp = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${id}/like`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/artikels`,
       {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newArtikel.title,
+          category: newArtikel.category,
+          tags: newArtikel.tags,
+          content: newArtikel.content,
+        }),
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+export const deleteArtikel = async (token, id) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/artikels/${id}`,
+      {
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -259,10 +318,7 @@ export const likedToggle = async (token, id) => {
     const result = await handleApiResponse(resp);
     if (result.success) {
       revalidatePath(`/dashboard/profile`, 'page');
-      revalidatePath(`/dashboard/forum`, 'page');
-      revalidatePath(`/forum`, 'page');
     }
-
     return result;
   } catch (error) {
     throw new Error('Network Error Occurred');

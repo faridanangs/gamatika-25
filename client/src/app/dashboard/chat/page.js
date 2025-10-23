@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 
 // Konfigurasi AI
 const ai = new GoogleGenAI({
-  apiKey: 'AIzaSyBLiJgdGYRrNEd5wVmYzRj4SCw7cifLtyM',
+  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
 });
 
 // Format waktu
