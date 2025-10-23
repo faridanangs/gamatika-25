@@ -25,6 +25,7 @@ type User struct {
 
 	Achievements datatypes.JSON `gorm:"column:achievements;types:jsonb"`
 	Posts        []Post         `gorm:"foreignKey:user_id;references:id;constraint:OnDelete:CASCADE"`
+	Artikels     []Artikel      `gorm:"foreignKey:user_id;references:id;constraint:OnDelete:CASCADE"`
 }
 
 func (User) TableName() string {
@@ -60,16 +61,17 @@ type PrivKeyReq struct {
 
 // ==================== RESPONSE DTO ====================
 type UserResponse struct {
-	ID            string         `json:"id"`
-	FullName      string         `json:"full_name"`
-	Username      string         `json:"username"`
-	Role          string         `json:"role"`
-	Avatar        string         `json:"avatar"`
-	Prodi         string         `json:"prodi"`
-	Nim           string         `json:"nim"`
-	Email         string         `json:"email"`
-	WalletAddress string         `json:"wallet_address"`
-	Achievements  datatypes.JSON `json:"achievements"`
-	CreatedAt     time.Time      `json:"created_at"`
-	Posts         []PostResponse `json:"posts"`
+	ID            string            `json:"id"`
+	FullName      string            `json:"full_name"`
+	Username      string            `json:"username"`
+	Role          string            `json:"role"`
+	Avatar        string            `json:"avatar"`
+	Prodi         string            `json:"prodi"`
+	Nim           string            `json:"nim"`
+	Email         string            `json:"email"`
+	WalletAddress string            `json:"wallet_address"`
+	Achievements  datatypes.JSON    `json:"achievements"`
+	CreatedAt     time.Time         `json:"created_at"`
+	Posts         []PostResponse    `json:"posts"`
+	Artikels      []ArtikelResponse `json:"artikels"`
 }

@@ -24,7 +24,7 @@ func Connect() *gorm.DB {
 		panic(err)
 	}
 
-	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}, &models.PostLike{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}, &models.PostLike{}, &models.Artikel{}); err != nil {
 		log.Fatal("Failed to migrate database schema: ", err)
 	}
 

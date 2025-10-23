@@ -183,7 +183,10 @@ func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
 		Preload("Posts.Comments").
 		Preload("Posts.Comments.Author").
 		Preload("Posts.Likes").
-		Preload("Posts.Likes.Author").Where("id = ?", id).First(&user).Error; err != nil {
+		Preload("Posts.Likes.Author").
+		Preload("Artikels").
+		Preload("Artikels.Author").
+		Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "User retrieval")
 	}
 	return helpers.MapToUserResponse(user), nil
@@ -197,7 +200,10 @@ func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
 		Preload("Posts.Comments").
 		Preload("Posts.Comments.Author").
 		Preload("Posts.Likes").
-		Preload("Posts.Likes.Author").Find(&users).Error; err != nil {
+		Preload("Posts.Likes.Author").
+		Preload("Artikels").
+		Preload("Artikels.Author").
+		Find(&users).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "Users retrieval")
 	}
 	responses := make([]models.UserResponse, len(users))

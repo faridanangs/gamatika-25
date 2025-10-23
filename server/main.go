@@ -42,13 +42,15 @@ func main() {
 	userService := services.NewUserService(db, validator)
 	postService := services.NewPostService(db, validator, userService)
 	commentService := services.NewCommentService(db, validator, userService)
+	artikelService := services.NewArtikelService(db, userService)
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService)
 	postController := controllers.NewPostController(postService, commentService)
+	artikelController := controllers.NewArtikelController(artikelService, validator)
 
 	// Setup all routes
-	routes.SetupRoutes(app, userController, postController)
+	routes.SetupRoutes(app, userController, postController, artikelController)
 
 	// Start server
 	log.Fatal(app.Listen(":8080"))

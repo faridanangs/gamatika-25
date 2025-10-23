@@ -34,29 +34,6 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 		return nil, err
 	}
 
-	// Check if user exists
-	var userExists models.User
-	if err := ps.db.Where("id = ?", userID).First(&userExists).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, &helpers.AppError{
-				Code:    fiber.StatusNotFound,
-				Message: "User not found",
-				Details: &helpers.CustomErrorResponse{
-					Status:  "error",
-					Message: "User not found",
-					Errors: []helpers.FieldError{
-						{
-							Field:   "user",
-							Message: "User not found",
-							Code:    "USER_NOT_FOUND",
-						},
-					},
-				},
-			}
-		}
-		return nil, ps.dbErrorHandler.HandleError(err, "User lookup")
-	}
-
 	postID := uuid.New().String()
 	post := models.Post{
 		ID:           postID,
@@ -73,7 +50,6 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 
 	post.SetImages(req.Images)
 
-	// Insert post
 	if err := ps.db.Create(&post).Error; err != nil {
 		return nil, ps.dbErrorHandler.HandleError(err, "Post creation")
 	}
@@ -143,7 +119,7 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 
 	// Find post and check ownership
 	var post models.Post
-	if err := ps.db.Preload("Author").Where("id = ? AND user_id = ?", id, claims.UserID).First(&post).Error; err != nil {
+	if err := ps.db.Preload("Author").Where("id = ?", id).First(&post).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -171,7 +147,7 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 		}
 	}
 
-	if err := ps.db.Unscoped().Delete(&post).Error; err != nil {
+	if err := ps.db.Unscoped().Where("id = ?", id).Delete(&post).Error; err != nil {
 		return ps.dbErrorHandler.HandleTransactionError(err, "Post deletion")
 	}
 

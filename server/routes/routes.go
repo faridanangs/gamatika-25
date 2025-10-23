@@ -7,13 +7,15 @@ import (
 )
 
 // SetupRoutes - Setup all routes for the application
-func SetupRoutes(app *fiber.App, userController *controllers.UserController, postController *controllers.PostController) {
+func SetupRoutes(app *fiber.App, userController *controllers.UserController, postController *controllers.PostController, artikelController *controllers.ArtikelController) {
 	// Public routes
 	app.Post("/users", userController.CreateUser)
 	app.Post("/login", userController.LoginUser)
 	app.Get("/posts", postController.GetAllPosts)
 	app.Get("/users/top-contributors", userController.GetCachedTopContributors)
 	app.Get("/users/:id/contribution", userController.GetUserContribution)
+	app.Get("/artikels", artikelController.GetAll)
+	app.Get("/artikels/:id", artikelController.GetByID)
 
 	// Protected routes
 	protected := app.Group("/api")
@@ -40,5 +42,9 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 		protected.Get("/comments/:id", postController.GetCommentByID)
 		protected.Put("/comments/:id", postController.UpdateComment)
 		protected.Delete("/comments/:id", postController.DeleteComment)
+
+		// Artikels routes
+		protected.Post("/artikels", artikelController.Create)
+		protected.Delete("/artikels/:id", artikelController.Delete)
 	}
 }

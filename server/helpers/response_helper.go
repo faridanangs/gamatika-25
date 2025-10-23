@@ -1,6 +1,10 @@
 package helpers
 
-import "github.com/faridanangs/gamatika-25/models"
+import (
+	"encoding/json"
+
+	"github.com/faridanangs/gamatika-25/models"
+)
 
 // Helper function to map User to AuthorResponse
 func MapToAuthorResponse(user models.User) models.AuthorResponse {
@@ -44,6 +48,21 @@ func MapToPostResponse(post models.Post) *models.PostResponse {
 	}
 }
 
+func MapToArtikelResponse(req models.Artikel) *models.ArtikelResponse {
+	var tags []string
+	json.Unmarshal(req.Tags, &tags)
+
+	return &models.ArtikelResponse{
+		ID:        req.ID,
+		Title:     req.Title,
+		Category:  req.Category,
+		Tags:      tags,
+		Content:   req.Content,
+		Author:    MapToAuthorResponse(req.Author),
+		CreatedAt: req.CreatedAt,
+	}
+}
+
 // Helper function to map Comment to CommentResponse
 func MapToCommentResponse(comment models.Comment) *models.CommentResponse {
 	return &models.CommentResponse{
@@ -70,6 +89,11 @@ func MapToUserResponse(user models.User) *models.UserResponse {
 		postResponses[i] = *MapToPostResponse(post)
 	}
 
+	artikelResponses := make([]models.ArtikelResponse, len(user.Artikels))
+	for i, artikel := range user.Artikels {
+		artikelResponses[i] = *MapToArtikelResponse(artikel)
+	}
+
 	return &models.UserResponse{
 		ID:            user.ID,
 		FullName:      user.FullName,
@@ -83,5 +107,6 @@ func MapToUserResponse(user models.User) *models.UserResponse {
 		Achievements:  user.Achievements,
 		CreatedAt:     user.CreatedAt,
 		Posts:         postResponses,
+		Artikels:      artikelResponses,
 	}
 }

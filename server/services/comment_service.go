@@ -180,7 +180,7 @@ func (cs *CommentService) DeleteComment(id uint64, tokenString string) error {
 		return cs.dbErrorHandler.HandleError(err, "Comment count update")
 	}
 
-	if err := cs.db.Unscoped().Delete(&comment).Error; err != nil {
+	if err := cs.db.Unscoped().Where("id = ?", id).Delete(&comment).Error; err != nil {
 		return cs.dbErrorHandler.HandleError(err, "Comment deletion")
 	}
 
