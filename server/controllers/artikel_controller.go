@@ -56,7 +56,6 @@ func (ac *ArtikelController) Create(c *fiber.Ctx) error {
 		"message": "Artikel created successfully",
 		"data":    resp,
 	})
-
 }
 
 func (ac *ArtikelController) GetByID(c *fiber.Ctx) error {
