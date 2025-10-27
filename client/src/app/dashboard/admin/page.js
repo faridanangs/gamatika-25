@@ -1,4 +1,4 @@
-import AdminComp from '@/components/Admin/AdminComp';
+import AdminComp from '@/components/Dashboard/Admin/AdminComp';
 import ErrorPage from '@/components/ErrorPage';
 import { getAllConribs } from '@/data/getAllContribs';
 import { getAllArtikel } from '@/data/getArtikelData';

@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import { deleteComment } from '@/lib/action';
-import { formatReadableTime } from './ForumPost';
+import { formatReadableTime } from '@/lib/timeReadable';
 
 export function Comment({ comment, user, token }) {
   const [showImageModal, setShowImageModal] = useState(false);
@@ -75,7 +75,7 @@ export function Comment({ comment, user, token }) {
 
         <div className="flex-1">
           <div className="flex justify-between mb-2">
-            <div className="flex mb-1 flex-col ml-4">
+            <div className="flex mb-1 flex-col md:ml-4">
               <div className="flex gap-2">
                 <h4
                   className={cn('font-semibold text-gray-800 dark:text-white')}

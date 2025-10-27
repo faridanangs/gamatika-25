@@ -18,8 +18,9 @@ import { Textarea } from '../../ui/textarea';
 import { Button } from '../../ui/button';
 import { CommentInput } from '../../Forum/Comment';
 import { createComment, deleteComment } from '@/lib/action';
-import { formatReadableTime } from '../../Forum/ForumPost';
 import { getPrivateKey } from '@/data/getUserData';
+import { formatReadableTime } from '@/lib/timeReadable';
+import { ImageModal } from '@/components/Forum/ImageUpload';
 
 export const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   const [title, setTitle] = useState(post.title);
@@ -83,8 +84,7 @@ export const PostDetailModal = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [comments, setComments] = useState(post.comments || []);
   const [newComment, setNewComment] = useState('');
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+
   const commentsStartRef = useRef(null);
 
   useEffect(() => {
@@ -145,198 +145,214 @@ export const PostDetailModal = ({
     }
   };
 
-  const handleImageClick = (image) => {
-    setSelectedImage(image);
-    setShowImageModal(true);
+  const handleDialogClose = () => {
+    onClose();
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-xl">{post.title}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={true} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-5xl max-h-[90vh] w-[96vw] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl text-start">
+              {post.title}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage
-                  src={post.author?.avatar}
-                  alt={post.author?.username}
-                />
-                <AvatarFallback>{post?.author?.username?.[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{post?.author?.username}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatReadableTime(post?.created_at)}
-                    </p>
-                  </div>
-                  <Badge variant="secondary">{post?.category}</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {post?.content}
-              </p>
-            </div>
-
-            {post?.images && post.images.length > 0 && (
-              <div className="space-y-4">
-                <div className="relative rounded-lg overflow-hidden border">
-                  <Image
-                    src={post.images[currentImageIndex] || post.images[0]}
-                    alt={`Gambar ${currentImageIndex + 1}`}
-                    width={800}
-                    height={600}
-                    className="w-full object-contain"
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage
+                    src={post.author?.avatar}
+                    alt={post.author?.username}
                   />
-                  {post.images.length > 1 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                        onClick={handlePrevImage}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                        onClick={handleNextImage}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                      </Button>
-                    </>
-                  )}
+                  <AvatarFallback>{post?.author?.username?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">
+                        {post?.author?.username}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {formatReadableTime(post?.created_at)}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{post?.category}</Badge>
+                  </div>
                 </div>
-                <div className="flex justify-center space-x-1">
-                  {post.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-2 h-2 rounded-full ${
-                        index === currentImageIndex
-                          ? 'bg-primary'
-                          : 'bg-gray-300'
-                      }`}
+              </div>
+
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {post?.content}
+                </p>
+              </div>
+
+              {post?.images && post.images.length > 0 && (
+                <div className="space-y-4">
+                  <div className="relative rounded-lg overflow-hidden border cursor-pointer">
+                    <Image
+                      src={post.images[currentImageIndex] || post.images[0]}
+                      alt={`Gambar ${currentImageIndex + 1}`}
+                      width={800}
+                      height={600}
+                      className="w-full object-contain"
                     />
-                  ))}
+                    {post.images.length > 1 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                          onClick={(e) => {
+                            handlePrevImage();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                          onClick={(e) => {
+                            handleNextImage();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                          </svg>
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex justify-center space-x-1">
+                    {post.images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={(e) => {
+                          setCurrentImageIndex(index);
+                          e.stopPropagation();
+                        }}
+                        className={`w-2 h-2 rounded-full ${
+                          index === currentImageIndex
+                            ? 'bg-primary'
+                            : 'bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="border-t pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">Komentar ({comments.length})</h4>
-              </div>
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold">
+                    Komentar ({comments.length})
+                  </h4>
+                </div>
 
-              <div className="space-y-4 mb-20">
-                {comments.map((comment, i) => (
-                  <Card
-                    key={comment.id || i}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="pt-4">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10 hidden md:inline-block">
-                          <AvatarImage
-                            src={comment?.author?.avatar}
-                            alt={comment?.author?.username}
-                          />
-                          <AvatarFallback>
-                            {comment?.author?.username?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex justify-between mb-2">
-                            <div className="flex mb-1 flex-col">
-                              <p className="font-medium">
-                                {comment?.author?.username}
-                              </p>
-                              <span className="text-sm text-muted-foreground">
-                                {formatReadableTime(comment?.created_at)}
-                              </span>
+                <div className="space-y-4 mb-20">
+                  {comments.map((comment, i) => (
+                    <Card
+                      key={comment.id || i}
+                      className="hover:shadow-md transition-shadow"
+                    >
+                      <CardContent className="pt-4">
+                        <div className="flex gap-3">
+                          <Avatar className="h-10 w-10 hidden md:inline-block">
+                            <AvatarImage
+                              src={comment?.author?.avatar}
+                              alt={comment?.author?.username}
+                            />
+                            <AvatarFallback>
+                              {comment?.author?.username?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex mb-1 flex-col">
+                                <p className="font-medium">
+                                  {comment?.author?.username}
+                                </p>
+                                <span className="text-sm text-muted-foreground">
+                                  {formatReadableTime(comment?.created_at)}
+                                </span>
+                              </div>
+                              {user.id === comment.author.id && (
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    handleDeleteComment(comment.id);
+                                    e.stopPropagation();
+                                  }}
+                                  className="hover:bg-transparent bg-transparent hover:text-[16px] duration-900 transition-all hover:cursor-pointer p-0"
+                                >
+                                  🗑️
+                                </Button>
+                              )}
                             </div>
-                            {user.id === comment.author.id && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDeleteComment(comment.id)}
-                                className="hover:bg-transparent bg-transparent hover:text-[16px] duration-900 transition-all hover:cursor-pointer p-0"
-                              >
-                                🗑️
-                              </Button>
+                            <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+                              {comment?.content}
+                            </p>
+                            {comment?.image && (
+                              <div className="rounded-lg overflow-hidden border cursor-pointer hover:shadow-md transition-shadow">
+                                <Image
+                                  src={comment.image}
+                                  alt={`Comment image`}
+                                  width={400}
+                                  height={300}
+                                  className="w-full h-48 object-cover"
+                                />
+                              </div>
                             )}
                           </div>
-                          <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                            {comment?.content}
-                          </p>
-                          {comment?.image && (
-                            <div
-                              className="rounded-lg overflow-hidden border cursor-pointer hover:shadow-md transition-shadow"
-                              onClick={() => handleImageClick(comment.image)}
-                            >
-                              <Image
-                                src={comment.image}
-                                alt={`Comment image`}
-                                width={400}
-                                height={300}
-                                className="w-full h-48 object-cover"
-                              />
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </CardContent>
-                    <div ref={commentsStartRef} />
-                  </Card>
-                ))}
+                      </CardContent>
+                      <div ref={commentsStartRef} />
+                    </Card>
+                  ))}
 
-                {comments.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Belum ada komentar. Jadilah yang pertama berkomentar!
-                  </div>
-                )}
+                  {comments.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Belum ada komentar. Jadilah yang pertama berkomentar!
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Input komentar tetap di bagian bawah */}
-        <div className="flex-shrink-0 border-t p-4 bg-background">
-          <CommentInput onAddComment={handleAddComment} />
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Input komentar tetap di bagian bawah */}
+          <div className="flex-shrink-0 border-t p-4 bg-background">
+            <CommentInput onAddComment={handleAddComment} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

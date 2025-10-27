@@ -27,34 +27,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, Share2, X } from 'lucide-react';
+import { Share2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatDistanceToNow } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { MessageCircle, LogIn } from 'lucide-react';
+import { formatReadableTime } from '@/lib/timeReadable';
 import { categories } from '@/data/mockCategories';
 import Link from 'next/link';
-
-// Format waktu yang lebih mudah dibaca
-export const formatReadableTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
-
-  if (diffInMinutes < 1) return 'Baru saja';
-  if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`;
-  if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
-  if (diffInDays < 7) return `${diffInDays} hari yang lalu`;
-
-  return formatDistanceToNow(date, {
-    addSuffix: true,
-    locale: id,
-  });
-};
+import { ImageModal } from './ImageUpload';
 
 export function ForumPost({
   post,
@@ -67,8 +48,14 @@ export function ForumPost({
   token,
 }) {
   const [showComments, setShowComments] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleImageClick = (img) => {
+    setSelectedImage(img);
+    setShowImageModal(true);
+  };
 
   const handleCommentClick = () => {
     setShowComments(!showComments);
@@ -76,11 +63,6 @@ export function ForumPost({
 
   const handleAddComment = (newComment) => {
     onAddComment(post?.id, newComment);
-  };
-
-  const handleImageClick = (index) => {
-    setSelectedImageIndex(index);
-    setShowImageModal(true);
   };
 
   const handlePrevImage = () => {
@@ -100,7 +82,7 @@ export function ForumPost({
       navigator.share({
         title: post?.title,
         text: post?.content?.substring(0, 20) + '...',
-        url: `${window.location.href}/${id}`,
+        url: `${window.location.origin}/forum/${id}`,
       });
     } else {
       alert('Link disalin ke clipboard!');
@@ -109,193 +91,144 @@ export function ForumPost({
   };
 
   return (
-    <Card className={`${className} mb-4 transition-colors duration-300`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-start">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={post?.author.avatar} alt={post?.author.name} />
-            <AvatarFallback>{post?.author.username?.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div className="ml-2 flex-1">
-            <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
-              <span className="font-medium">{post?.author.username}</span>
-              <span className="text-xs">
-                {formatReadableTime(post?.created_at)}
-              </span>
-            </div>
-          </div>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-          >
-            {post?.category}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p
-          className={`text-gray-700 dark:text-gray-300 mb-4 ${
-            post?.images.length > 0 ? '' : 'text-lg'
-          }`}
-        >
-          {post?.content}
-        </p>
-
-        {post?.images.length > 0 && (
-          <div className="mb-4 rounded-2xl">
-            <div className="relative group">
-              <div className="relative lg:w-[70%] max-h-fit h-full max-w-fit overflow-hidden mx-auto border-[1px] border-gray-800 dark:border-gray-400 rounded-sm dark:shadow-sm">
-                <Image
-                  alt={`Post image ${selectedImageIndex + 1}`}
-                  src={post?.images[selectedImageIndex] || post?.images[0]}
-                  width={800}
-                  height={700}
-                  className="object-contain"
-                  unoptimized
-                />
+    <>
+      <Card className={`${className} mb-4 transition-colors duration-300`}>
+        <CardHeader className="pb-4">
+          <div className="flex items-start">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={post?.author.avatar} alt={post?.author.name} />
+              <AvatarFallback>
+                {post?.author.username?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="ml-2 flex-1">
+              <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
+                <span className="font-medium">{post?.author.username}</span>
+                <span className="text-xs">
+                  {formatReadableTime(post?.created_at)}
+                </span>
               </div>
-
-              {/* Navigation buttons */}
-              {post?.images.length > 1 && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-whiter"
-                    onClick={handlePrevImage}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-whiter"
-                    onClick={handleNextImage}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                  </Button>
-                </>
-              )}
             </div>
+            <Badge
+              variant="secondary"
+              className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+            >
+              {post?.category}
+            </Badge>
           </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t dark:border-gray-700">
-          <div className="flex space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={isAuth ? false : true}
-              onClick={() => onLike(post?.id)}
-              className={`flex items-center space-x-1 ${
-                post?.liked
-                  ? 'text-red-500'
-                  : 'text-gray-500 hover:text-red-500'
-              }`}
-            >
-              <svg
-                className="w-5 h-5"
-                fill={post?.liked ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-              <span>{post?.like_count}</span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCommentClick}
-              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <span>{post?.comment_count}</span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleShare(post.id)}
-              className="flex items-center space-x-1 text-gray-500 hover:text-green-500"
-            >
-              <Share2 />
-            </Button>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p
+            className={`text-gray-700 dark:text-gray-300 mb-4 ${
+              post?.images.length > 0 ? '' : 'text-lg'
+            }`}
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-              />
-            </svg>
-          </Button>
-        </div>
+            {post?.content}
+          </p>
 
-        {showComments && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-gray-800 dark:text-white">
-                Komentar ({post?.comment_count})
-              </h4>
+          {post?.images.length > 0 && (
+            <div className="mb-4 rounded-2xl">
+              <div className="relative group">
+                <div
+                  className="relative lg:w-[70%] max-h-fit h-full max-w-fit overflow-hidden mx-auto border-[1px] border-gray-800 dark:border-gray-400 rounded-sm dark:shadow-sm"
+                  onClick={() =>
+                    handleImageClick(
+                      post?.images[selectedImageIndex] || post?.images[0]
+                    )
+                  }
+                >
+                  <Image
+                    alt={`Post image ${selectedImageIndex + 1}`}
+                    src={post?.images[selectedImageIndex] || post?.images[0]}
+                    width={800}
+                    height={700}
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+
+                {/* Navigation buttons */}
+                {post?.images.length > 1 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute left-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-whiter"
+                      onClick={handlePrevImage}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                      </svg>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute right-0 top-1/2 transform -translate-y-1/2 dark:bg-card dark:text-white"
+                      onClick={handleNextImage}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2 border-t dark:border-gray-700">
+            <div className="flex space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={isAuth ? false : true}
+                onClick={() => onLike(post?.id)}
+                className={`flex items-center space-x-1 ${
+                  post?.liked
+                    ? 'text-red-500'
+                    : 'text-gray-500 hover:text-red-500'
+                }`}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill={post?.liked ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+                <span>{post?.like_count}</span>
+              </Button>
+
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleCommentClick}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="flex items-center space-x-1 text-gray-500 hover:text-blue-500"
               >
                 <svg
                   className="w-5 h-5"
@@ -307,31 +240,101 @@ export function ForumPost({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                   />
                 </svg>
+                <span>{post?.comment_count}</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleShare(post.id)}
+                className="flex items-center space-x-1 text-gray-500 hover:text-green-500"
+              >
+                <Share2 />
               </Button>
             </div>
-            <ScrollArea
-              className={`w-full rounded-md relative dark:border-gray-700 md:p-4 p-1 h-[calc(100vh)] overflow-y-scroll`}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              {comments.map((comment, i) => (
-                <Comment key={i} comment={comment} user={user} token={token} />
-              ))}
-              {isAuth ? (
-                <CommentInput onAddComment={handleAddComment} />
-              ) : (
-                <CommentAuthPrompt />
-              )}
-            </ScrollArea>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                />
+              </svg>
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {showComments && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-800 dark:text-white">
+                  Komentar ({post?.comment_count})
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCommentClick}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </Button>
+              </div>
+              <ScrollArea
+                className={`w-full rounded-md relative dark:border-gray-700 md:p-4 p-1 h-[calc(100vh)] overflow-y-scroll`}
+              >
+                {comments.map((comment, i) => (
+                  <Comment
+                    key={i}
+                    comment={comment}
+                    user={user}
+                    token={token}
+                  />
+                ))}
+                {isAuth ? (
+                  <CommentInput onAddComment={handleAddComment} />
+                ) : (
+                  <CommentAuthPrompt />
+                )}
+              </ScrollArea>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ImageModal
+        image={selectedImage}
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+      />
+    </>
   );
 }
 
-// Komponen lainnya tetap sama...
 export function CreatePostButton({ onClick }) {
   return (
     <Button
@@ -418,7 +421,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="dark:bg-gray-800 w-[80%] max-w-2xl">
+      <DialogContent className="dark:bg-gray-800 w-[80%] max-w-2xl h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
             Buat Postingan Baru
@@ -608,9 +611,7 @@ function ImageUpload({ images, setImages, maxImages = 4 }) {
   );
 }
 
-import { MessageCircle, LogIn } from 'lucide-react';
-
-const CommentAuthPrompt = () => {
+export const CommentAuthPrompt = () => {
   return (
     <Card className="w-full border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-900/50">
       <CardHeader className="text-center pb-4">

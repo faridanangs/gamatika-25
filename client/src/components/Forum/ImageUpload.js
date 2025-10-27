@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export function ImageUpload({ images, setImages, maxImages = 4 }) {
   const [uploading, setUploading] = useState(false);
@@ -137,12 +138,13 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
 export function ImageModal({ image, isOpen, onClose }) {
   if (!isOpen || !image) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-3xl bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="relative max-h-[80vh]">
+  // Gunakan portal untuk memastikan modal dirender di root level
+  return createPortal(
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+      <div className="relative max-w-5xl max-h-[90vh]">
         <button
           onClick={onClose}
-          className="absolute -top-1 -right-1 text-white bg-black bg-opacity-50 rounded-full p-1 z-10"
+          className="absolute -top-4 -right-4 text-white bg-black/70 rounded-full p-2 z-50 hover:bg-black/90 transition-colors"
         >
           <svg
             className="w-6 h-6"
@@ -153,19 +155,22 @@ export function ImageModal({ image, isOpen, onClose }) {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2"
+              strokeWidth={2}
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
         </button>
-        <Image
-          src={image}
-          alt="Show image"
-          width={1000}
-          height={1000}
-          className="w-full h-[50vh] md:h-[80vh] object-contain"
-        />
+        <div className="bg-black/20 rounded-lg p-2">
+          <Image
+            src={image}
+            alt="Show image"
+            width={1200}
+            height={800}
+            className="max-w-full max-h-[85vh] object-contain"
+          />
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

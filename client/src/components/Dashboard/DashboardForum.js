@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { PostSkeleton } from '../skeleton/PostSkeleton';
 import { createComment, createPost, likedToggle } from '@/lib/action';
 
-export default function DashboardForumPage({ postsO, user, token }) {
+export default function DashboardForumPage({ postsO, user, token, isAuth }) {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -133,7 +133,7 @@ export default function DashboardForumPage({ postsO, user, token }) {
                     onLike={handleLike}
                     comments={post?.comments}
                     onAddComment={handleAddComment}
-                    isAuth={true}
+                    isAuth={isAuth}
                     user={user}
                     token={token}
                   />

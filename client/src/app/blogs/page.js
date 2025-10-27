@@ -21,27 +21,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { getAllArtikel } from '@/data/getArtikelData';
 import { artikelCategories } from '@/data/mockCategories';
-import { formatReadableTime } from '@/components/Forum/ForumPost';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import { BlogsPageSkeleton } from '@/components/skeleton/BlogSkeleton';
-
-// Fungsi untuk mendapatkan warna kategori
-const getCategoryColor = (category) => {
-  const colors = {
-    Penting: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    Akademik: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    Beasiswa:
-      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    Event:
-      'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-  };
-
-  return colors[category] || colors.default;
-};
+import { formatReadableTime } from '@/lib/timeReadable';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 export default function BlogsPage() {
   const router = useRouter();
@@ -63,7 +50,6 @@ export default function BlogsPage() {
         const resp = await getAllArtikel();
         setArtikel(resp.data || []);
       } catch (error) {
-        console.error('Error fetching artikel:', error);
         setArtikel([]);
       } finally {
         setIsLoading(false);
@@ -95,11 +81,9 @@ export default function BlogsPage() {
     );
   };
 
-  // Terapkan filter: pertama filter kategori, lalu filter pencarian
   const filteredByCategory = filterByCategory(artikel, selectedKategori);
   const filteredArtikel = filterBySearch(filteredByCategory, search);
 
-  // Urutkan berdasarkan tanggal (terbaru dulu)
   const sortedArtikel = [...filteredArtikel].sort((a, b) => {
     return new Date(b.date || b.created_at) - new Date(a.date || a.created_at);
   });
@@ -236,9 +220,7 @@ export default function BlogsPage() {
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-3">
                       <span
-                        className={`text-xs font-semibold px-2 py-1 rounded-full ${getCategoryColor(
-                          item.category
-                        )}`}
+                        className={`text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`}
                       >
                         {item.category || 'Tidak berkategori'}
                       </span>
@@ -257,6 +239,56 @@ export default function BlogsPage() {
                         <ReactMarkdown
                           remarkPlugins={[remarkMath, remarkGfm]}
                           rehypePlugins={[rehypeKatex]}
+                          components={{
+                            code({
+                              node,
+                              inline,
+                              className,
+                              children,
+                              ...props
+                            }) {
+                              const match = /language-(\w+)/.exec(
+                                className || ''
+                              );
+                              return !inline && match ? (
+                                <SyntaxHighlighter
+                                  style={atomDark}
+                                  language={match[1]}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, '')}
+                                </SyntaxHighlighter>
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                            table({ children }) {
+                              return (
+                                <div className="overflow-x-auto">
+                                  <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
+                                    {children}
+                                  </table>
+                                </div>
+                              );
+                            },
+                            th({ children }) {
+                              return (
+                                <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
+                                  {children}
+                                </th>
+                              );
+                            },
+                            td({ children }) {
+                              return (
+                                <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
+                                  {children}
+                                </td>
+                              );
+                            },
+                          }}
                         >
                           {item.content.substring(0, 120) + '...'}
                         </ReactMarkdown>

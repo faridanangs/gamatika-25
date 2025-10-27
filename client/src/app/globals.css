@@ -139,11 +139,6 @@
   background: #555;
 }
 
-textarea {
-  min-height: 40px;
-  max-height: 120px;
-}
-
 * {
   transition: background-color 0.2s ease;
 }

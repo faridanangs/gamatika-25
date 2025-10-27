@@ -1,4 +1,4 @@
-import ProfilePageComp from '@/components/Dashboard/Profile';
+import ProfilePageComp from '@/components/Dashboard/Profile/Profile';
 import ErrorPage from '@/components/ErrorPage';
 import { getUserProfile } from '@/data/getUserData';
 import { authOptions } from '@/lib/auth';

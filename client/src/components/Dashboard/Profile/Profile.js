@@ -9,30 +9,34 @@ import {
   updatePost,
   updateUser,
 } from '@/lib/action';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
+} from '../../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
+import { Badge } from '../../ui/badge';
+import { Input } from '../../ui/input';
+import { Button } from '../../ui/button';
 import {
   EditPostModal,
   PostDetailModal,
   PrivateKeyModal,
-} from './Profile/PostModalProfile';
+} from './PostModalProfile';
 import { conGetNFTByOwner } from '@/nft/action';
-import { ProfileSkeletonComp } from '../skeleton/ProfileSkeleton';
-import AchievementSection from './Profile/Achievement';
-import { formatReadableTime } from '../Forum/ForumPost';
+import { ProfileSkeletonComp } from '../../skeleton/ProfileSkeleton';
+import AchievementSection from './Achievement';
 
-import { ArtikelCard, PostCard } from './Profile/ArtikelAndPostCard';
+import { ArtikelCard, PostCard } from './ArtikelAndPostCard';
 
 export default function ProfilePageComp({ user, token }) {
   const [nfts, setNfts] = useState([]);
@@ -96,6 +100,12 @@ export default function ProfilePageComp({ user, token }) {
     },
     {
       id: 2,
+      title: 'Buat Artikel baru',
+      icon: '📰',
+      action: () => route.push('/dashboard/artikel'),
+    },
+    {
+      id: 3,
       title: 'Lihat Private Key',
       icon: '🔑',
       action: () => setShowPrivateKeyModal(true),

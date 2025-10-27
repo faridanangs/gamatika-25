@@ -4,12 +4,12 @@ import Head from 'next/head';
 import { categories } from '@/data/mockCategories';
 import { ForumPost } from './ForumPost';
 import { PostSkeleton } from '../skeleton/PostSkeleton';
-import { TopContributorsSkeleton } from '../TopContibSkeleton';
+import { TopContributorsSkeleton } from '../skeleton/TopContibSkeleton';
 import { Button } from '../ui/button';
 import toast from 'react-hot-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
-export default function ForumPage({ postsO, contribsO }) {
+export default function ForumPage({ postsO, contribsO, isAuth }) {
   const [posts, setPosts] = useState([]);
   const [contribs, setContribs] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);

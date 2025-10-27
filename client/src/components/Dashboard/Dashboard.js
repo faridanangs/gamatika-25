@@ -10,19 +10,19 @@ const menuItems = [
   { id: 'profile', label: 'Profil', icon: '👤', href: '/dashboard/profile' },
   { id: 'forum', label: 'Forum', icon: '📢', href: '/dashboard/forum' },
   {
-    id: 'E-Book & Jurnal',
-    label: 'E-Book & Jurnal',
-    icon: '📚',
-    href: '/dashboard/materi',
-  },
-  { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
-  { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
-  {
     id: 'artikel',
     label: 'Buat Artikel',
     icon: '📰',
     href: '/dashboard/artikel',
   },
+  { id: 'cv', label: 'Buat CV', icon: '📄', href: '/dashboard/cv' },
+  {
+    id: 'E-Book & Jurnal',
+    label: 'E-Book & Jurnal',
+    icon: '📚',
+    href: '/dashboard/materi',
+  },
+  { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
   // {
   //   id: 'langganan',
   //   label: 'Berlangganan',

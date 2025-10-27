@@ -1,14 +1,16 @@
 import React from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Badge, Trash2 } from 'lucide-react';
-import { formatReadableTime } from '../../Forum/ForumPost';
+import { Badge, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
+import { formatReadableTime } from '@/lib/timeReadable';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 export const ArtikelCard = ({
   currentArtikels,
@@ -56,6 +58,56 @@ export const ArtikelCard = ({
                       <ReactMarkdown
                         remarkPlugins={[remarkMath, remarkGfm]}
                         rehypePlugins={[rehypeKatex]}
+                        components={{
+                          code({
+                            node,
+                            inline,
+                            className,
+                            children,
+                            ...props
+                          }) {
+                            const match = /language-(\w+)/.exec(
+                              className || ''
+                            );
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={atomDark}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                          table({ children }) {
+                            return (
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
+                                  {children}
+                                </table>
+                              </div>
+                            );
+                          },
+                          th({ children }) {
+                            return (
+                              <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
+                                {children}
+                              </th>
+                            );
+                          },
+                          td({ children }) {
+                            return (
+                              <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
+                                {children}
+                              </td>
+                            );
+                          },
+                        }}
                       >
                         {artkl.content.substring(0, 120) + '...'}
                       </ReactMarkdown>
@@ -169,6 +221,18 @@ export const PostCard = ({
   goToPrevPage,
   setCurrentPage,
 }) => {
+  const handleShare = (post) => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title,
+        text: post?.content?.substring(0, 20) + '...',
+        url: `${window.location.origin}/forum/${post.id}`,
+      });
+    } else {
+      alert('Link disalin ke clipboard!');
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
   return (
     <Card>
       <CardHeader>
@@ -177,16 +241,17 @@ export const PostCard = ({
       <CardContent>
         <div className="space-y-4 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-2">
           {currentPosts.map((post) => (
-            <Card
-              key={post.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleViewPost(post)}
-            >
+            <Card key={post.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold">{post.title}</h4>
+                      <h4
+                        className="font-semibold cursor-pointer underline"
+                        onClick={() => handleViewPost(post)}
+                      >
+                        {post.title}
+                      </h4>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -223,8 +288,11 @@ export const PostCard = ({
                       <span className="text-muted-foreground">
                         ❤️ {post?.like_count || 0}
                       </span>
-                      <span className="text-muted-foreground">
-                        👁️ {post?.share_count || 0}
+                      <span className="text-muted-foreground cursor-pointer">
+                        <Share2
+                          className="size-4"
+                          onClick={() => handleShare(post)}
+                        />
                       </span>
                     </div>
                   </div>

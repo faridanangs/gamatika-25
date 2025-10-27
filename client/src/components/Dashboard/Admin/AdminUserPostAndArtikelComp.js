@@ -1,7 +1,7 @@
 import { FileText, Search, Trash2, Users } from 'lucide-react';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
+import { Button } from '../../ui/button';
 
 export const UserPostAndArtikelComp = ({
   setSearchTerm,
@@ -34,6 +34,19 @@ export const UserPostAndArtikelComp = ({
   totalPostsPages,
   totalUsersPages,
 }) => {
+  // Urutkan data berdasarkan created_at (terbaru dulu)
+  const sortedUsers = [...currentUsers].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  const sortedPosts = [...currentPosts].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  const sortedArtikels = [...currentArtikels].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
   return (
     <div className="space-y-8">
       {/* User Management */}
@@ -69,12 +82,15 @@ export const UserPostAndArtikelComp = ({
                   Postingan
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Artikel
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {currentUsers.map((user) => (
+              {sortedUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center">
@@ -91,11 +107,19 @@ export const UserPostAndArtikelComp = ({
                         <div className="text-sm text-gray-500 dark:text-gray-400">
                           {user.email}
                         </div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(user.created_at).toLocaleDateString(
+                            'id-ID'
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {user.posts?.length || 0} postingan
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {user.artikels?.length || 0} artikel
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     <button
@@ -226,7 +250,7 @@ export const UserPostAndArtikelComp = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {currentPosts.map((post) => (
+              {sortedPosts.map((post) => (
                 <tr key={post.id}>
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -365,7 +389,7 @@ export const UserPostAndArtikelComp = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {currentArtikels.map((artikel) => (
+              {sortedArtikels.map((artikel) => (
                 <tr key={artikel.id}>
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">

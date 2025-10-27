@@ -28,8 +28,8 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { TopContributors } from '../Forum/Forum';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { TopContributors } from '../../Forum/Forum';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { Button } from '@/components/ui/button';
 import { UserPostAndArtikelComp } from './AdminUserPostAndArtikelComp';
 

@@ -18,10 +18,12 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import { getAllArtikel, getArtikelByID } from '@/data/getArtikelData';
-import { formatReadableTime } from '@/components/Forum/ForumPost';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { BlogDetailSkeleton } from '@/components/skeleton/BlogSkeleton';
+import { formatReadableTime } from '@/lib/timeReadable';
+import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter';
 
 // Fungsi untuk mengacak array
 const shuffleArray = (array) => {
@@ -54,7 +56,6 @@ export default function BlogDetailPage() {
       }
       setArtikel(response.data);
     } catch (error) {
-      console.error('Error fetching artikel:', error);
       setArtikel(null);
     } finally {
       setIsLoading(false);
@@ -71,7 +72,6 @@ export default function BlogDetailPage() {
       const shuffled = shuffleArray(filtered);
       setRelatedArtikels(shuffled.slice(0, 3));
     } catch (error) {
-      console.error('Error fetching all artikels:', error);
       setArtikels([]);
       setRelatedArtikels([]);
     }
@@ -83,11 +83,6 @@ export default function BlogDetailPage() {
       fetchAllArtikels();
     }
   }, [id]);
-
-  const toggleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // Implementasi bookmark sesungguhnya
-  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -166,22 +161,6 @@ export default function BlogDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={toggleBookmark}
-                className={`flex items-center ${
-                  isBookmarked ? 'bg-blue-50 border-blue-200 text-blue-700' : ''
-                }`}
-              >
-                <Bookmark
-                  className={`h-4 w-4 mr-2 ${
-                    isBookmarked ? 'fill-current' : ''
-                  }`}
-                />
-                {isBookmarked ? 'Tersimpan' : 'Simpan'}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={handleShare}
                 className="flex items-center"
               >
@@ -198,6 +177,48 @@ export default function BlogDetailPage() {
             <ReactMarkdown
               remarkPlugins={[remarkMath, remarkGfm]}
               rehypePlugins={[rehypeKatex]}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <SyntaxHighlighter
+                      style={atomDark}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                table({ children }) {
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
+                        {children}
+                      </table>
+                    </div>
+                  );
+                },
+                th({ children }) {
+                  return (
+                    <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
+                      {children}
+                    </th>
+                  );
+                },
+                td({ children }) {
+                  return (
+                    <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
+                      {children}
+                    </td>
+                  );
+                },
+              }}
             >
               {artikel.content || ''}
             </ReactMarkdown>

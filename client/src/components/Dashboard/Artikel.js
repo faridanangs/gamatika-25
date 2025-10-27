@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Save, Eye, FileText, X } from 'lucide-react';
+import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-import 'katex/dist/katex.min.css';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '../ui/spinner';
 import { artikelCategories } from '@/data/mockCategories';
+import SyntaxHighlighter from 'react-syntax-highlighter';
 
 const ArticlePreview = ({ article }) => {
   return (
@@ -54,6 +55,48 @@ const ArticlePreview = ({ article }) => {
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
         rehypePlugins={[rehypeKatex]}
+        components={{
+          code({ node, inline, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || '');
+            return !inline && match ? (
+              <SyntaxHighlighter
+                style={atomDark}
+                language={match[1]}
+                PreTag="div"
+                {...props}
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            ) : (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          table({ children }) {
+            return (
+              <div className="overflow-x-auto">
+                <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
+                  {children}
+                </table>
+              </div>
+            );
+          },
+          th({ children }) {
+            return (
+              <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
+                {children}
+              </th>
+            );
+          },
+          td({ children }) {
+            return (
+              <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
+                {children}
+              </td>
+            );
+          },
+        }}
       >
         {article.content || ''}
       </ReactMarkdown>
@@ -245,23 +288,27 @@ export default function CreateArticlePage({ token }) {
 
                 {/* Content */}
                 <div>
-                  <Label
-                    htmlFor="content"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
-                  >
-                    Konten Artikel
-                  </Label>
-                  <Textarea
-                    id="content"
-                    placeholder="Tulis konten artikel Anda di sini."
-                    value={article.content}
-                    onChange={(e) =>
-                      setArticle((prev) => ({
-                        ...prev,
-                        content: e.target.value,
-                      }))
-                    }
-                  />
+                  <div>
+                    <Label
+                      htmlFor="content"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+                    >
+                      Konten Artikel
+                    </Label>
+                    <Textarea
+                      id="content"
+                      placeholder="Tulis konten artikel Anda di sini."
+                      value={article.content}
+                      onChange={(e) =>
+                        setArticle((prev) => ({
+                          ...prev,
+                          content: e.target.value,
+                        }))
+                      }
+                      // 👇 Tambahkan properti className di sini
+                      className=" max-h-[600px]"
+                    />
+                  </div>
                   <div className="mt-3 p-3 bg-blue-50 dark:bg-gray-500 rounded-lg text-sm">
                     <div className="text-blue-800 dark:text-gray-200">
                       <strong>Tips:</strong> Untuk menulis rumus matematika,

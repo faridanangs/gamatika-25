@@ -17,3 +17,22 @@ export async function getAllPosts() {
     throw new Error(error || 'Network Error Occurred');
   }
 }
+
+export async function getPostByID(id) {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}posts/${id}`,
+      {
+        cache: 'no-store',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return handleApiResponse(resp);
+  } catch (error) {
+    throw new Error(error || 'Network Error Occurred');
+  }
+}

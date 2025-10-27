@@ -105,7 +105,7 @@ export const likedToggle = async (token, id) => {
     if (result.success) {
       revalidatePath(`/dashboard/profile`, 'page');
       revalidatePath(`/dashboard/forum`, 'page');
-      revalidatePath(`/forum`, 'page');
+      revalidatePath(`/forum`, 'layout');
     }
 
     return result;
@@ -210,6 +210,7 @@ export const createComment = async (postId, token, newComment) => {
     if (result.success) {
       revalidatePath(`/dashboard/forum`, 'page');
       revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/forum/[id]`, 'page');
     }
 
     return result;
@@ -235,7 +236,9 @@ export const deleteComment = async (token, id) => {
     if (result.success) {
       revalidatePath(`/dashboard/profile`, 'page');
       revalidatePath(`/dashboard/forum`, 'page');
+      revalidatePath(`/forum/[id]`, 'page');
     }
+
     return result;
   } catch (error) {
     throw new Error('Network Error Occurred');

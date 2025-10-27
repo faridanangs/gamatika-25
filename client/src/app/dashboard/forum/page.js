@@ -14,6 +14,7 @@ const DashboardForum = async () => {
         postsO={posts.data}
         user={session.user}
         token={session.accessToken}
+        isAuth={session != null}
       />
     );
   } catch (error) {
