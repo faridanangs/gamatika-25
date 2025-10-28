@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { categories, mockPosts } from '@/data/mockCategories';
 import CreatePostModal, {
@@ -11,29 +11,102 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { PostSkeleton } from '../skeleton/PostSkeleton';
 import { createComment, createPost, likedToggle } from '@/lib/action';
+import { getPostPerPage } from '@/data/getPostsData';
 
-export default function DashboardForumPage({ postsO, user, token, isAuth }) {
-  const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
+export default function DashboardForumPage({ user, token, isAuth }) {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    if (selectedCategory === 'Semua') {
-      setFilteredPosts(posts);
-    } else {
-      setFilteredPosts(
-        posts.filter((post) => post.category === selectedCategory)
-      );
+  const [displayedPosts, setDisplayedPosts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const postsPerPage = 10;
+
+  const observer = useRef();
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (isLoading) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMorePosts();
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, hasMore]
+  );
+
+  const loadInitialPosts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      setDisplayedPosts([]);
+      setPage(1);
+
+      const categoryParam =
+        selectedCategory === 'Semua' ? '' : selectedCategory;
+
+      const response = await getPostPerPage(1, postsPerPage, categoryParam);
+
+      if (response.success) {
+        setDisplayedPosts(response.data);
+
+        if (response.data.length < postsPerPage) {
+          setHasMore(false);
+        } else {
+          setPage(2);
+          setHasMore(true);
+        }
+      } else {
+        toast.error(response.message || 'Gagal memuat postingan');
+        setHasMore(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Terjadi kesalahan saat memuat postingan');
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedCategory, posts]);
+  }, [selectedCategory, postsPerPage]);
+
+  const loadMorePosts = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const categoryParam =
+        selectedCategory === 'Semua' ? '' : selectedCategory;
+      const response = await getPostPerPage(page, postsPerPage, categoryParam);
+
+      if (response.success) {
+        if (response.data.length > 0) {
+          setDisplayedPosts((prev) => [...prev, ...response.data]);
+          setPage((prev) => prev + 1);
+
+          if (response.data.length < postsPerPage) {
+            setHasMore(false);
+          }
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        toast.error(response.message || 'Gagal memuat postingan tambahan');
+        setHasMore(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Terjadi kesalahan saat memuat postingan');
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, hasMore, page, postsPerPage, selectedCategory]);
 
   useEffect(() => {
-    const sorted = postsO.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    setPosts(sorted);
-  }, [postsO]);
+    loadInitialPosts();
+  }, [loadInitialPosts]);
 
   const handleLike = async (id) => {
     try {
@@ -121,23 +194,41 @@ export default function DashboardForumPage({ postsO, user, token, isAuth }) {
             </div>
 
             <div className="space-y-4">
-              {posts.length == 0 ? (
+              {isLoading && displayedPosts.length == 0 ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <PostSkeleton key={i} />
                 ))
-              ) : filteredPosts?.length > 0 ? (
-                filteredPosts.map((post, i) => (
-                  <ForumPost
-                    key={i}
-                    post={post}
-                    onLike={handleLike}
-                    comments={post?.comments}
-                    onAddComment={handleAddComment}
-                    isAuth={isAuth}
-                    user={user}
-                    token={token}
-                  />
-                ))
+              ) : displayedPosts.length > 0 ? (
+                displayedPosts.map((post, i) => {
+                  if (displayedPosts.length === i + 1) {
+                    return (
+                      <div ref={lastPostElementRef} key={i}>
+                        <ForumPost
+                          post={post}
+                          onLike={handleLike}
+                          comments={post?.comments}
+                          onAddComment={handleAddComment}
+                          isAuth={isAuth}
+                          user={user}
+                          token={token}
+                        />
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <ForumPost
+                        key={i}
+                        post={post}
+                        onLike={handleLike}
+                        comments={post?.comments}
+                        onAddComment={handleAddComment}
+                        isAuth={isAuth}
+                        user={user}
+                        token={token}
+                      />
+                    );
+                  }
+                })
               ) : (
                 <div className="text-center py-12">
                   <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-4 inline-block mb-4">
@@ -161,6 +252,18 @@ export default function DashboardForumPage({ postsO, user, token, isAuth }) {
                   <p className="text-gray-500 dark:text-gray-400 mt-2">
                     Coba pilih kategori lain atau buat postingan baru
                   </p>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+
+              {!hasMore && displayedPosts.length > 0 && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  Tidak ada lagi postingan untuk dimuat
                 </div>
               )}
             </div>

@@ -4,7 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   UploadIcon,
   SendIcon,
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 
 const ai = new GoogleGenAI({
   apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
@@ -47,7 +48,7 @@ const MessageBubble = React.memo(({ message, isTyping, onCopy }) => {
         className={`max-w-2xl px-4 py-3 rounded-2xl shadow-md ${
           isUser
             ? 'bg-blue-500 text-white rounded-br-none'
-            : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none'
+            : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none overflow-x-auto'
         } break-words`}
       >
         {isTyping ? (
@@ -75,7 +76,7 @@ const MessageBubble = React.memo(({ message, isTyping, onCopy }) => {
             ) : (
               <ReactMarkdown
                 remarkPlugins={[remarkMath, remarkGfm]}
-                rehypePlugins={[rehypeKatex]}
+                rehypePlugins={[rehypeKatex, rehypeRaw]}
                 components={{
                   code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');

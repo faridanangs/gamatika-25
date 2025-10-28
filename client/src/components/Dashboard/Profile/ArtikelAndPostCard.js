@@ -9,8 +9,9 @@ import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import { formatReadableTime } from '@/lib/timeReadable';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import rehypeRaw from 'rehype-raw';
 
 export const ArtikelCard = ({
   currentArtikels,
@@ -57,7 +58,7 @@ export const ArtikelCard = ({
                     <div className="inline-block text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath, remarkGfm]}
-                        rehypePlugins={[rehypeKatex]}
+                        rehypePlugins={[rehypeKatex, rehypeRaw]}
                         components={{
                           code({
                             node,
@@ -109,7 +110,7 @@ export const ArtikelCard = ({
                           },
                         }}
                       >
-                        {artkl.content.substring(0, 120) + '...'}
+                        {artkl.content.substring(0, 150) + '...'}
                       </ReactMarkdown>
                     </div>
                     <Link

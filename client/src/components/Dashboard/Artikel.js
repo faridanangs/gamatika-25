@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Save, Eye, FileText, X } from 'lucide-react';
-import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -26,7 +26,8 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '../ui/spinner';
 import { artikelCategories } from '@/data/mockCategories';
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import rehypeRaw from 'rehype-raw';
 
 const ArticlePreview = ({ article }) => {
   return (
@@ -54,7 +55,7 @@ const ArticlePreview = ({ article }) => {
 
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[rehypeKatex, rehypeRaw]}
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
@@ -242,7 +243,7 @@ export default function CreateArticlePage({ token }) {
                     }
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Pilih kategori" />
+                      <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>
                     <SelectContent>
                       {artikelCategories.map((e, i) => (

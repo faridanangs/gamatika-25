@@ -108,8 +108,8 @@ export function Comment({ comment, user, token }) {
               <Image
                 src={comment.image}
                 alt={`Comment image ${comment.id}`}
-                width={100}
-                height={100}
+                width={600}
+                height={600}
                 className="object-cover w-60 h-40"
               />
             </div>

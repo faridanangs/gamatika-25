@@ -19,7 +19,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getAllArtikel } from '@/data/getArtikelData';
+import { getAllArtikel, getArtikelPerPage } from '@/data/getArtikelData';
 import { artikelCategories } from '@/data/mockCategories';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -27,91 +27,83 @@ import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import { BlogsPageSkeleton } from '@/components/skeleton/BlogSkeleton';
 import { formatReadableTime } from '@/lib/timeReadable';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import rehypeRaw from 'rehype-raw';
 
 export default function BlogsPage() {
   const router = useRouter();
   const [artikel, setArtikel] = useState([]);
-  const [selectedKategori, setSelectedKategori] = useState('Semua');
-  const [search, setSearch] = useState('');
+  const [selectedKategori, setSelectedKategori] = useState('semua');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showClearButton, setShowClearButton] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalArtikel, setTotalArtikel] = useState(0);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
 
-  // Fetch data artikel
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const resp = await getAllArtikel();
-        setArtikel(resp.data || []);
+        const resp = await getArtikelPerPage(
+          itemsPerPage,
+          currentPage,
+          selectedKategori,
+          searchTerm
+        );
+        setArtikel(resp.data);
+        setTotalArtikel(resp.total);
       } catch (error) {
         setArtikel([]);
+        setTotalArtikel(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [itemsPerPage, currentPage, selectedKategori, searchTerm]);
 
-  // Filter artikel berdasarkan kategori
-  const filterByCategory = (items, category) => {
-    if (category === 'Semua') return items;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedKategori]);
 
-    const categoryFiltered = items.filter((item) => {
-      return item.category.toLowerCase() === category.toLowerCase();
-    });
-    return categoryFiltered;
+  const totalPages = Math.ceil(totalArtikel / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
   };
 
-  // Filter artikel berdasarkan pencarian
-  const filterBySearch = (items, searchTerm) => {
-    if (searchTerm === '') return items;
-
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.content &&
-          item.content.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  };
-
-  const filteredByCategory = filterByCategory(artikel, selectedKategori);
-  const filteredArtikel = filterBySearch(filteredByCategory, search);
-
-  const sortedArtikel = [...filteredArtikel].sort((a, b) => {
-    return new Date(b.date || b.created_at) - new Date(a.date || a.created_at);
-  });
-
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedArtikel.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedArtikel.length / itemsPerPage);
-
-  // Handle pagination
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-  const prevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
-  // Handle klik artikel - arahkan ke halaman detail
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setShowClearButton(false);
+  };
+
   const handleArtikelClick = (id) => {
     router.push(`/blogs/${id}`);
   };
-
-  // Reset halaman saat filter berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedKategori, search]);
 
   if (isLoading) {
     return <BlogsPageSkeleton />;
@@ -132,9 +124,7 @@ export default function BlogsPage() {
               <p className="text-blue-100 mt-1">Fakultas MIPA</p>
             </div>
             <div className="bg-blue-500/20 px-4 py-2 rounded-lg">
-              <p className="text-white text-sm">
-                Total: {sortedArtikel.length} Blogs
-              </p>
+              <p className="text-white text-sm">Total: {totalArtikel} Blogs</p>
             </div>
           </div>
         </div>
@@ -148,12 +138,15 @@ export default function BlogsPage() {
                 Cari Blogs
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
+                  onClick={handleSearch}
+                />
                 <Input
                   type="text"
-                  value={search}
+                  value={searchInput}
                   onChange={(e) => {
-                    setSearch(e.target.value);
+                    setSearchInput(e.target.value);
                     setShowClearButton(e.target.value.length > 0);
                   }}
                   placeholder="Cari judul atau isi Blogs..."
@@ -161,8 +154,8 @@ export default function BlogsPage() {
                 />
                 {showClearButton && (
                   <button
-                    onClick={() => setSearch('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    onClick={handleClearSearch}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -181,11 +174,11 @@ export default function BlogsPage() {
                   <SelectValue placeholder="Pilih kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key="Semua" value="Semua">
+                  <SelectItem key="Semua" value="semua">
                     Semua
                   </SelectItem>
                   {artikelCategories.map((kategori) => (
-                    <SelectItem key={kategori} value={kategori}>
+                    <SelectItem key={kategori} value={kategori.toLowerCase()}>
                       {kategori}
                     </SelectItem>
                   ))}
@@ -196,7 +189,7 @@ export default function BlogsPage() {
         </div>
 
         {/* Daftar Blogs */}
-        {sortedArtikel.length === 0 ? (
+        {artikel.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
             <div className="text-gray-400 mb-4">
               <FileText className="h-16 w-16 mx-auto" />
@@ -211,7 +204,7 @@ export default function BlogsPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {currentItems.map((item) => (
+              {artikel.map((item) => (
                 <div
                   key={item.id}
                   className="bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-between shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
@@ -238,7 +231,7 @@ export default function BlogsPage() {
                       {item.content ? (
                         <ReactMarkdown
                           remarkPlugins={[remarkMath, remarkGfm]}
-                          rehypePlugins={[rehypeKatex]}
+                          rehypePlugins={[rehypeKatex, rehypeRaw]}
                           components={{
                             code({
                               node,
@@ -290,7 +283,7 @@ export default function BlogsPage() {
                             },
                           }}
                         >
-                          {item.content.substring(0, 120) + '...'}
+                          {item.content.substring(0, 200) + '...'}
                         </ReactMarkdown>
                       ) : (
                         'Tidak ada konten'

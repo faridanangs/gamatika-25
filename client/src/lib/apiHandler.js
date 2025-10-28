@@ -33,5 +33,6 @@ export const handleApiResponse = async (response) => {
     status: response.status,
     message: data.message,
     data: data.data || data,
+    total: data?.total,
   };
 };

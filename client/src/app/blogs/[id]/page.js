@@ -22,8 +22,9 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { BlogDetailSkeleton } from '@/components/skeleton/BlogSkeleton';
 import { formatReadableTime } from '@/lib/timeReadable';
-import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import rehypeRaw from 'rehype-raw';
 
 // Fungsi untuk mengacak array
 const shuffleArray = (array) => {
@@ -176,7 +177,7 @@ export default function BlogDetailPage() {
           <div className="p-4 md:p-8 prose dark:prose-invert max-w-none">
             <ReactMarkdown
               remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={[rehypeKatex]}
+              rehypePlugins={[rehypeKatex, rehypeRaw]}
               components={{
                 code({ node, inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');

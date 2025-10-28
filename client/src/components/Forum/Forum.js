@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { categories } from '@/data/mockCategories';
 import { ForumPost } from './ForumPost';
@@ -9,29 +9,106 @@ import { Button } from '../ui/button';
 import toast from 'react-hot-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
-export default function ForumPage({ postsO, contribsO, isAuth }) {
-  const [posts, setPosts] = useState([]);
+import { getPostPerPage } from '@/data/getPostsData';
+
+export default function ForumPage({ contribsO, isAuth }) {
   const [contribs, setContribs] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
 
-  useEffect(() => {
-    if (selectedCategory === 'Semua') {
-      setFilteredPosts(posts);
-    } else {
-      setFilteredPosts(
-        posts.filter((post) => post.category === selectedCategory)
-      );
-    }
-  }, [selectedCategory, posts]);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const postsPerPage = 10;
 
   useEffect(() => {
-    const sorted = postsO.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    setPosts(sorted);
     setContribs(contribsO);
-  }, [postsO, contribsO]);
+  }, [contribsO]);
+
+  const observer = useRef();
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (isLoading) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMorePosts();
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, hasMore]
+  );
+
+  const loadInitialPosts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      setDisplayedPosts([]);
+      setPage(1);
+
+      const categoryParam =
+        selectedCategory === 'Semua' ? '' : selectedCategory;
+
+      const response = await getPostPerPage(1, postsPerPage, categoryParam);
+
+      if (response.success) {
+        setDisplayedPosts(response.data);
+
+        if (response.data.length < postsPerPage) {
+          setHasMore(false);
+        } else {
+          setPage(2);
+          setHasMore(true);
+        }
+      } else {
+        toast.error(response.message || 'Gagal memuat postingan');
+        setHasMore(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Terjadi kesalahan saat memuat postingan');
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedCategory, postsPerPage]);
+
+  const loadMorePosts = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const categoryParam =
+        selectedCategory === 'Semua' ? '' : selectedCategory;
+      const response = await getPostPerPage(page, postsPerPage, categoryParam);
+
+      if (response.success) {
+        if (response.data.length > 0) {
+          setDisplayedPosts((prev) => [...prev, ...response.data]);
+          setPage((prev) => prev + 1);
+
+          if (response.data.length < postsPerPage) {
+            setHasMore(false);
+          }
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        toast.error(response.message || 'Gagal memuat postingan tambahan');
+        setHasMore(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Terjadi kesalahan saat memuat postingan');
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, hasMore, page, postsPerPage, selectedCategory]);
+
+  useEffect(() => {
+    loadInitialPosts();
+  }, [loadInitialPosts]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 transition-colors duration-300 pt-10">
@@ -44,7 +121,7 @@ export default function ForumPage({ postsO, contribsO, isAuth }) {
       </Head>
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 relative">
             <TopContributors props={contribs} />
           </div>
           <div className="lg:col-span-3">
@@ -77,43 +154,72 @@ export default function ForumPage({ postsO, contribsO, isAuth }) {
               </div>
             </div>
             <div>
-              {posts.length == 0 ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <PostSkeleton key={i} />
-                ))
-              ) : filteredPosts?.length > 0 ? (
-                filteredPosts.map((post, i) => (
-                  <ForumPost
-                    className={'dark:bg-gray-800'}
-                    key={i}
-                    post={post}
-                    comments={post.comments}
-                    isAuth={false}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-4 inline-block mb-4">
-                    <svg
-                      className="w-12 h-12 text-gray-400 dark:text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">
-                    Tidak ada postingan di kategori ini
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    Coba pilih kategori lain atau buat postingan baru
-                  </p>
+              {isLoading && displayedPosts.length === 0
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <PostSkeleton key={i} />
+                  ))
+                : displayedPosts.length > 0
+                ? displayedPosts.map((post, i) => {
+                    if (displayedPosts.length === i + 1) {
+                      return (
+                        <div ref={lastPostElementRef} key={i}>
+                          <ForumPost
+                            className={'dark:bg-gray-800'}
+                            post={post}
+                            comments={post.comments}
+                            isAuth={false}
+                          />
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <ForumPost
+                          key={i}
+                          className={'dark:bg-gray-800'}
+                          post={post}
+                          comments={post.comments}
+                          isAuth={false}
+                        />
+                      );
+                    }
+                  })
+                : !isLoading && (
+                    <div className="text-center py-12">
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-4 inline-block mb-4">
+                        <svg
+                          className="w-12 h-12 text-gray-400 dark:text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400 text-lg">
+                        Tidak ada postingan di kategori ini
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400 mt-2">
+                        Coba pilih kategori lain atau buat postingan baru
+                      </p>
+                    </div>
+                  )}
+
+              {/* Loading indicator untuk load more */}
+              {isLoading && displayedPosts.length > 0 && (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+
+              {/* End of posts message */}
+              {!hasMore && displayedPosts.length > 0 && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  Tidak ada lagi postingan untuk dimuat
                 </div>
               )}
             </div>
@@ -166,7 +272,7 @@ export function TopContributors({ props, isText = true, isAddress = false }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300 lg:sticky lg:top-21">
       {isText && (
         <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
           Top Contributors{' '}
