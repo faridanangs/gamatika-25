@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/faridanangs/gamatika-25/helpers"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/faridanangs/gamatika-25/services"
@@ -73,6 +75,25 @@ func (pc *PostController) GetPostByID(c *fiber.Ctx) error {
 
 func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
 	posts, err := pc.postService.GetAllPosts()
+	if err != nil {
+		return helpers.HelperErrNotNil(err, c)
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Posts retrieved successfully",
+		"data":    posts,
+	})
+}
+func (pc *PostController) GetPostPerPage(c *fiber.Ctx) error {
+	page := c.QueryInt("page", 0)
+	limit := c.QueryInt("limit", 10)
+	category := c.Query("category", "Semua")
+
+	fmt.Println(page, limit, category)
+
+	posts, err := pc.postService.GetPostPerPage(page, limit, category)
+
 	if err != nil {
 		return helpers.HelperErrNotNil(err, c)
 	}

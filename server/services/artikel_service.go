@@ -120,3 +120,44 @@ func (as *ArtikelService) GetAll() ([]models.ArtikelResponse, error) {
 
 	return resps, nil
 }
+
+func (as *ArtikelService) GetPerPage(limit, page int, category, q string) ([]models.ArtikelResponse, int64, error) {
+	var artikels []models.Artikel
+	var count int64
+
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+
+	query := as.db.Model(&models.Artikel{})
+
+	if category != "" && category != "semua" {
+		query = query.Where("category = ?", category)
+	}
+
+	if q != "" {
+		searchQuery := "%" + q + "%"
+		query = query.Where("title ILIKE ? OR content ILIKE ? OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(tags) AS tag WHERE tag ILIKE ?)",
+			searchQuery, searchQuery, searchQuery)
+	}
+
+	if err := query.Count(&count).Error; err != nil {
+		return nil, 0, as.dbErrorHandler.HandleError(err, "Get Artikel Count Error")
+	}
+
+	if err := query.Preload("Author").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at desc").
+		Find(&artikels).Error; err != nil {
+		return nil, count, as.dbErrorHandler.HandleError(err, "Get Artikel Per Page Error")
+	}
+
+	resps := make([]models.ArtikelResponse, len(artikels))
+	for i, res := range artikels {
+		resps[i] = *helpers.MapToArtikelResponse(res)
+	}
+
+	return resps, count, nil
+}

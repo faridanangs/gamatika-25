@@ -8,6 +8,7 @@ type Contribution struct {
 	TotalScore     uint64    `json:"total_score"`
 	PostsCount     uint64    `json:"posts_count"`
 	CommentsCount  uint64    `json:"comments_count"`
+	ArtikelsCount  uint64    `json:"artikels_count"`
 	LikesReceived  uint64    `json:"likes_received"`
 	SharesReceived uint64    `json:"shares_received"`
 	LastUpdated    time.Time `json:"last_updated"`
@@ -22,6 +23,7 @@ type TopContributorsResponse struct {
 
 type ContributionBreakdown struct {
 	Posts    uint64 `json:"posts"`
+	Artikels uint64 `json:"artikels"`
 	Comments uint64 `json:"comments"`
 	Likes    uint64 `json:"likes"`
 	Shares   uint64 `json:"shares"`

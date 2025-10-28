@@ -180,7 +180,7 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 				},
 			}
 		}
-		return nil, ps.dbErrorHandler.HandleError(err, "Post retrieval")
+		return nil, ps.dbErrorHandler.HandleError(err, "Get Post Error")
 	}
 	return helpers.MapToPostResponse(post), nil
 }
@@ -194,8 +194,41 @@ func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
 		Preload("Likes").
 		Preload("Likes.Author").
 		Find(&posts).Error; err != nil {
-		return nil, ps.dbErrorHandler.HandleError(err, "Posts retrieval")
+		return nil, ps.dbErrorHandler.HandleError(err, "Get Posts Error")
 	}
+	responses := make([]models.PostResponse, len(posts))
+	for i, post := range posts {
+		responses[i] = *helpers.MapToPostResponse(post)
+	}
+	return responses, nil
+}
+
+func (ps *PostService) GetPostPerPage(page, limit int, category string) ([]models.PostResponse, error) {
+	var posts []models.Post
+
+	if page < 1 {
+		page = 1
+	}
+
+	offset := (page - 1) * limit
+
+	query := ps.db.Preload("Author").
+		Preload("Comments").
+		Preload("Comments.Author").
+		Preload("Likes").
+		Preload("Likes.Author").
+		Limit(limit).
+		Offset(offset).
+		Order("created_at desc")
+
+	if category != "" && category != "Semua" {
+		query = query.Where("category = ?", category)
+	}
+
+	if err := query.Find(&posts).Error; err != nil {
+		return nil, ps.dbErrorHandler.HandleError(err, "Get Posts Per Page Error")
+	}
+
 	responses := make([]models.PostResponse, len(posts))
 	for i, post := range posts {
 		responses[i] = *helpers.MapToPostResponse(post)

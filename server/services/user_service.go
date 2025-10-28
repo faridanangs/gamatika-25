@@ -281,7 +281,6 @@ func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivK
 	return privateKey, nil
 }
 
-// CalculateUserContribution - Calculate user contribution metrics
 func (us *UserService) CalculateUserContribution(userID string) (*models.Contribution, error) {
 	var contribution models.Contribution
 	var user models.User
@@ -292,7 +291,7 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 
 	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 
-	var postsCount, commentsCount, likesReceived, sharesReceived uint64
+	var postsCount, commentsCount, artikelsCount, likesReceived, sharesReceived uint64
 
 	for _, post := range user.Posts {
 		if post.CreatedAt.After(sevenDaysAgo) {
@@ -313,7 +312,18 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 		}
 	}
 
-	totalScore := (postsCount * 2) + (commentsCount * 3) + (likesReceived * 2) + (sharesReceived * 2)
+	var artikels []models.Artikel
+	if err := us.db.Where("user_id = ?", userID).Find(&artikels).Error; err != nil {
+		return nil, us.dbErrorHandler.HandleError(err, "Artikels retrieval")
+	}
+
+	for _, artikel := range artikels {
+		if artikel.CreatedAt.After(sevenDaysAgo) {
+			artikelsCount++
+		}
+	}
+
+	totalScore := (postsCount * 2) + (commentsCount * 3) + (likesReceived * 2) + (sharesReceived * 2) + (artikelsCount * 5)
 
 	contribution = models.Contribution{
 		UserID:         user.ID,
@@ -321,6 +331,7 @@ func (us *UserService) CalculateUserContribution(userID string) (*models.Contrib
 		TotalScore:     totalScore,
 		PostsCount:     postsCount,
 		CommentsCount:  commentsCount,
+		ArtikelsCount:  artikelsCount,
 		LikesReceived:  likesReceived,
 		SharesReceived: sharesReceived,
 		LastUpdated:    time.Now(),
@@ -381,6 +392,7 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 			Score: contrib.TotalScore,
 			Breakdown: models.ContributionBreakdown{
 				Posts:    contrib.PostsCount,
+				Artikels: contrib.ArtikelsCount,
 				Comments: contrib.CommentsCount,
 				Likes:    contrib.LikesReceived,
 				Shares:   contrib.SharesReceived,

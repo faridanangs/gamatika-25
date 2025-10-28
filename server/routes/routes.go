@@ -12,11 +12,13 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 	app.Post("/users", userController.CreateUser)
 	app.Post("/login", userController.LoginUser)
 	app.Get("/posts", postController.GetAllPosts)
+	app.Get("/posts/scroll", postController.GetPostPerPage)
 	app.Get("/posts/:id", postController.GetPostByID)
 
 	app.Get("/users/top-contributors", userController.GetCachedTopContributors)
 	app.Get("/users/:id/contribution", userController.GetUserContribution)
 	app.Get("/artikels", artikelController.GetAll)
+	app.Get("/artikels/pagination", artikelController.GetPerPage)
 	app.Get("/artikels/:id", artikelController.GetByID)
 
 	// Protected routes
