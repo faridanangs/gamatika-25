@@ -50,7 +50,8 @@ Menjadi ekosistem digital pilihan utama yang memberdayakan kolaborasi, inovasi, 
 - **🤖 Asisten AI:** Dapatkan bantuan dan konsultasi cepat mengenai berbagai topik akademik melalui chat AI yang terintegrasi.
 - **🏆 Reward NFT:** Jadilah kontributor teratas di forum dan dapatkan penghargaan eksklusif berupa NFT yang di-minting setiap 7 hari.
 - **💼 Info Loker:** Jelajahi informasi lowongan kerja terbaru yang relevan dengan bidang MIPA (dapat diakses tanpa login).
-- **📢 Papan Pengumuman:** Tetap update dengan pengumuman penting dari komunitas Delta Civitas (dapat diakses tanpa login).
+- **📢 Buar Artikel:** Bagikan pengetahuan, penelitian, atau pandangan Anda dengan menulis dan mempublikasikan artikel sendiri di platform.
+- **📢 Blogs:** elajahi kumpulan artikel, berita, dan wawasan terbaru seputar dunia MIPA yang ditulis oleh sesama mahasiswa dan kontributor.
 
 ---
 
