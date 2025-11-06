@@ -3,8 +3,10 @@ package database
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/faridanangs/gamatika-25/models"
+	"github.com/joho/godotenv"
 	"github.com/josestg/getenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -17,7 +19,17 @@ func Connect() *gorm.DB {
 	password := getenv.String("PASSWORD", "postgres")
 	dbname := getenv.String("DBNAME", "postgres")
 
+	appEnv := os.Getenv("APP_ENV")
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbname, port)
+
+	if appEnv == "production" {
+		if err := godotenv.Load(); err != nil {
+			log.Println("Peringatan: Tidak dapat memuat file .env")
+		}
+
+		dsn = os.Getenv("NEON_DB_URL")
+	}
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {

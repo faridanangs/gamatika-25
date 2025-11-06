@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"sort"
 	"sync"
 	"time"
 
@@ -176,41 +175,66 @@ func (us *UserService) DeleteUser(id string, tokenString string) error {
 }
 
 // GetUserByID - Get user by ID
-func (us *UserService) GetUserByID(id string) (*models.UserResponse, error) {
+func (us *UserService) GetUserByID(query string) (*models.UserResponse, error) {
 	var user models.User
-	if err := us.db.Preload("Posts").
-		Preload("Posts.Author").
-		Preload("Posts.Comments").
-		Preload("Posts.Comments.Author").
-		Preload("Posts.Likes").
-		Preload("Posts.Likes.Author").
-		Preload("Artikels").
-		Preload("Artikels.Author").
-		Where("id = ?", id).First(&user).Error; err != nil {
+	if err := us.db.Where("id = ? or email = ? or username = ?", query, query, query).First(&user).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "User retrieval")
 	}
+
 	return helpers.MapToUserResponse(user), nil
 }
 
-// GetAllUsers - Get all users
-func (us *UserService) GetAllUsers() ([]models.UserResponse, error) {
-	var users []models.User
-	if err := us.db.Preload("Posts").
-		Preload("Posts.Author").
-		Preload("Posts.Comments").
-		Preload("Posts.Comments.Author").
-		Preload("Posts.Likes").
-		Preload("Posts.Likes.Author").
-		Preload("Artikels").
-		Preload("Artikels.Author").
-		Find(&users).Error; err != nil {
-		return nil, us.dbErrorHandler.HandleError(err, "Users retrieval")
+func (us *UserService) GetUserPost(id string, page, limit int) ([]models.PostResponse, int64, error) {
+	offset := (page - 1) * limit
+	var count int64
+	var posts []models.Post
+
+	tx := us.db.Model(&models.Post{}).Where("user_id = ?", id)
+
+	if err := tx.Count(&count).Error; err != nil {
+		return nil, 0, us.dbErrorHandler.HandleError(err, "Count User Post Error")
 	}
-	responses := make([]models.UserResponse, len(users))
-	for i, user := range users {
-		responses[i] = *helpers.MapToUserResponse(user)
+
+	if err := tx.Preload("Author").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at desc").
+		Find(&posts).Error; err != nil {
+		return nil, 0, us.dbErrorHandler.HandleError(err, "Get User Post Error")
 	}
-	return responses, nil
+
+	responses := make([]models.PostResponse, len(posts))
+	for i, post := range posts {
+		responses[i] = *helpers.MapToPostResponse(post)
+	}
+
+	return responses, count, nil
+}
+
+func (us *UserService) GetUserArtikel(id string, page, limit int) ([]models.ArtikelResponse, int64, error) {
+	offset := (page - 1) * limit
+	var count int64
+	var artikels []models.Artikel
+
+	tx := us.db.Model(&models.Artikel{}).Where("user_id = ?", id)
+
+	if err := tx.Count(&count).Error; err != nil {
+		return nil, 0, us.dbErrorHandler.HandleError(err, "Count User Artikel Error")
+	}
+
+	if err := tx.Preload("Author").
+		Offset(offset).
+		Limit(limit).
+		Find(&artikels).Error; err != nil {
+		return nil, 0, us.dbErrorHandler.HandleError(err, "get user artikel error")
+	}
+
+	responses := make([]models.ArtikelResponse, len(artikels))
+	for i, artikel := range artikels {
+		responses[i] = *helpers.MapToArtikelResponse(artikel)
+	}
+
+	return responses, count, nil
 }
 
 // LoginUser - User authentication with JWT token
@@ -281,121 +305,162 @@ func (us *UserService) GetPrivateKeyWithPassword(userID string, req models.PrivK
 	return privateKey, nil
 }
 
-func (us *UserService) CalculateUserContribution(userID string) (*models.Contribution, error) {
-	var contribution models.Contribution
-	var user models.User
+// func (us *UserService) CalculateUserContribution(userID string) (*models.Contribution, error) {
+// 	var contribution models.Contribution
+// 	var user models.User
 
-	if err := us.db.Preload("Posts").Where("id = ?", userID).First(&user).Error; err != nil {
-		return nil, us.dbErrorHandler.HandleError(err, "User contribution calculation")
-	}
+// 	if err := us.db.Preload("Posts").Where("id = ?", userID).First(&user).Error; err != nil {
+// 		return nil, us.dbErrorHandler.HandleError(err, "User contribution calculation")
+// 	}
 
-	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
+// 	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 
-	var postsCount, commentsCount, artikelsCount, likesReceived, sharesReceived uint64
+// 	var postsCount, commentsCount, artikelsCount, likesReceived, sharesReceived uint64
 
-	for _, post := range user.Posts {
-		if post.CreatedAt.After(sevenDaysAgo) {
-			postsCount++
-			likesReceived += post.LikeCount
-			sharesReceived += post.ShareCount
-		}
-	}
+// 	for _, post := range user.Posts {
+// 		if post.CreatedAt.After(sevenDaysAgo) {
+// 			postsCount++
+// 			likesReceived += post.LikeCount
+// 			sharesReceived += post.ShareCount
+// 		}
+// 	}
 
-	var comments []models.Comment
-	if err := us.db.Where("user_id = ?", userID).Find(&comments).Error; err != nil {
-		return nil, us.dbErrorHandler.HandleError(err, "Comments retrieval")
-	}
+// 	var comments []models.Comment
+// 	if err := us.db.Where("user_id = ?", userID).Find(&comments).Error; err != nil {
+// 		return nil, us.dbErrorHandler.HandleError(err, "Comments retrieval")
+// 	}
 
-	for _, comment := range comments {
-		if comment.CreatedAt.After(sevenDaysAgo) {
-			commentsCount++
-		}
-	}
+// 	for _, comment := range comments {
+// 		if comment.CreatedAt.After(sevenDaysAgo) {
+// 			commentsCount++
+// 		}
+// 	}
 
-	var artikels []models.Artikel
-	if err := us.db.Where("user_id = ?", userID).Find(&artikels).Error; err != nil {
-		return nil, us.dbErrorHandler.HandleError(err, "Artikels retrieval")
-	}
+// 	var artikels []models.Artikel
+// 	if err := us.db.Where("user_id = ?", userID).Find(&artikels).Error; err != nil {
+// 		return nil, us.dbErrorHandler.HandleError(err, "Artikels retrieval")
+// 	}
 
-	for _, artikel := range artikels {
-		if artikel.CreatedAt.After(sevenDaysAgo) {
-			artikelsCount++
-		}
-	}
+// 	for _, artikel := range artikels {
+// 		if artikel.CreatedAt.After(sevenDaysAgo) {
+// 			artikelsCount++
+// 		}
+// 	}
 
-	totalScore := (postsCount * 2) + (commentsCount * 3) + (likesReceived * 2) + (sharesReceived * 2) + (artikelsCount * 5)
+// 	totalScore := (postsCount * 2) + (commentsCount * 3) + (likesReceived * 2) + (sharesReceived * 2) + (artikelsCount * 5)
 
-	contribution = models.Contribution{
-		UserID:         user.ID,
-		Username:       user.Username,
-		TotalScore:     totalScore,
-		PostsCount:     postsCount,
-		CommentsCount:  commentsCount,
-		ArtikelsCount:  artikelsCount,
-		LikesReceived:  likesReceived,
-		SharesReceived: sharesReceived,
-		LastUpdated:    time.Now(),
-	}
+// 	contribution = models.Contribution{
+// 		UserID:         user.ID,
+// 		Username:       user.Username,
+// 		TotalScore:     totalScore,
+// 		PostsCount:     postsCount,
+// 		CommentsCount:  commentsCount,
+// 		ArtikelsCount:  artikelsCount,
+// 		LikesReceived:  likesReceived,
+// 		SharesReceived: sharesReceived,
+// 		LastUpdated:    time.Now(),
+// 	}
 
-	return &contribution, nil
-}
+// 	return &contribution, nil
+// }
 
+// Ini diperbaiki di bagian get all user, karna kita hanya perlu user dengan aktifitas 7 hari terakhir
 // GetTopContributors - Get top contributors
+// GetTopContributors - Get top contributors using a single optimized SQL query
 func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, error) {
-	var users []models.User
-	var topContributors []models.TopContributorsResponse
+	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
+	var results []models.ContributionQueryResult // Gunakan struct helper
 
-	if err := us.db.Preload("Posts").Find(&users).Error; err != nil {
+	// Query SQL ini menggunakan CTE untuk mengagregasi data sebelum menggabungkannya.
+	// Ini jauh lebih efisien daripada ribuan query kecil.
+	// Catatan: Pastikan nama tabel (posts, comments, artikels) dan kolom (like_count, share_count) sesuai
+	sqlQuery := `
+        WITH 
+        user_posts AS (
+          SELECT
+            user_id,
+            COUNT(*) AS posts_count,
+            COALESCE(SUM(like_count), 0) AS likes_received,
+            COALESCE(SUM(share_count), 0) AS shares_received
+          FROM posts
+          WHERE created_at >= ?
+          GROUP BY user_id
+        ),
+        user_comments AS (
+          SELECT
+            user_id,
+            COUNT(*) AS comments_count
+          FROM comments
+          WHERE created_at >= ?
+          GROUP BY user_id
+        ),
+        user_artikels AS (
+          SELECT
+            user_id,
+            COUNT(*) AS artikels_count
+          FROM artikels
+          WHERE created_at >= ?
+          GROUP BY user_id
+        ),
+        -- Gabungkan semua ID user yang aktif dalam 7 hari terakhir
+        all_active_users AS (
+          SELECT user_id FROM user_posts
+          UNION
+          SELECT user_id FROM user_comments
+          UNION
+          SELECT user_id FROM user_artikels
+        )
+        -- Hitung skor total dan ambil data user
+        SELECT
+          u.id AS user_id,
+          u.username,
+          u.avatar,
+          u.wallet_address,
+          COALESCE(p.posts_count, 0) AS posts_count,
+          COALESCE(c.comments_count, 0) AS comments_count,
+          COALESCE(a.artikels_count, 0) AS artikels_count,
+          COALESCE(p.likes_received, 0) AS likes_received,
+          COALESCE(p.shares_received, 0) AS shares_received,
+          (
+            (COALESCE(p.posts_count, 0) * 2) +
+            (COALESCE(c.comments_count, 0) * 3) +
+            (COALESCE(p.likes_received, 0) * 2) +
+            (COALESCE(p.shares_received, 0) * 2) +
+            (COALESCE(a.artikels_count, 0) * 5)
+          ) AS total_score
+        FROM all_active_users au
+        JOIN users u ON u.id = au.user_id
+        LEFT JOIN user_posts p ON p.user_id = au.user_id
+        LEFT JOIN user_comments c ON c.user_id = au.user_id
+        LEFT JOIN user_artikels a ON a.user_id = au.user_id
+        ORDER BY total_score DESC
+        LIMIT 3
+    `
+
+	// Jalankan query mentah
+	// Kita passing sevenDaysAgo 3x untuk mengisi 3 placeholder (?) di query
+	if err := us.db.Raw(sqlQuery, sevenDaysAgo, sevenDaysAgo, sevenDaysAgo).Scan(&results).Error; err != nil {
 		return nil, us.dbErrorHandler.HandleError(err, "Top contributors retrieval")
 	}
 
-	var contributions []models.Contribution
-	for _, user := range users {
-		if user.ID == "" {
-			continue
-		}
-
-		contrib, err := us.CalculateUserContribution(user.ID)
-		if err != nil {
-			continue
-		}
-		contributions = append(contributions, *contrib)
-	}
-
-	if len(contributions) == 0 {
-		return topContributors, nil
-	}
-
-	sort.Slice(contributions, func(i, j int) bool {
-		return contributions[i].TotalScore > contributions[j].TotalScore
-	})
-
-	for i := 0; i < 3 && i < len(contributions); i++ {
-		contrib := contributions[i]
-		var user models.User
-
-		for _, u := range users {
-			if u.ID == contrib.UserID {
-				user = u
-				break
-			}
-		}
-
+	// Ubah hasil query menjadi format response yang Anda inginkan
+	var topContributors []models.TopContributorsResponse
+	for i, res := range results {
 		topContributors = append(topContributors, models.TopContributorsResponse{
 			Rank: uint64(i + 1),
 			User: models.AuthorResponse{
-				ID:            user.ID,
-				Username:      user.Username,
-				Avatar:        user.Avatar,
-				WalletAddress: user.WalletAddress,
+				ID:            res.UserID,
+				Username:      res.Username,
+				Avatar:        res.Avatar,
+				WalletAddress: res.WalletAddress,
 			},
-			Score: contrib.TotalScore,
+			Score: res.TotalScore,
 			Breakdown: models.ContributionBreakdown{
-				Posts:    contrib.PostsCount,
-				Artikels: contrib.ArtikelsCount,
-				Comments: contrib.CommentsCount,
-				Likes:    contrib.LikesReceived,
-				Shares:   contrib.SharesReceived,
+				Posts:    res.PostsCount,
+				Artikels: res.ArtikelsCount,
+				Comments: res.CommentsCount,
+				Likes:    res.LikesReceived,
+				Shares:   res.SharesReceived,
 			},
 		})
 	}
@@ -403,7 +468,6 @@ func (us *UserService) GetTopContributors() ([]models.TopContributorsResponse, e
 	return topContributors, nil
 }
 
-// StartTopContributorScheduler - Start background scheduler
 func (us *UserService) StartTopContributorScheduler() {
 	us.updateCache()
 	ticker := time.NewTicker(7 * 24 * time.Hour)

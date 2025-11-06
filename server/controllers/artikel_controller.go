@@ -58,9 +58,9 @@ func (ac *ArtikelController) Create(c *fiber.Ctx) error {
 	})
 }
 
-func (ac *ArtikelController) GetByID(c *fiber.Ctx) error {
+func (ac *ArtikelController) GetArtikelByID(c *fiber.Ctx) error {
 	id := c.Params("id")
-	resp, err := ac.as.GetByID(id)
+	resp, err := ac.as.GetArtikelByID(id)
 	if err != nil {
 		return helpers.HelperErrNotNil(err, c)
 	}
@@ -69,19 +69,6 @@ func (ac *ArtikelController) GetByID(c *fiber.Ctx) error {
 		"status":  "success",
 		"message": "Artikel retrieved successfully",
 		"data":    resp,
-	})
-}
-
-func (ac *ArtikelController) GetAll(c *fiber.Ctx) error {
-	artikels, err := ac.as.GetAll()
-	if err != nil {
-		return helpers.HelperErrNotNil(err, c)
-	}
-
-	return c.Status(200).JSON(fiber.Map{
-		"status":  "success",
-		"message": "artikels retrieved successfully",
-		"data":    artikels,
 	})
 }
 

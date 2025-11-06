@@ -124,16 +124,3 @@ func (pc *PostController) GetCommentByID(c *fiber.Ctx) error {
 		"data":    comment,
 	})
 }
-
-func (pc *PostController) GetAllComments(c *fiber.Ctx) error {
-	comments, err := pc.commentService.GetAllComments()
-	if err != nil {
-		return helpers.HelperErrNotNil(err, c)
-	}
-
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "Comments retrieved successfully",
-		"data":    comments,
-	})
-}

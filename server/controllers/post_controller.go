@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/faridanangs/gamatika-25/helpers"
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/faridanangs/gamatika-25/services"
@@ -73,8 +71,14 @@ func (pc *PostController) GetPostByID(c *fiber.Ctx) error {
 	})
 }
 
-func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
-	posts, err := pc.postService.GetAllPosts()
+func (pc *PostController) GetPostPerPage(c *fiber.Ctx) error {
+	page := c.QueryInt("page", 0)
+	limit := c.QueryInt("limit", 10)
+	category := c.Query("category", "Semua")
+	q := c.Query("query")
+
+	posts, err := pc.postService.GetPostPerPage(page, limit, category, q)
+
 	if err != nil {
 		return helpers.HelperErrNotNil(err, c)
 	}
@@ -85,14 +89,13 @@ func (pc *PostController) GetAllPosts(c *fiber.Ctx) error {
 		"data":    posts,
 	})
 }
-func (pc *PostController) GetPostPerPage(c *fiber.Ctx) error {
+
+func (pc *PostController) GetPostCommentPerPage(c *fiber.Ctx) error {
+	id := c.Params("id")
 	page := c.QueryInt("page", 0)
 	limit := c.QueryInt("limit", 10)
-	category := c.Query("category", "Semua")
 
-	fmt.Println(page, limit, category)
-
-	posts, err := pc.postService.GetPostPerPage(page, limit, category)
+	posts, count, err := pc.postService.GetPostCommentPerPage(id, page, limit)
 
 	if err != nil {
 		return helpers.HelperErrNotNil(err, c)
@@ -102,6 +105,7 @@ func (pc *PostController) GetPostPerPage(c *fiber.Ctx) error {
 		"status":  "success",
 		"message": "Posts retrieved successfully",
 		"data":    posts,
+		"total":   count,
 	})
 }
 

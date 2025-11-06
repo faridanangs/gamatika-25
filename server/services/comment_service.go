@@ -214,17 +214,31 @@ func (cs *CommentService) GetCommentByID(id uint64) (*models.CommentResponse, er
 	return helpers.MapToCommentResponse(comment), nil
 }
 
-// GetAllComments - Get all comments with authors
-func (cs *CommentService) GetAllComments() ([]models.CommentResponse, error) {
-	var comments []models.Comment
-	if err := cs.db.Preload("Author").Find(&comments).Error; err != nil {
-		return nil, cs.dbErrorHandler.HandleError(err, "Comments retrieval")
+func (cs *CommentService) GetPostComment(post_id string, page, limit int) (*models.CommentResponse, error) {
+	var comment models.Comment
+
+	offset := (page - 1) * limit
+
+	if err := cs.db.Where("post_id = ?", post_id).Preload("Author").Offset(offset).Limit(limit).Order("created_at desc").First(&comment).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &helpers.AppError{
+				Code:    fiber.StatusNotFound,
+				Message: "Comment not found",
+				Details: &helpers.CustomErrorResponse{
+					Status:  "error",
+					Message: "Comment not found",
+					Errors: []helpers.FieldError{
+						{
+							Field:   "comment",
+							Message: "Comment not found",
+							Code:    "COMMENT_NOT_FOUND",
+						},
+					},
+				},
+			}
+		}
+		return nil, cs.dbErrorHandler.HandleError(err, "Comment retrieval")
 	}
 
-	responses := make([]models.CommentResponse, len(comments))
-	for i, comment := range comments {
-		responses[i] = *helpers.MapToCommentResponse(comment)
-	}
-
-	return responses, nil
+	return helpers.MapToCommentResponse(comment), nil
 }

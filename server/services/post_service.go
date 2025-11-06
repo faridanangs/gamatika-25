@@ -54,7 +54,12 @@ func (ps *PostService) CreatePost(req models.CreatePostRequest, tokenString stri
 		return nil, ps.dbErrorHandler.HandleError(err, "Post creation")
 	}
 
-	return helpers.MapToPostResponse(post), nil
+	resp, err := ps.GetPostByID(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // UpdatePost - Update existing post with token verification
@@ -157,12 +162,7 @@ func (ps *PostService) DeletePost(id string, tokenString string) error {
 // GetPostByID - Get post by ID with author and comments
 func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 	var post models.Post
-	if err := ps.db.Preload("Author").
-		Preload("Comments").
-		Preload("Comments.Author").
-		Preload("Likes").
-		Preload("Likes.Author").
-		Where("id = ?", id).First(&post).Error; err != nil {
+	if err := ps.db.Preload("Author").Where("id = ?", id).First(&post).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &helpers.AppError{
 				Code:    fiber.StatusNotFound,
@@ -185,25 +185,7 @@ func (ps *PostService) GetPostByID(id string) (*models.PostResponse, error) {
 	return helpers.MapToPostResponse(post), nil
 }
 
-// GetAllPosts - Get all posts with authors and comments
-func (ps *PostService) GetAllPosts() ([]models.PostResponse, error) {
-	var posts []models.Post
-	if err := ps.db.Preload("Author").
-		Preload("Comments").
-		Preload("Comments.Author").
-		Preload("Likes").
-		Preload("Likes.Author").
-		Find(&posts).Error; err != nil {
-		return nil, ps.dbErrorHandler.HandleError(err, "Get Posts Error")
-	}
-	responses := make([]models.PostResponse, len(posts))
-	for i, post := range posts {
-		responses[i] = *helpers.MapToPostResponse(post)
-	}
-	return responses, nil
-}
-
-func (ps *PostService) GetPostPerPage(page, limit int, category string) ([]models.PostResponse, error) {
+func (ps *PostService) GetPostPerPage(page, limit int, category, q string) ([]models.PostResponse, error) {
 	var posts []models.Post
 
 	if page < 1 {
@@ -212,20 +194,21 @@ func (ps *PostService) GetPostPerPage(page, limit int, category string) ([]model
 
 	offset := (page - 1) * limit
 
-	query := ps.db.Preload("Author").
-		Preload("Comments").
-		Preload("Comments.Author").
-		Preload("Likes").
-		Preload("Likes.Author").
-		Limit(limit).
-		Offset(offset).
-		Order("created_at desc")
+	query := ps.db.Model(&models.Post{})
 
 	if category != "" && category != "Semua" {
 		query = query.Where("category = ?", category)
 	}
 
-	if err := query.Find(&posts).Error; err != nil {
+	if q != "" {
+		searchQuery := "%" + q + "%"
+		query = query.Where("title ILIKE ? OR content ILIKE ?", searchQuery, searchQuery)
+	}
+
+	if err := query.Preload("Author").
+		Limit(limit).
+		Offset(offset).
+		Order("created_at desc").Find(&posts).Error; err != nil {
 		return nil, ps.dbErrorHandler.HandleError(err, "Get Posts Per Page Error")
 	}
 
@@ -234,6 +217,31 @@ func (ps *PostService) GetPostPerPage(page, limit int, category string) ([]model
 		responses[i] = *helpers.MapToPostResponse(post)
 	}
 	return responses, nil
+}
+
+func (ps *PostService) GetPostCommentPerPage(id string, page, limit int) ([]models.CommentResponse, int64, error) {
+	var comments []models.Comment
+	var count int64
+
+	offset := (page - 1) * limit
+
+	query := ps.db.Model(&models.Comment{}).Where("post_id = ?", id)
+
+	if err := query.Count(&count).Error; err != nil {
+		return nil, 0, ps.dbErrorHandler.HandleError(err, "Get Posts Comment Count Per Page Error")
+	}
+
+	if err := query.Preload("Author").Offset(offset).Limit(limit).Find(&comments).Error; err != nil {
+		return nil, 0, ps.dbErrorHandler.HandleError(err, "Get Posts Comment Per Page Error")
+	}
+
+	responses := make([]models.CommentResponse, len(comments))
+	for i, comment := range comments {
+		responses[i] = *helpers.MapToCommentResponse(comment)
+	}
+
+	return responses, count, nil
+
 }
 
 func (ps *PostService) ToggleLike(postID string, tokenString string) (*models.PostResponse, error) {

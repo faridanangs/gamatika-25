@@ -17,24 +17,41 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Golang
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Panic(err)
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv != "production" {
+		if err := godotenv.Load(); err != nil {
+			log.Println("Peringatan: Tidak dapat memuat file .env")
+		}
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Panic("FATAL: JWT_SECRET tidak diatur di environment variable")
+	}
 
 	middleware.SetJWTSecret(jwtSecret)
 
 	app := fiber.New(fiber.Config{})
 
-	// Middleware
-	app.Use(logger.New())
-	app.Use(recover.New())
-	app.Use(cors.New())
+	if appEnv != "production" {
+		app.Use(logger.New())
+	}
 
-	// Initialize validator
+	app.Use(recover.New())
+
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" && appEnv == "production" {
+		log.Println("Peringatan: FRONTEND_URL tidak di-set, CORS mungkin gagal")
+	}
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     frontendURL + ", http://localhost:3000",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PUT, DELETE",
+		AllowCredentials: true,
+	}))
+
 	validator := validator.New()
 	db := database.Connect()
 
@@ -52,6 +69,11 @@ func main() {
 	// Setup all routes
 	routes.SetupRoutes(app, userController, postController, artikelController)
 
-	// Start server
-	log.Fatal(app.Listen(":8080"))
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server berjalan di port %s\n", port)
+	log.Fatal(app.Listen(":" + port))
 }

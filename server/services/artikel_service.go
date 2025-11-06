@@ -95,7 +95,7 @@ func (as *ArtikelService) Delete(id, token string) error {
 	return nil
 }
 
-func (as *ArtikelService) GetByID(id string) (*models.ArtikelResponse, error) {
+func (as *ArtikelService) GetArtikelByID(id string) (*models.ArtikelResponse, error) {
 	var artikel models.Artikel
 
 	if err := as.db.Preload("Author").Where("id = ?", id).Find(&artikel).Error; err != nil {
@@ -103,22 +103,6 @@ func (as *ArtikelService) GetByID(id string) (*models.ArtikelResponse, error) {
 	}
 
 	return helpers.MapToArtikelResponse(artikel), nil
-}
-
-func (as *ArtikelService) GetAll() ([]models.ArtikelResponse, error) {
-	var artikels []models.Artikel
-
-	if err := as.db.Preload("Author").Find(&artikels).Error; err != nil {
-		return nil, as.dbErrorHandler.HandleError(err, "Get All Artikel")
-	}
-
-	resps := make([]models.ArtikelResponse, len(artikels))
-
-	for i, res := range artikels {
-		resps[i] = *helpers.MapToArtikelResponse(res)
-	}
-
-	return resps, nil
 }
 
 func (as *ArtikelService) GetPerPage(limit, page int, category, q string) ([]models.ArtikelResponse, int64, error) {

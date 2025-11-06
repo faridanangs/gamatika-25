@@ -11,27 +11,27 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 	// Public routes
 	app.Post("/users", userController.CreateUser)
 	app.Post("/login", userController.LoginUser)
-	app.Get("/posts", postController.GetAllPosts)
 	app.Get("/posts/scroll", postController.GetPostPerPage)
 	app.Get("/posts/:id", postController.GetPostByID)
+	app.Get("/posts/comment/:id", postController.GetPostCommentPerPage)
 
 	app.Get("/users/top-contributors", userController.GetCachedTopContributors)
 	app.Get("/users/:id/contribution", userController.GetUserContribution)
-	app.Get("/artikels", artikelController.GetAll)
 	app.Get("/artikels/pagination", artikelController.GetPerPage)
-	app.Get("/artikels/:id", artikelController.GetByID)
+	app.Get("/artikels/:id", artikelController.GetArtikelByID)
 
 	// Protected routes
 	protected := app.Group("/api")
 	protected.Use(middleware.JWTProtected())
 	{
 		// User routes
-		protected.Get("/users", userController.GetAllUsers)
 		protected.Get("/users/profile", userController.GetProfile)
 		protected.Post("/users/private-key", userController.GetPrivateKey)
 		protected.Get("/users/:id", userController.GetUserByID)
 		protected.Put("/users/:id", userController.UpdateUser)
 		protected.Delete("/users/:id", userController.DeleteUser)
+		protected.Get("/users/post/:id", userController.GetUserPost)
+		protected.Get("/users/artikel/:id", userController.GetUserArtikel)
 
 		// Post routes
 		protected.Post("/posts", postController.CreatePost)
@@ -41,7 +41,6 @@ func SetupRoutes(app *fiber.App, userController *controllers.UserController, pos
 
 		// Comment routes
 		protected.Post("/posts/:id/comments", postController.CreateComment)
-		protected.Get("/comments", postController.GetAllComments)
 		protected.Get("/comments/:id", postController.GetCommentByID)
 		protected.Put("/comments/:id", postController.UpdateComment)
 		protected.Delete("/comments/:id", postController.DeleteComment)

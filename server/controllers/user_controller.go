@@ -43,12 +43,10 @@ func (uc *UserController) CreateUser(c *fiber.Ctx) error {
 	if err != nil {
 		var appErr *helpers.AppError
 		if errors.As(err, &appErr) {
-			// Check if Details contains a CustomErrorResponse
 			if customErr, ok := appErr.Details.(*helpers.CustomErrorResponse); ok {
 				return c.Status(appErr.Code).JSON(customErr)
 			}
 
-			// Fallback to a generic error response
 			return c.Status(appErr.Code).JSON(&helpers.CustomErrorResponse{
 				Status:  "error",
 				Message: appErr.Message,
@@ -202,19 +200,6 @@ func (uc *UserController) GetProfile(c *fiber.Ctx) error {
 	})
 }
 
-func (uc *UserController) GetAllUsers(c *fiber.Ctx) error {
-	users, err := uc.userService.GetAllUsers()
-	if err != nil {
-		return helpers.HelperErrNotNil(err, c)
-	}
-
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "Users retrieved successfully",
-		"data":    users,
-	})
-}
-
 func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -230,6 +215,41 @@ func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
 	})
 }
 
+func (uc *UserController) GetUserPost(c *fiber.Ctx) error {
+	id := c.Params("id")
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 6)
+
+	user, count, err := uc.userService.GetUserPost(id, page, limit)
+	if err != nil {
+		return helpers.HelperErrNotNil(err, c)
+	}
+
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "User retrieved successfully",
+		"data":    user,
+		"total":   count,
+	})
+}
+func (uc *UserController) GetUserArtikel(c *fiber.Ctx) error {
+	id := c.Params("id")
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 6)
+
+	user, count, err := uc.userService.GetUserArtikel(id, page, limit)
+	if err != nil {
+		return helpers.HelperErrNotNil(err, c)
+	}
+
+	return c.JSON(fiber.Map{
+		"status":  "success",
+		"message": "User retrieved successfully",
+		"data":    user,
+		"total":   count,
+	})
+}
+
 func (uc *UserController) GetCachedTopContributors(c *fiber.Ctx) error {
 	res := uc.userService.GetCachedTopContributors()
 
@@ -241,9 +261,9 @@ func (uc *UserController) GetCachedTopContributors(c *fiber.Ctx) error {
 }
 
 func (uc *UserController) GetUserContribution(c *fiber.Ctx) error {
-	userID := c.Params("id")
+	// userID := c.Params("id")
 
-	contribution, err := uc.userService.CalculateUserContribution(userID)
+	contribution, err := uc.userService.GetTopContributors()
 	if err != nil {
 		return helpers.HelperErrNotNil(err, c)
 	}

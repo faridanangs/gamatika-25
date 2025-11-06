@@ -1,19 +1,17 @@
 package models
 
-import "time"
-
-type Contribution struct {
-	UserID         string    `json:"user_id"`
-	Username       string    `json:"username"`
-	TotalScore     uint64    `json:"total_score"`
-	PostsCount     uint64    `json:"posts_count"`
-	CommentsCount  uint64    `json:"comments_count"`
-	ArtikelsCount  uint64    `json:"artikels_count"`
-	LikesReceived  uint64    `json:"likes_received"`
-	SharesReceived uint64    `json:"shares_received"`
-	LastUpdated    time.Time `json:"last_updated"`
+type ContributionQueryResult struct {
+	UserID         string
+	Username       string
+	Avatar         string
+	WalletAddress  string
+	PostsCount     uint64
+	CommentsCount  uint64
+	ArtikelsCount  uint64
+	LikesReceived  uint64
+	SharesReceived uint64
+	TotalScore     uint64
 }
-
 type TopContributorsResponse struct {
 	Rank      uint64                `json:"rank"`
 	User      AuthorResponse        `json:"user"`
