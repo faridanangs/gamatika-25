@@ -12,7 +12,6 @@ const PostPage = async ({ params }) => {
     const id = param.id;
 
     const response = await getPostByID(id);
-    console.log(response);
     return (
       <ForumByID
         token={session?.accessToken}

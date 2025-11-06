@@ -6,22 +6,26 @@ import CreatePostModal, {
   CreatePostButton,
   ForumPost,
 } from '../Forum/ForumPost';
-import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 import { PostSkeleton } from '../skeleton/PostSkeleton';
-import { createComment, createPost, likedToggle } from '@/lib/action';
+import { createPost, likedToggle } from '@/lib/action';
 import { getPostPerPage } from '@/data/getPostsData';
 
-export default function DashboardForumPage({ user, token, isAuth }) {
+export default function DashboardForumPage({
+  user,
+  token,
+  isAuth,
+  initialPosts,
+  hasMoreInitial,
+  postsPerPage,
+}) {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const [displayedPosts, setDisplayedPosts] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [displayedPosts, setDisplayedPosts] = useState(initialPosts);
+  const [page, setPage] = useState(2);
+  const [hasMore, setHasMore] = useState(hasMoreInitial);
   const [isLoading, setIsLoading] = useState(false);
-  const postsPerPage = 10;
 
   const observer = useRef();
   const lastPostElementRef = useCallback(
@@ -39,6 +43,8 @@ export default function DashboardForumPage({ user, token, isAuth }) {
     },
     [isLoading, hasMore]
   );
+
+  const isInitialMount = useRef(true);
 
   const loadInitialPosts = useCallback(async () => {
     setIsLoading(true);
@@ -104,27 +110,38 @@ export default function DashboardForumPage({ user, token, isAuth }) {
     }
   }, [isLoading, hasMore, page, postsPerPage, selectedCategory]);
 
-  useEffect(() => {
-    loadInitialPosts();
-  }, [loadInitialPosts]);
-
   const handleLike = async (id) => {
+    const originalPosts = displayedPosts;
+
+    setDisplayedPosts((prev) =>
+      prev.map((post) =>
+        post.id === id
+          ? {
+              ...post,
+              liked: !post.liked,
+              like_count: post.liked
+                ? post.like_count - 1
+                : post.like_count + 1,
+            }
+          : post
+      )
+    );
+
     try {
       const resp = await likedToggle(token, id);
       if (!resp.success) {
-        resp?.errors.map((e) => {
-          toast.error(e.message);
-        });
-        return;
+        toast.error('Gagal menyukai post');
+        setDisplayedPosts(originalPosts);
+        resp?.errors.map((e) => toast.error(e.message));
       }
     } catch (error) {
       toast.error(error.message);
+      setDisplayedPosts(originalPosts);
     }
   };
 
   const handleCreatePost = async (newPost) => {
     try {
-      setShowCreateModal(false);
       const resp = await createPost(token, newPost);
       if (!resp.success) {
         resp?.errors.map((e) => {
@@ -132,23 +149,25 @@ export default function DashboardForumPage({ user, token, isAuth }) {
         });
         return;
       }
+
+      const newPostData = resp.data;
+      setDisplayedPosts((prev) => [newPostData, ...prev]);
+
       toast.success(resp.message);
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setShowCreateModal(false);
     }
   };
 
-  const handleAddComment = async (postId, newComment) => {
-    try {
-      const resp = await createComment(postId, token, newComment);
-      if (!resp.success) {
-        toast.error(resp.errors[0].message);
-        return;
-      }
-    } catch (error) {
-      toast.error(error.message);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
-  };
+    loadInitialPosts();
+  }, [selectedCategory, loadInitialPosts]);
 
   return (
     <div className="min-h-screen dark:bg-card transition-colors duration-300 w-full overflow-x-hidden">
@@ -207,7 +226,6 @@ export default function DashboardForumPage({ user, token, isAuth }) {
                           post={post}
                           onLike={handleLike}
                           comments={post?.comments}
-                          onAddComment={handleAddComment}
                           isAuth={isAuth}
                           user={user}
                           token={token}
@@ -221,7 +239,6 @@ export default function DashboardForumPage({ user, token, isAuth }) {
                         post={post}
                         onLike={handleLike}
                         comments={post?.comments}
-                        onAddComment={handleAddComment}
                         isAuth={isAuth}
                         user={user}
                         token={token}

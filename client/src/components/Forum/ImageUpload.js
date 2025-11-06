@@ -41,11 +41,8 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
           file: files[index],
         }));
 
-        console.log('new Images ', newImages);
-
         setImages((prev) => [...prev, ...newImages]);
       } catch (error) {
-        console.error('Upload error:', error);
         alert(`Gagal mengunggah gambar: ${error.message}`);
       } finally {
         setUploading(false);

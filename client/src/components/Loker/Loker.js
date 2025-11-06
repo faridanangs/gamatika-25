@@ -28,16 +28,6 @@ export default function LokerPage() {
     localStorage.setItem('theme', newTheme);
   };
 
-  // useEffect(() => {
-  //   const getJobs = async () => {
-  //     const resp = await getDataJobs();
-  //     console.log(resp, 'resp');
-  //     setJobs(resp);
-  //   };
-
-  //   getJobs();
-  // }, []);
-
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('theme');

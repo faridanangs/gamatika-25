@@ -13,18 +13,16 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
-import { getAllArtikel, getArtikelByID } from '@/data/getArtikelData';
+import {
+  getAllArtikel,
+  getArtikelByID,
+  getArtikelPerPage,
+} from '@/data/getArtikelData';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { BlogDetailSkeleton } from '@/components/skeleton/BlogSkeleton';
 import { formatReadableTime } from '@/lib/timeReadable';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import rehypeRaw from 'rehype-raw';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
 
 // Fungsi untuk mengacak array
 const shuffleArray = (array) => {
@@ -65,7 +63,7 @@ export default function BlogDetailPage() {
 
   const fetchAllArtikels = async () => {
     try {
-      const resp = await getAllArtikel();
+      const resp = await getArtikelPerPage(20, 1, '', '');
       const allArtikels = resp.data || [];
       setArtikels(allArtikels);
 
@@ -174,55 +172,11 @@ export default function BlogDetailPage() {
 
         {/* Artikel Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-x-auto mb-8">
-          <div className="p-4 md:p-8 prose dark:prose-invert max-w-none">
-            <ReactMarkdown
-              remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={[rehypeKatex, rehypeRaw]}
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match ? (
-                    <SyntaxHighlighter
-                      style={atomDark}
-                      language={match[1]}
-                      PreTag="div"
-                      {...props}
-                    >
-                      {String(children).replace(/\n$/, '')}
-                    </SyntaxHighlighter>
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  );
-                },
-                table({ children }) {
-                  return (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
-                        {children}
-                      </table>
-                    </div>
-                  );
-                },
-                th({ children }) {
-                  return (
-                    <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
-                      {children}
-                    </th>
-                  );
-                },
-                td({ children }) {
-                  return (
-                    <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
-                      {children}
-                    </td>
-                  );
-                },
-              }}
-            >
-              {artikel.content || ''}
-            </ReactMarkdown>
+          <div className="p-4 md:p-8">
+            <RenderReactMarkDown
+              content={artikel.content}
+              isSubstring={false}
+            />
           </div>
         </div>
 
@@ -309,18 +263,6 @@ export default function BlogDetailPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 mt-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-400">
-              &copy; {new Date().getFullYear()} Delta Civitas. All rights
-              reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

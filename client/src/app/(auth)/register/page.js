@@ -20,303 +20,410 @@ import {
 } from '@/components/ui/select';
 import toast from 'react-hot-toast';
 import { prodis } from '@/data/prodi';
-import { registerUser } from '@/lib/action';
+import { useState } from 'react';
+import { BackgroundCircle } from '../login/page';
+import {
+  User,
+  Mail,
+  Lock,
+  BookOpen,
+  Shield,
+  ArrowRight,
+  ArrowLeft,
+  RefreshCw,
+  CheckCircle,
+  UserCircle,
+  Fingerprint,
+  GraduationCap,
+  MessageSquare,
+} from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const [step, setStep] = useState('form');
+  const [isLoading, setIsLoading] = useState(false);
 
-    const formData = {
-      fullName: document.getElementById('fullName').value,
-      username: document.getElementById('username').value,
-      email: document.getElementById('email').value,
-      nim: document.getElementById('nim').value,
-      prodi: document.getElementById('prodi').value,
-      password: document.getElementById('password').value,
-    };
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    nim: '',
+    prodi: '',
+    password: '',
+  });
+  const [verificationCode, setVerificationCode] = useState('');
+
+  const handleFormChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleProdiChange = (value) => {
+    setFormData((prev) => ({ ...prev, prodi: value }));
+  };
+
+  const handleRequestCode = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    toast.loading('Mengirim kode verifikasi...');
 
     try {
-      const response = await registerUser(formData);
+      const response = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-      if (!response.success) {
-        if (response.status == 500) {
-          toast.error(response.message);
-          return;
-        } else {
-          response?.errors?.map((e) => {
-            toast.error(e.message);
-          });
-          return;
-        }
+      const result = await response.json();
+      toast.dismiss();
+
+      if (!response.ok) {
+        toast.error(result.message || 'Gagal mengirim kode.');
+        setIsLoading(false);
+        return;
       }
 
-      toast.success(response.message);
+      toast.success(result.message);
+      setStep('verify');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Terjadi kesalahan jaringan.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleVerifyAndRegister = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    toast.loading('Memverifikasi kode...');
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+
+      const result = await response.json();
+      toast.dismiss();
+
+      if (!response.ok) {
+        if (result.errors) {
+          result.errors.map((err) => toast.error(err.message));
+        } else {
+          toast.error(result.message || 'Gagal mendaftar.');
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success(result.message);
       setTimeout(() => {
         router.push('/login');
       }, 1000);
     } catch (error) {
-      toast.error(error.message);
+      toast.dismiss();
+      toast.error('Terjadi kesalahan jaringan.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+      <BackgroundCircle />
       <div className="container mx-auto px-4 py-16">
         <div className="flex justify-center">
           <div className="w-full max-w-md">
-            {/* Logo and Title */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-black dark:bg-white rounded-2xl shadow-lg mb-4 transform transition-transform hover:scale-105">
-                <svg
-                  className="w-10 h-10 text-white dark:text-black"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
+            <div className="text-center mb-8 mt-9">
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
+                  <UserCircle className="h-10 w-10 text-white" />
+                </div>
               </div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Buat Akun
+                {step === 'form' ? 'Buat Akun' : 'Verifikasi Email Anda'}
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Daftar ke DeltaCivitas
+                {step === 'form'
+                  ? 'Daftar ke Delta Civitas'
+                  : `Kami telah mengirim kode 6 digit ke ${formData.email}`}
               </p>
             </div>
 
-            {/* Register Form */}
-            <Card className="bg-white dark:bg-card shadow-xl">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Informasi Pribadi
-                </CardTitle>
-                <CardDescription className="text-gray-600 dark:text-gray-400">
-                  Isi formulir di bawah untuk membuat akun
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Full Name Input */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="fullName"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Nama Lengkap
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="fullName"
-                        name="fullName"
-                        required
-                        placeholder="John Doe"
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
+            {step === 'form' && (
+              <Card className="bg-white dark:bg-card shadow-xl border-0">
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                    <User className="mr-2 h-6 w-6 text-blue-600" />
+                    Informasi Pribadi
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    Isi formulir di bawah untuk membuat akun
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <form onSubmit={handleRequestCode} className="space-y-4">
+                    {/* Full Name Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName" className="flex items-center">
+                        Nama Lengkap
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="fullName"
+                          value={formData.fullName}
+                          onChange={handleFormChange}
+                          required
+                          placeholder="John Doe"
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Username Input */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="username"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Username
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="username"
-                        name="username"
-                        required
-                        placeholder="johndoe"
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
+                    {/* Username Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="username" className="flex items-center">
+                        Username
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="username"
+                          value={formData.username}
+                          onChange={handleFormChange}
+                          required
+                          placeholder="johndoe"
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <UserCircle className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Email Input */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="email"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Email
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        placeholder="nama@universitas.edu"
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                          />
-                        </svg>
+                    {/* Email Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center">
+                        Email
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={handleFormChange}
+                          required
+                          placeholder="nama@universitas.edu"
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Mail className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="nim"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      NIM
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="nim"
-                        name="nim"
-                        type="text"
-                        required
-                        title="NIM minimal 8 digit"
-                        placeholder="X12345678"
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
+                    {/* NIM Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="nim" className="flex items-center">
+                        NIM
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="nim"
+                          type="text"
+                          value={formData.nim}
+                          onChange={handleFormChange}
+                          required
+                          title="NIM minimal 8 digit"
+                          placeholder="X12345678"
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Fingerprint className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="prodi"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Program Studi
-                    </Label>
-                    <Select
-                      required
-                      onValueChange={(value) => {
-                        document.getElementById('prodi').value = value;
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Program Studi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {prodis.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Hidden input untuk menyimpan nilai prodi */}
-                    <input type="hidden" id="prodi" name="prodi" value="" />
-                  </div>
-
-                  {/* Password Input */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="password"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
+                    {/* Prodi Select */}
+                    <div className="space-y-2">
+                      <Label htmlFor="prodi" className="flex items-center">
+                        Program Studi
+                      </Label>
+                      <Select
                         required
-                        minLength="6"
-                        placeholder="••••••••"
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                          />
-                        </svg>
+                        onValueChange={handleProdiChange}
+                        value={formData.prodi}
+                      >
+                        <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Pilih Program Studi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prodis.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Password Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="flex items-center">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type="password"
+                          value={formData.password}
+                          onChange={handleFormChange}
+                          required
+                          minLength="6"
+                          placeholder="••••••••"
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+                    {/* Submit Button */}
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+                    >
+                      {isLoading ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Memuat...
+                        </>
+                      ) : (
+                        <>
+                          Daftar & Kirim Kode
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ----- FORM VERIFIKASI (STEP 2) ----- */}
+            {step === 'verify' && (
+              <Card className="bg-white dark:bg-card shadow-xl border-0">
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                    <Shield className="mr-2 h-6 w-6 text-green-600" />
+                    Masukkan Kode Verifikasi
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    Cek email Anda untuk kode 6 digit.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <form
+                    onSubmit={handleVerifyAndRegister}
+                    className="space-y-4"
                   >
-                    Daftar
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="code" className="flex items-center">
+                        <MessageSquare className="mr-2 h-4 w-4 text-gray-500" />
+                        Kode Verifikasi
+                      </Label>
+                      <div className="flex justify-center space-x-2">
+                        {[0, 1, 2, 3, 4, 5].map((index) => (
+                          <Input
+                            key={index}
+                            id={`code-${index}`}
+                            type="text"
+                            maxLength={1}
+                            value={verificationCode[index] || ''}
+                            onChange={(e) => {
+                              const newCode = verificationCode.split('');
+                              newCode[index] = e.target.value;
+                              setVerificationCode(newCode.join(''));
+
+                              // Auto focus to next input
+                              if (e.target.value && index < 5) {
+                                document
+                                  .getElementById(`code-${index + 1}`)
+                                  .focus();
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              // Handle backspace
+                              if (
+                                e.key === 'Backspace' &&
+                                !verificationCode[index] &&
+                                index > 0
+                              ) {
+                                document
+                                  .getElementById(`code-${index - 1}`)
+                                  .focus();
+                              }
+                            }}
+                            required
+                            className="w-12 h-12 text-center text-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-500 text-center mt-2">
+                        Masukkan kode 6 digit yang dikirim ke {formData.email}
+                      </p>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={isLoading || verificationCode.length !== 6}
+                      className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+                    >
+                      {isLoading ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Memverifikasi...
+                        </>
+                      ) : (
+                        <>
+                          Verifikasi & Buat Akun
+                          <CheckCircle className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+
+                  <div className="flex flex-col space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center"
+                      onClick={() => setStep('form')}
+                      disabled={isLoading}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Kembali ke Form Registrasi
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      className="w-full flex items-center justify-center text-blue-600 hover:text-blue-800"
+                      onClick={handleRequestCode}
+                      disabled={isLoading}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Kirim Ulang Kode
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Sign In Link */}
             <div className="mt-6 text-center">
@@ -324,9 +431,10 @@ export default function RegisterPage() {
                 Sudah punya akun?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-black hover:underline dark:text-white"
+                  className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center justify-center"
                 >
                   Masuk di sini
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </p>
             </div>

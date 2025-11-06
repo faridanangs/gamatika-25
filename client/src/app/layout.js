@@ -1,6 +1,7 @@
-import { Geist, Geist_Mono } from 'next/font/google';
-import 'katex/dist/katex.min.css';
 import './globals.css';
+import 'katex/dist/katex.min.css';
+
+import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import NavbarWrapper from '@/components/NavbarWrapper';
 import { Toaster } from 'react-hot-toast';

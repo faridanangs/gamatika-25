@@ -226,42 +226,6 @@ export default function ForumPage({ contribsO, isAuth }) {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 mt-12 transition-colors duration-300">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">
-                Forum Diskusi Delta Civitas
-              </h3>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Aturan Forum</h3>
-              <ul className="text-gray-400 dark:text-gray-500 space-y-2">
-                <li>• Hormati sesama anggota</li>
-                <li>• Sampaikan pertanyaan dengan jelas</li>
-                <li>• Berikan kontribusi yang positif</li>
-                <li>• Hindari spam dan konten tidak sesuai</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Kontak</h3>
-              <ul className="text-gray-400 dark:text-gray-500 space-y-2">
-                <li>Email: forum@deltacivitas.com</li>
-                <li>WhatsApp: 0812-3456-7890</li>
-                <li>Instagram: @forum_deltacivitas</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 dark:border-gray-800 mt-8 pt-6 text-center text-gray-400 dark:text-gray-500">
-            <p>
-              &copy; {new Date().getFullYear()} Forum Diskusi Delta Civitas. All
-              rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

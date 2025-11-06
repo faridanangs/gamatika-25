@@ -23,7 +23,6 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

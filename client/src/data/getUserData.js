@@ -2,10 +2,10 @@
 
 import { handleApiResponse } from '@/lib/apiHandler';
 
-export async function getAllUsers(token) {
+export const getUserByID = async (token, userID) => {
   try {
     const resp = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/${userID}`,
       {
         cache: 'no-store',
         method: 'GET',
@@ -20,12 +20,30 @@ export async function getAllUsers(token) {
   } catch (error) {
     throw new Error(error || 'Network Error Occurred');
   }
-}
-
-export const getUserByID = async (token, userID) => {
+};
+export const getUserPost = async (token, userID, page, limit) => {
   try {
     const resp = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/${userID}`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/post/${userID}?page=${page}&limit=${limit}`,
+      {
+        cache: 'no-store',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleApiResponse(resp);
+  } catch (error) {
+    throw new Error(error || 'Network Error Occurred');
+  }
+};
+export const getUserArtikel = async (token, userID, page, limit) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/users/artikel/${userID}?page=${page}&limit=${limit}`,
       {
         cache: 'no-store',
         method: 'GET',

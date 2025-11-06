@@ -1,9 +1,7 @@
+import CreateArticlePage from '@/components/Dashboard/Artikel';
+import ErrorPage from '@/components/ErrorPage';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
-
-const {
-  default: CreateArticlePage,
-} = require('@/components/Dashboard/Artikel');
 
 const page = async () => {
   const session = await getServerSession(authOptions);

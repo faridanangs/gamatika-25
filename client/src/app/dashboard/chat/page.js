@@ -1,10 +1,6 @@
 'use client';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   UploadIcon,
   SendIcon,
@@ -15,16 +11,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
 
 const ai = new GoogleGenAI({
   apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
 });
 
 const MAX_MESSAGES = 50;
-const MAX_CONTEXT_MESSAGES = 10;
 
 const MessageImage = React.memo(({ src, alt }) => (
   <div className="mt-2 rounded-lg overflow-hidden shadow-md">
@@ -74,33 +67,7 @@ const MessageBubble = React.memo(({ message, isTyping, onCopy }) => {
                 ))}
               </>
             ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkMath, remarkGfm]}
-                rehypePlugins={[rehypeKatex, rehypeRaw]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <div className="overflow-x-auto rounded-md my-2 bg-[#2d2d2d]">
-                        <SyntaxHighlighter
-                          style={atomDark}
-                          language={match[1]}
-                          PreTag="div"
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                      </div>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {message.text}
-              </ReactMarkdown>
+              <RenderReactMarkDown content={message.text} isSubstring={false} />
             )}
           </div>
         )}

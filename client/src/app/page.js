@@ -2,32 +2,20 @@
 import { useState, useEffect } from 'react';
 import {
   ArrowRight,
-  Users,
+  Heart,
+  BookOpen,
+  MessageCircle,
   Briefcase,
   FileText,
   MessageSquare,
   Trophy,
-  Calendar,
+  Users,
   Star,
-  Heart,
-  MessageCircle,
-  Share2,
-  Sparkles,
-  GraduationCap,
-  Award,
-  Zap,
-  Moon,
-  Sun,
-  Search,
-  Bell,
-  User,
-  Menu,
-  X,
-  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Globe } from '@/components/Globe';
+import Footer from '@/components/Footer';
+import { stats, testimonials, features, whyChoose } from '@/data/homePageData';
 
 const HomePage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -88,118 +76,6 @@ const HomePage = () => {
     };
   }, []);
 
-  const features = [
-    {
-      id: 1,
-      title: 'Forum Diskusi',
-      description:
-        'Berkomentar, berdiskusi, dan berbagi pengetahuan dengan sesama mahasiswa',
-      icon: MessageCircle,
-      color: 'from-blue-500 to-cyan-500',
-      gradient: 'from-blue-600/10 to-cyan-600/10',
-    },
-    {
-      id: 2,
-      title: 'Ingfo Loker',
-      description:
-        'Temukan pekerjaan part-time, remote, dan lokasi dekat kampus',
-      icon: Briefcase,
-      color: 'from-green-500 to-emerald-500',
-      gradient: 'from-green-600/10 to-emerald-600/10',
-      feature: 'Comming Soon',
-    },
-    {
-      id: 3,
-      title: 'Pembuatan CV Otomatis',
-      description:
-        'Buat CV profesional dalam hitungan menit dengan template yang disesuaikan',
-      icon: FileText,
-      color: 'from-purple-500 to-pink-500',
-      gradient: 'from-purple-600/10 to-pink-600/10',
-    },
-    {
-      id: 7,
-      title: 'E-Book & Jurnal',
-      description:
-        'Akses e-book dan jurnal berdasarkan mata kuliah MIPA untuk mendukung pembelajaran dan penelitian.',
-      icon: BookOpen,
-      color: 'from-pink-500 to-red-500',
-      gradient: 'from-pink-600/10 to-red-600/10',
-    },
-
-    {
-      id: 4,
-      title: 'Chat dengan AI',
-      description: 'Asisten AI untuk membantu belajar dan konsultasi akademik',
-      icon: MessageSquare,
-      color: 'from-orange-500 to-red-500',
-      gradient: 'from-orange-600/10 to-red-600/10',
-    },
-    {
-      id: 5,
-      title: 'Reward NFT',
-      description: 'Dapatkan NFT sebagai hadiah untuk top contributor',
-      icon: Trophy,
-      color: 'from-yellow-500 to-amber-500',
-      gradient: 'from-yellow-600/10 to-amber-600/10',
-    },
-    {
-      id: 6,
-      title: 'Event & Pengumuman',
-      description: 'Semua informasi penting dan agenda kegiatan kampus',
-      icon: Calendar,
-      color: 'from-indigo-500 to-blue-500',
-      gradient: 'from-indigo-600/10 to-blue-600/10',
-    },
-  ];
-
-  const whyChoose = [
-    {
-      icon: GraduationCap,
-      title: 'Didesain untuk MIPA',
-      description:
-        'Platform khusus untuk mahasiswa Fakultas MIPA dengan fitur yang relevan',
-    },
-    {
-      icon: Award,
-      title: 'Reward Berharga',
-      description: 'Top contributor mendapatkan NFT yang bisa diperjualbelikan',
-    },
-    {
-      icon: Zap,
-      title: 'Cepat & Mudah',
-      description: 'Interface intuitif dengan proses yang disederhanakan',
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: 'Sarah W.',
-      role: 'Mahasiswa Matematika',
-      comment:
-        'Platform ini sangat membantu saya dalam membuat CV dan mencari pekerjaan part-time yang sesuai dengan jadwal kuliah.',
-    },
-    {
-      name: 'Ahmad R.',
-      role: 'Mahasiswa Fisika',
-      comment:
-        'Forum diskusinya sangat aktif dan AI chat-nya membantu saya memahami konsep yang sulit.',
-    },
-    {
-      name: 'Maya S.',
-      role: 'Mahasiswa Kimia',
-      comment:
-        'Saya sudah mendapatkan NFT karena menjadi top contributor di forum diskusi. Sangat membantu!',
-    },
-  ];
-
-  const stats = [
-    { label: 'Mahasiswa Aktif', value: '5,000+' },
-    { label: 'Postingan Forum', value: '10,000+' },
-    { label: 'Lowongan Kerja', value: '500+' },
-    { label: 'CV Dibuat', value: '3,000+' },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900 transition-colors duration-300">
       <section className="relative overflow-hidden py-20">
@@ -228,19 +104,19 @@ const HomePage = () => {
               style={{ transitionDelay: '0.2s' }}
             >
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-                Platform{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  Delta Civitas
+                Ekosistem Digital Mahasiswa
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
+                  MIPA.
                 </span>{' '}
-                untuk Mahasiswa MIPA
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl">
-                Solusi lengkap untuk mahasiswa MIPA - dari pembuatan CV hingga
-                mencari pekerjaan part-time, semuanya dalam satu platform modern
+                Terhubung di Forum, berkarya di Blog (support LaTeX), dan bangun
+                masa depanmu (CV/Loker). Semua terintegrasi dengan AI Chat,
+                E-Book/Jurnal, dan reward NFT
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/login">
-                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                  <button className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
                     Mulai Sekarang{' '}
                     <ArrowRight className="inline ml-2" size={20} />
                   </button>
@@ -279,15 +155,15 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20  bg-gradient-to-br from-blue-600/5 to-purple-600/5">
+      <section className="py-20 bg-gradient-to-br from-blue-600/5 to-purple-600/5">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-on-scroll">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Fitur Unggulan Kami
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Semua yang dibutuhkan mahasiswa MIPA dalam satu platform yang
-              modern dan mudah digunakan
+              Platform khusus untuk mahasiswa Fakultas MIPA dengan fitur yang
+              relevan untuk mendukung pembelajaran dan pengembangan karir
             </p>
           </div>
 
@@ -305,15 +181,14 @@ const HomePage = () => {
                 onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => setActiveFeature(index)}
               >
-                <div className="flex items-start justify-between ">
+                <div className="flex items-start justify-between">
                   <div
                     className={`bg-gradient-to-r ${feature.color} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}
                   >
                     <feature.icon className="text-white" size={28} />
                   </div>
                   {feature.feature && (
-                    <div className="px-3 py-1 bg-gradient-to-br from-[#b58d6b] to-[#da736d] rounded-lg font-bold text-white">
-                      {' '}
+                    <div className="px-3 py-1 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-lg font-bold text-white text-sm">
                       {feature.feature}
                     </div>
                   )}
@@ -324,6 +199,9 @@ const HomePage = () => {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {feature.description}
                 </p>
+                <div
+                  className={`h-1 w-full bg-gradient-to-r ${feature.gradient} rounded-full`}
+                ></div>
               </div>
             ))}
           </div>
@@ -335,8 +213,12 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-on-scroll">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Kenapa Memilih Platform Kami?
+              Kenapa Memilih Delta Civitas?
             </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+              Platform yang dirancang khusus untuk memenuhi kebutuhan mahasiswa
+              Fakultas MIPA
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -383,6 +265,15 @@ const HomePage = () => {
                 <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2 rounded-tl-xl rounded-br-xl">
                   <Heart className="size-4" />
                 </div>
+                <div className="flex mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="text-yellow-400 fill-current"
+                      size={16}
+                    />
+                  ))}
+                </div>
                 <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
                   &quot;{testimonial.comment}&quot;
                 </p>
@@ -409,105 +300,32 @@ const HomePage = () => {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto px-4 text-center">
           <div className="animate-on-scroll">
+            <div className="flex justify-center mb-6">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                <Users className="text-white" size={48} />
+              </div>
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Siap Memulai Perjalanan Belajar Anda?
+              Siap Bergabung dengan Komunitas MIPA?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Bergabunglah, ribuan mahasiswa MIPA telah merasakan manfaat
-              platform kami
+              Bergabunglah dengan 5,000+ mahasiswa MIPA yang telah merasakan
+              manfaat platform kami. Dapatkan akses ke forum diskusi, pembuatan
+              CV otomatis, dan reward NFT untuk top contributor.
             </p>
-            <Link href="/register">
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
-                Daftar Gratis Sekarang
-              </button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/register">
+                <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                  Daftar Sekarang
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-black text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">Delta Civitas</h3>
-              <p className="text-gray-400">
-                Platform khusus untuk mahasiswa Fakultas MIPA dalam mencari
-                pekerjaan, belajar, dan berkembang.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Fitur</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <p className="hover:text-white transition">Forum Diskusi</p>
-                </li>
-                <li>
-                  <p className="hover:text-white transition">Info Loker</p>
-                </li>
-                <li>
-                  <p className="hover:text-white transition">Pembuatan CV</p>
-                </li>
-                <li>
-                  <p className="hover:text-white transition">AI Chat</p>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Komunitas</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition">
-                    Event
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition">
-                    NFT Marketplace
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition">
-                    Bantuan
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Hubungi Kami</h4>
-              <p className="text-gray-400 mb-4">support@deltacivitas.ac.id</p>
-              <div className="flex space-x-4">
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition"
-                >
-                  <MessageCircle size={24} />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition"
-                >
-                  <Share2 size={24} />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition"
-                >
-                  <GraduationCap size={24} />
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Delta Civitas. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

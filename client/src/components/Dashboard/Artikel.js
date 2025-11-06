@@ -15,23 +15,17 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Save, Eye, FileText, X } from 'lucide-react';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
 import { createArtikel } from '@/lib/action';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '../ui/spinner';
 import { artikelCategories } from '@/data/mockCategories';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import rehypeRaw from 'rehype-raw';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
 
 const ArticlePreview = ({ article }) => {
   return (
-    <div className="prose max-w-none dark:prose-invert overflow-x-auto text-justify">
+    <div className="overflow-x-auto text-justify">
       <h1 className="text-2xl font-bold mb-4">{article.title}</h1>
 
       <div className="mb-4">
@@ -53,54 +47,9 @@ const ArticlePreview = ({ article }) => {
         </div>
       </div>
 
-      <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex, rehypeRaw]}
-        components={{
-          code({ node, inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <SyntaxHighlighter
-                style={atomDark}
-                language={match[1]}
-                PreTag="div"
-                {...props}
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
-            ) : (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          },
-          table({ children }) {
-            return (
-              <div className="overflow-x-auto">
-                <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
-                  {children}
-                </table>
-              </div>
-            );
-          },
-          th({ children }) {
-            return (
-              <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
-                {children}
-              </th>
-            );
-          },
-          td({ children }) {
-            return (
-              <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
-                {children}
-              </td>
-            );
-          },
-        }}
-      >
-        {article.content || ''}
-      </ReactMarkdown>
+      <article className="prose prose-lg dark:prose-invert max-w-none">
+        <RenderReactMarkDown content={article.content} isSubstring={false} />
+      </article>
     </div>
   );
 };
@@ -312,8 +261,8 @@ export default function CreateArticlePage({ token }) {
                   </div>
                   <div className="mt-3 p-3 bg-blue-50 dark:bg-gray-500 rounded-lg text-sm">
                     <div className="text-blue-800 dark:text-gray-200">
-                      <strong>Tips:</strong> Untuk menulis rumus matematika,
-                      gunakan:
+                      <strong>Tips:</strong> Untuk menulis rumus matematika dan
+                      Markdown, gunakan:
                       <ul className="list-disc pl-5 mt-1">
                         <li>
                           Rumus inline:{' '}
@@ -322,9 +271,12 @@ export default function CreateArticlePage({ token }) {
                           </code>
                         </li>
                         <li>
-                          Rumus display:{' '}
-                          <code className="dark:bg-gray-600 bg-blue-100 px-1 mx-1 rounded">
-                            {'$$int_{a}^{b} x^2 , dx$$'}
+                          Rumus display: <br />
+                          <code className="dark:bg-gray-600 bg-blue-100 px-1 mx-1 rounded inline-block">
+                            $$ <br />
+                            {`\\mathbb{E}[X] = \\int x f(x) dx`}
+                            <br />
+                            $$
                           </code>
                         </li>
                       </ul>
@@ -353,12 +305,6 @@ export default function CreateArticlePage({ token }) {
                     Jumlah Tag
                   </span>
                   <span className="font-medium">{article.tags.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-200">
-                    Status
-                  </span>
-                  <span className="font-medium text-green-600">Draft</span>
                 </div>
               </CardContent>
             </Card>

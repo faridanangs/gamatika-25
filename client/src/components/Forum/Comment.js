@@ -11,9 +11,10 @@ import { useSession } from 'next-auth/react';
 import { deleteComment } from '@/lib/action';
 import { formatReadableTime } from '@/lib/timeReadable';
 
-export function Comment({ comment, user, token }) {
+export function Comment({ comment, user, token, onDeleteComment }) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showAllTextContent, setShowAllTextContent] = useState(false);
 
   const handleImageClick = (image) => {
     setSelectedImage(image);
@@ -29,6 +30,10 @@ export function Comment({ comment, user, token }) {
       if (!resp.success) {
         toast.error(resp.message);
         return;
+      }
+
+      if (onDeleteComment) {
+        onDeleteComment(comment.id);
       }
 
       toast.success(resp.message);
@@ -97,9 +102,35 @@ export function Comment({ comment, user, token }) {
               </Button>
             )}
           </div>
-          <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-            {comment?.content}
-          </p>
+          {showAllTextContent ? (
+            <>
+              {comment.content}
+              <span
+                onClick={() => setShowAllTextContent(false)}
+                className="cursor-pointer"
+              >
+                {' '}
+                ⬆️
+              </span>
+            </>
+          ) : (
+            <span>
+              {comment?.content.length < 250 ? (
+                comment.content
+              ) : (
+                <span>
+                  {comment.content.slice(0, 250)}{' '}
+                  <span
+                    onClick={() => setShowAllTextContent(true)}
+                    className="cursor-pointer"
+                  >
+                    {'... '}
+                    ⬇️
+                  </span>
+                </span>
+              )}
+            </span>
+          )}
           {comment?.image && (
             <div
               className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"

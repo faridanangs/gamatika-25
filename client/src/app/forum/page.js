@@ -1,7 +1,6 @@
 import ErrorPage from '@/components/ErrorPage';
 import ForumPage from '@/components/Forum/Forum';
 import { getAllConribs } from '@/data/getAllContribs';
-import { getAllPosts, getPostPerPage } from '@/data/getPostsData';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import React from 'react';

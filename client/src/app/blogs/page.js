@@ -19,17 +19,12 @@ import {
   Tag,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getAllArtikel, getArtikelPerPage } from '@/data/getArtikelData';
+import { getArtikelPerPage } from '@/data/getArtikelData';
 import { artikelCategories } from '@/data/mockCategories';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
 import { BlogsPageSkeleton } from '@/components/skeleton/BlogSkeleton';
 import { formatReadableTime } from '@/lib/timeReadable';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import rehypeRaw from 'rehype-raw';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
+import Footer from '@/components/Footer';
 
 export default function BlogsPage() {
   const router = useRouter();
@@ -139,7 +134,7 @@ export default function BlogsPage() {
               </label>
               <div className="relative">
                 <Search
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
+                  className="absolute right-3 cursor-pointer top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
                   onClick={handleSearch}
                 />
                 <Input
@@ -204,95 +199,42 @@ export default function BlogsPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {artikel.map((item) => (
+              {artikel.map((article) => (
                 <div
-                  key={item.id}
+                  key={article.id}
                   className="bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-between shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                  onClick={() => handleArtikelClick(item.id)}
+                  onClick={() => handleArtikelClick(article.id)}
                 >
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-3">
                       <span
                         className={`text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`}
                       >
-                        {item.category || 'Tidak berkategori'}
+                        {article.category}
                       </span>
                       <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {formatReadableTime(item.created_at)}
+                        {formatReadableTime(article.created_at)}
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
-                      {item.title || 'Judul tidak tersedia'}
-                    </h3>
+                    <h1 className="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
+                      {article.title}
+                    </h1>
 
                     <div className="inline-block text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-                      {item.content ? (
-                        <ReactMarkdown
-                          remarkPlugins={[remarkMath, remarkGfm]}
-                          rehypePlugins={[rehypeKatex, rehypeRaw]}
-                          components={{
-                            code({
-                              node,
-                              inline,
-                              className,
-                              children,
-                              ...props
-                            }) {
-                              const match = /language-(\w+)/.exec(
-                                className || ''
-                              );
-                              return !inline && match ? (
-                                <SyntaxHighlighter
-                                  style={atomDark}
-                                  language={match[1]}
-                                  PreTag="div"
-                                  {...props}
-                                >
-                                  {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
-                              ) : (
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                            table({ children }) {
-                              return (
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full my-4 border-collapse border border-gray-300 dark:border-gray-700">
-                                    {children}
-                                  </table>
-                                </div>
-                              );
-                            },
-                            th({ children }) {
-                              return (
-                                <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left font-semibold">
-                                  {children}
-                                </th>
-                              );
-                            },
-                            td({ children }) {
-                              return (
-                                <td className="border border-gray-300 dark:border-gray-700 px-4 py-2">
-                                  {children}
-                                </td>
-                              );
-                            },
-                          }}
-                        >
-                          {item.content.substring(0, 200) + '...'}
-                        </ReactMarkdown>
-                      ) : (
-                        'Tidak ada konten'
+                      {article.content && (
+                        <RenderReactMarkDown
+                          content={article.content}
+                          isSubstring={true}
+                          lenght={200}
+                        />
                       )}
                     </div>
 
-                    {item.tags && item.tags.length > 0 && (
+                    {article.tags && article.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
-                        {item.tags.slice(0, 3).map((tag, index) => (
+                        {article.tags.slice(0, 3).map((tag, index) => (
                           <span
                             key={index}
                             className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs flex items-center"
@@ -301,9 +243,9 @@ export default function BlogsPage() {
                             {tag}
                           </span>
                         ))}
-                        {item.tags.length > 3 && (
+                        {article.tags.length > 3 && (
                           <span className="text-gray-500 dark:text-gray-400 text-xs">
-                            +{item.tags.length - 3} lainnya
+                            +{article.tags.length - 3} lainnya
                           </span>
                         )}
                       </div>
@@ -376,42 +318,9 @@ export default function BlogsPage() {
             )}
           </>
         )}
-
-        {/* Subscribe Notifikasi */}
-        <div className="mt-12 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-8 text-white">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold mb-4">
-              Dapatkan Notifikasi Blogs Terbaru
-            </h2>
-            <p className="mb-6">
-              Daftarkan email Anda untuk menerima Blogs penting langsung ke
-              inbox Anda
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <input
-                type="email"
-                placeholder="Masukkan email Anda"
-                className="flex-grow px-4 py-3 bg-blue-500/20 border border-blue-400/30 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white"
-              />
-              <button className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 mt-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-400">
-              &copy; {new Date().getFullYear()} Delta Civitas. All rights
-              reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

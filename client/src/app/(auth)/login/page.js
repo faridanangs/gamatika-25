@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
+import { ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +68,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-card relative overflow-hidden pt-16 pb-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 relative overflow-hidden pt-16 pb-6">
       <Head>
         <title>Login - DeltaCivitas</title>
         <meta name="description" content="Login ke sistem DeltaCivitas" />
@@ -241,14 +242,15 @@ export default function LoginPage() {
           </Card>
 
           {/* Sign Up Link */}
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Belum punya akun?{' '}
               <Link
                 href="/register"
-                className="font-medium text-black hover:underline dark:text-white"
+                className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center justify-center"
               >
                 Daftar di sini
+                <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </p>
           </div>
@@ -258,9 +260,9 @@ export default function LoginPage() {
   );
 }
 
-function BackgroundCircle() {
+export function BackgroundCircle() {
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden -z-40">
       {/* Circle 1 - Light Mode: Gray-200, Dark Mode: Gray-700 */}
       <div className="absolute top-10 left-10 w-40 h-40 bg-gradient-to-tr dark:from-gray-400 dark:to-gray-800 rounded-full opacity-40 blur-2xl"></div>
       {/* Circle 2 */}

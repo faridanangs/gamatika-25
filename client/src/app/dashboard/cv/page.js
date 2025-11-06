@@ -34,126 +34,38 @@ import { printPDF } from '@/lib/cvTemplate';
 import { CVHandler } from './cv-handler';
 import { Badge } from '@/components/ui/badge';
 
-// const [personalInfo, setPersonalInfo] = useState({
-//   name: '',
-//   title: '',
-//   email: '',
-//   phone: '',
-//   location: '',
-//   linkedin: '',
-//   github: '',
-//   portfolio: '',
-//   image: '',
-// });
-
-// const [summary, setSummary] = useState('');
-
-// const [skills, setSkills] = useState({
-//   technical: [],
-//   soft: [],
-// });
-
-// const [experience, setExperience] = useState([]);
-
-// const [education, setEducation] = useState([]);
-
-// const [projects, setProjects] = useState([]);
-
-// const [certifications, setCertifications] = useState([]);
-
-// const [languages, setLanguages] = useState([]);
-
 const CVBuilder = () => {
   const [step, setStep] = useState(1);
   const componentRef = useRef();
 
-  // Data dummy untuk pengujian
   const [personalInfo, setPersonalInfo] = useState({
-    name: 'Budi Santoso',
-    title: 'Mitra Driver Logistik / Kurir', // Judul yang relevan
-    email: 'budi.santoso88@gmail.com',
-    phone: '+62 857 1234 5678',
-    location: 'Mataram, NTB', // Lokasi yang spesifik
-    linkedin: '', // Tidak relevan, dikosongkan
-    github: '', // Tidak relevan, dikosongkan
-    portfolio: '', // Tidak relevan, dikosongkan
+    name: '',
+    title: '',
+    email: '',
+    phone: '',
+    location: '',
+    linkedin: '',
+    github: '',
+    portfolio: '',
     image: '',
   });
 
-  const [summary, setSummary] = useState(
-    'Driver mitra yang jujur dan berdedikasi dengan pengalaman 3+ tahun di bidang logistik dan pengantaran. Sangat menguasai rute dan wilayah Kota Mataram dan sekitarnya. Berkomitmen tinggi untuk mengantarkan paket dan pesanan secara tepat waktu, aman, dan menjaga kepuasan pelanggan.'
-  );
+  const [summary, setSummary] = useState('');
 
   const [skills, setSkills] = useState({
-    technical: [
-      'Manajemen Rute Pengantaran',
-      'Navigasi (Google Maps & Waze)',
-      'Penggunaan Aplikasi Driver (Shopee, Gojek, Grab)',
-      'Memiliki SIM C Aktif & SKCK',
-    ],
-    soft: [
-      'Manajemen Waktu',
-      'Jujur dan Amanah',
-      'Disiplin & Tepat Waktu',
-      'Komunikasi & Pelayanan Pelanggan',
-    ],
+    technical: [],
+    soft: [],
   });
 
-  const [experience, setExperience] = useState([
-    {
-      id: uuidv4(),
-      name: 'Mitra ShopeeFood',
-      position: 'Mitra Pengemudi',
-      period: 'Feb 2021 – Sekarang',
-      location: 'Mataram, NTB',
-      achievements: [
-        'Menyelesaikan rata-rata 25+ orderan per hari secara konsisten.',
-        'Mempertahankan rating kepuasan pelanggan 4.9/5.0 selama 2 tahun berturut-turut.',
-      ],
-    },
-    {
-      id: uuidv4(),
-      name: 'JNE Express (Agen Cakranegara)', // Pengalaman pendukung
-      position: 'Kurir Lapangan',
-      period: 'Jan 2019 – Feb 2021',
-      location: 'Mataram, NTB',
-      achievements: [
-        'Bertanggung jawab atas pengantaran paket di wilayah Cakranegara dan Sandubaya.',
-        'Berhasil mengantarkan 99% paket harian tanpa ada keluhan atau kesalahan alamat.',
-        'Membantu proses penyortiran paket di gudang saat jam sibuk.',
-      ],
-    },
-  ]);
+  const [experience, setExperience] = useState([]);
 
-  const [education, setEducation] = useState([
-    {
-      id: uuidv4(),
-      degree: 'SMA (Jurusan IPS)', // Pendidikan yang wajar untuk peran ini
-      institution: 'SMAN 1 Mataram',
-      period: '2015 – 2018',
-      gpa: '', // Tidak relevan, dikosongkan
-      honors: '', // Tidak relevan, dikosongkan
-    },
-  ]);
+  const [education, setEducation] = useState([]);
 
-  // Bagian ini tidak relevan untuk driver, jadi dikosongkan
   const [projects, setProjects] = useState([]);
 
-  // Bagian ini juga umumnya tidak ada, jadi dikosongkan
   const [certifications, setCertifications] = useState([]);
 
-  const [languages, setLanguages] = useState([
-    {
-      id: uuidv4(),
-      name: 'Bahasa Indonesia',
-      level: 'Lisan & Tulisan (Native)',
-    },
-    {
-      id: uuidv4(),
-      name: 'Bahasa Sasak',
-      level: 'Lisan (Lokal, membantu navigasi)', // Nilai tambah
-    },
-  ]);
+  const [languages, setLanguages] = useState([]);
 
   const {
     handleAchievementChange,
@@ -212,7 +124,6 @@ const CVBuilder = () => {
     setStep(stepNumber);
   };
 
-  // Render form steps dengan komponen yang di-memo
   const renderFormStep = () => {
     switch (step) {
       case 1:

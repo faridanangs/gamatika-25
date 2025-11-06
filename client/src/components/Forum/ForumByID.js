@@ -18,18 +18,6 @@ export default function ForumByID({ token, user, isAuth, post }) {
     }
   };
 
-  const handleAddComment = async (postId, newComment) => {
-    try {
-      const resp = await createComment(postId, token, newComment);
-      if (!resp.success) {
-        toast.error(resp.errors[0].message);
-        return;
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
   return (
     <>
       {post.length == 0 ? (
@@ -38,8 +26,6 @@ export default function ForumByID({ token, user, isAuth, post }) {
         <ForumPost
           className={'mt-20 max-w-5xl mx-auto'}
           post={post}
-          comments={post.comments}
-          onAddComment={handleAddComment}
           onLike={handleLike}
           token={token}
           user={user}

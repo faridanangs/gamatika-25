@@ -64,30 +64,6 @@ export const updatePost = async (token, newPost) => {
   }
 };
 
-export const deletePost = async (token, postID) => {
-  try {
-    const resp = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${postID}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const result = await handleApiResponse(resp);
-    if (result.success) {
-      revalidatePath(`/dashboard/profile`, 'page');
-      revalidatePath(`/dashboard/admin`, 'page');
-    }
-    return result;
-  } catch (error) {
-    throw new Error('Network Error Occurred');
-  }
-};
-
 export const likedToggle = async (token, id) => {
   try {
     const resp = await fetch(
@@ -108,6 +84,30 @@ export const likedToggle = async (token, id) => {
       revalidatePath(`/forum`, 'layout');
     }
 
+    return result;
+  } catch (error) {
+    throw new Error('Network Error Occurred');
+  }
+};
+
+export const deletePost = async (token, postID) => {
+  try {
+    const resp = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_URL}api/posts/${postID}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await handleApiResponse(resp);
+    if (result.success) {
+      revalidatePath(`/dashboard/profile`, 'page');
+      revalidatePath(`/dashboard/admin`, 'page');
+    }
     return result;
   } catch (error) {
     throw new Error('Network Error Occurred');

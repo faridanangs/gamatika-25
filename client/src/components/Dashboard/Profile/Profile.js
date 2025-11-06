@@ -27,16 +27,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { Badge } from '../../ui/badge';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
-import {
-  EditPostModal,
-  PostDetailModal,
-  PrivateKeyModal,
-} from './PostModalProfile';
+import { EditPostModal, PrivateKeyModal } from './PostModalProfile';
 import { conGetNFTByOwner } from '@/nft/action';
 import { ProfileSkeletonComp } from '../../skeleton/ProfileSkeleton';
 import AchievementSection from './Achievement';
 
 import { ArtikelCard, PostCard } from './ArtikelAndPostCard';
+import { getUserArtikel, getUserPost } from '@/data/getUserData';
 
 export default function ProfilePageComp({ user, token }) {
   const [nfts, setNfts] = useState([]);
@@ -45,10 +42,17 @@ export default function ProfilePageComp({ user, token }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({});
   const [editingPost, setEditingPost] = useState(null);
-  const [viewingPost, setViewingPost] = useState(null);
+
+  // State untuk menyimpan posts dan artikels dari server
+  const [posts, setPosts] = useState([]);
+  const [artikels, setArtikels] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingArtikels, setLoadingArtikels] = useState(false);
+  const [totalPostsCount, setTotalPostsCount] = useState(0);
+  const [totalArtikelsCount, setTotalArtikelsCount] = useState(0);
 
   // Pagination states for posts
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPostPage, setCurrentPostPage] = useState(1);
   const postsPerPage = 6;
 
   // Pagination states for artikels
@@ -62,11 +66,28 @@ export default function ProfilePageComp({ user, token }) {
   useEffect(() => {
     fetchAchievements();
     fetchUserNFTs();
+    handleFetchArtikel();
+    handleFetchPost();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'posts') {
+      handleFetchPost();
+    }
+  }, [currentPostPage, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'artikels') {
+      handleFetchArtikel();
+    }
+  }, [currentArtikelPage, activeTab]);
 
   const calculateLevel = () => {
     const totalContributions =
-      userStats.totalPosts + userStats.totalComments + userStats.totalLikes;
+      userStats.totalPosts +
+      userStats.totalComments +
+      userStats.totalLikes +
+      userStats.totalArtikels;
     if (totalContributions >= 100) return { level: 'Expert', progress: 100 };
     if (totalContributions >= 50)
       return { level: 'Advanced', progress: (totalContributions / 100) * 100 };
@@ -79,13 +100,12 @@ export default function ProfilePageComp({ user, token }) {
   };
 
   const userStats = {
-    totalPosts: user?.posts?.length || 0,
+    totalPosts: totalPostsCount || 0,
+    totalArtikels: totalArtikelsCount || 0,
     totalComments:
-      user?.posts?.reduce((sum, post) => sum + post.comment_count, 0) || 0,
-    totalLikes:
-      user?.posts?.reduce((sum, post) => sum + post.like_count, 0) || 0,
-    totalShares:
-      user?.posts?.reduce((sum, post) => sum + post.share_count, 0) || 0,
+      posts?.reduce((sum, post) => sum + post.comment_count, 0) || 0,
+    totalLikes: posts?.reduce((sum, post) => sum + post.like_count, 0) || 0,
+    totalShares: posts?.reduce((sum, post) => sum + post.share_count, 0) || 0,
     badges: 0,
   };
 
@@ -117,7 +137,7 @@ export default function ProfilePageComp({ user, token }) {
       const resp = await conGetNFTByOwner(user?.wallet_address);
       setNfts(resp);
     } catch (error) {
-      console.log(error);
+      toast.error(error);
     }
   };
 
@@ -163,10 +183,6 @@ export default function ProfilePageComp({ user, token }) {
     setEditingPost(post);
   };
 
-  const handleViewPost = (post) => {
-    setViewingPost(post);
-  };
-
   const handleSavePost = async (updatedPost) => {
     try {
       setEditingPost(null);
@@ -176,6 +192,8 @@ export default function ProfilePageComp({ user, token }) {
         return;
       }
       toast.success(resp.message);
+      // Refresh posts setelah update
+      handleFetchPost();
     } catch (error) {
       toast.error(error.message);
     }
@@ -192,6 +210,7 @@ export default function ProfilePageComp({ user, token }) {
           return;
         }
         toast.success(resp.message);
+        handleFetchPost();
       }
     } catch (error) {
       toast.error(error.message);
@@ -200,7 +219,6 @@ export default function ProfilePageComp({ user, token }) {
 
   const handleDeleteArtikel = async (id) => {
     try {
-      setEditingPost(null);
       const isYes = confirm('Delete artikel!');
       if (isYes) {
         const resp = await deleteArtikel(token, id);
@@ -209,47 +227,73 @@ export default function ProfilePageComp({ user, token }) {
           return;
         }
         toast.success(resp.message);
+        handleFetchArtikel();
       }
     } catch (error) {
       toast.error(error.message);
     }
   };
 
+  const handleFetchPost = async () => {
+    setLoadingPosts(true);
+    try {
+      const resp = await getUserPost(
+        token,
+        user.id,
+        currentPostPage,
+        postsPerPage
+      );
+
+      if (!resp.success) {
+        return;
+      }
+
+      setPosts(resp.data);
+      setTotalPostsCount(resp.total || resp.data.length);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  const handleFetchArtikel = async () => {
+    setLoadingArtikels(true);
+    try {
+      const resp = await getUserArtikel(
+        token,
+        user.id,
+        currentArtikelPage,
+        artikelsPerPage
+      );
+
+      if (!resp.success) {
+        return;
+      }
+      setArtikels(resp.data);
+      setTotalArtikelsCount(resp.total || resp.data.length);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoadingArtikels(false);
+    }
+  };
+
   // Post pagination
-  const sortedPosts = user?.posts
-    ? [...user.posts].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      )
-    : [];
-  const totalPostsPages = Math.ceil(sortedPosts.length / postsPerPage);
-  const currentPosts = sortedPosts.slice(
-    (currentPage - 1) * postsPerPage,
-    currentPage * postsPerPage
-  );
+  const totalPostsPages = Math.ceil(totalPostsCount / postsPerPage);
   const goToNextPage = () => {
-    if (currentPage < totalPostsPages) {
-      setCurrentPage(currentPage + 1);
+    if (currentPostPage < totalPostsPages) {
+      setCurrentPostPage(currentPostPage + 1);
     }
   };
   const goToPrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    if (currentPostPage > 1) {
+      setCurrentPostPage(currentPostPage - 1);
     }
   };
 
   // Artikel pagination
-  const sortedArtikels = user?.artikels
-    ? [...user.artikels].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      )
-    : [];
-
-  const totalArtikelsPages = Math.ceil(sortedArtikels.length / artikelsPerPage);
-  const currentArtikels = sortedArtikels.slice(
-    (currentArtikelPage - 1) * artikelsPerPage,
-    currentArtikelPage * artikelsPerPage
-  );
-
+  const totalArtikelsPages = Math.ceil(totalArtikelsCount / artikelsPerPage);
   const goToNextArtikelPage = () => {
     if (currentArtikelPage < totalArtikelsPages) {
       setCurrentArtikelPage(currentArtikelPage + 1);
@@ -330,6 +374,10 @@ export default function ProfilePageComp({ user, token }) {
               <p className="font-medium">{userStats.totalPosts}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Total Artikel</p>
+              <p className="font-medium">{userStats.totalArtikels}</p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">Wallet Address</p>
               <div className="flex items-center gap-2">
                 <code className="text-[10px] md:text-[11px] font-mono bg-gray-100 p-1 dark:bg-gray-800 rounded truncate">
@@ -403,25 +451,26 @@ export default function ProfilePageComp({ user, token }) {
 
         <TabsContent value="posts" className="space-y-8">
           <PostCard
-            currentPage={currentPage}
-            currentPosts={currentPosts}
+            currentPostPage={currentPostPage}
+            currentPosts={posts}
             goToNextPage={goToNextPage}
             goToPrevPage={goToPrevPage}
             handleEditPost={handleEditPost}
-            handleViewPost={handleViewPost}
-            setCurrentPage={setCurrentPage}
+            setCurrentPostPage={setCurrentPostPage}
             totalPostsPages={totalPostsPages}
+            loading={loadingPosts}
           />
         </TabsContent>
         <TabsContent value="artikels" className="space-y-8">
           <ArtikelCard
             currentArtikelPage={currentArtikelPage}
-            currentArtikels={currentArtikels}
+            currentArtikels={artikels}
             goToNextArtikelPage={goToNextArtikelPage}
             goToPrevArtikelPage={goToPrevArtikelPage}
             handleDeleteArtikel={handleDeleteArtikel}
             totalArtikelsPages={totalArtikelsPages}
             setCurrentArtikelPage={setCurrentArtikelPage}
+            loading={loadingArtikels}
           />
         </TabsContent>
 
@@ -538,24 +587,6 @@ export default function ProfilePageComp({ user, token }) {
           onDeletePost={handleDeletePost}
           onSave={handleSavePost}
           onClose={() => setEditingPost(null)}
-        />
-      )}
-
-      {viewingPost && (
-        <PostDetailModal
-          post={viewingPost}
-          onClose={() => setViewingPost(null)}
-          token={token}
-          user={user}
-          onCommentAdded={(postId, newComment) => {
-            setViewingPost((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                comments: [newComment, ...(prev.comments || [])],
-              };
-            });
-          }}
         />
       )}
 

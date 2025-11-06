@@ -10,7 +10,6 @@ export default function LogoutButton() {
   const handleLogout = () => {
     setIsLoggingOut(true);
     setTimeout(() => {
-      console.log('Logging out...');
       setIsLoggingOut(false);
       signOut({
         callbackUrl: '/',

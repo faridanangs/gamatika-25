@@ -119,7 +119,7 @@ export function JobDetailModal({ job, onClose }) {
             <h3 className="font-semibold text-xl mb-4 text-gray-800 dark:text-white">
               Deskripsi Pekerjaan
             </h3>
-            <div className="prose max-w-none dark:prose-invert">
+            <div className="">
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 {job.description}
               </p>

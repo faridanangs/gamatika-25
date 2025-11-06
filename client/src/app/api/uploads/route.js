@@ -53,7 +53,6 @@ export async function POST(request) {
       images: results,
     });
   } catch (error) {
-    console.error('Upload error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Upload failed' },
       { status: 500 }

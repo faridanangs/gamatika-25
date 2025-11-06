@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Comment, CommentInput } from './Comment';
 import {
   Dialog,
@@ -36,21 +36,55 @@ import { formatReadableTime } from '@/lib/timeReadable';
 import { categories } from '@/data/mockCategories';
 import Link from 'next/link';
 import { ImageModal } from './ImageUpload';
+import { getPostCommentPerPage } from '@/data/getPostsData';
+import { createComment } from '@/lib/action';
 
-export function ForumPost({
-  post,
-  onLike,
-  comments,
-  onAddComment,
-  className,
-  isAuth,
-  user,
-  token,
-}) {
+// Komponen Skeleton untuk komentar
+const CommentSkeleton = () => {
+  return (
+    <div className="flex space-x-3 mb-4 animate-pulse">
+      <div className="flex-shrink-0">
+        <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+      </div>
+      <div className="flex-1">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-1"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+      </div>
+    </div>
+  );
+};
+
+export function ForumPost({ post, onLike, className, isAuth, user, token }) {
   const [showComments, setShowComments] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limitComment = 10;
+  const [showAllTextContent, setShowAllTextContent] = useState(false);
+
+  const commentsContainerRef = useRef(null);
+  const observer = useRef();
+  const lastCommentElementRef = useCallback(
+    (node) => {
+      if (loadingMore || !hasMore || !showComments) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore && showComments) {
+          loadMoreComments();
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [loadingMore, hasMore, showComments]
+  );
 
   const handleImageClick = (img) => {
     setSelectedImage(img);
@@ -59,11 +93,50 @@ export function ForumPost({
 
   const handleCommentClick = () => {
     setShowComments(!showComments);
+    if (!showComments) {
+      setComments([]);
+      setCurrentPage(1);
+      setHasMore(true);
+    }
   };
 
-  const handleAddComment = (newComment) => {
-    onAddComment(post?.id, newComment);
+  useEffect(() => {
+    if (showComments) {
+      handleFetchComment();
+    }
+  }, [showComments]);
+
+  const handleAddComment = async (newCommentObject) => {
+    try {
+      const resp = await createComment(post.id, token, newCommentObject);
+      if (!resp.success) {
+        toast.error(resp.errors[0].message);
+        return;
+      }
+
+      const newCommentData = resp.data;
+
+      // Tambahkan komentar baru ke akhir daftar komentar
+      setComments((prev) => [...prev, newCommentData]);
+
+      // Update comment count pada post
+      post.comment_count = (post.comment_count || 0) + 1;
+
+      toast.success('Komentar berhasil ditambahkan');
+    } catch (error) {
+      toast.error('Gagal menambahkan komentar');
+    }
   };
+
+  // Fungsi untuk menghapus komentar dari state
+  const handleDeleteComment = useCallback(
+    (commentId) => {
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      // Update comment count pada post
+      post.comment_count = Math.max(0, (post.comment_count || 0) - 1);
+    },
+    [post]
+  );
 
   const handlePrevImage = () => {
     setSelectedImageIndex((prevIndex) =>
@@ -81,7 +154,7 @@ export function ForumPost({
     if (navigator.share) {
       navigator.share({
         title: post?.title,
-        text: post?.content?.substring(0, 20) + '...',
+        text: post?.title?.substring(0, 20) + '...',
         url: `${window.location.origin}/forum/${id}`,
       });
     } else {
@@ -90,20 +163,104 @@ export function ForumPost({
     }
   };
 
+  const handleFetchComment = async (isLoadMore = false) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const resp = await getPostCommentPerPage(
+        post.id,
+        currentPage,
+        limitComment
+      );
+
+      if (!resp.success) {
+        toast.error(resp.message);
+        if (!isLoadMore) {
+          setComments([]);
+        }
+        setHasMore(false);
+        return;
+      }
+
+      // Filter komentar yang valid (memiliki author)
+      const validComments = resp.data.filter(
+        (comment) => comment && comment.author && comment.author.username
+      );
+
+      if (validComments.length < limitComment) {
+        setHasMore(false);
+      }
+
+      if (isLoadMore) {
+        setComments((prev) => [...prev, ...validComments]);
+      } else {
+        setComments(validComments);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreComments = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const resp = await getPostCommentPerPage(post.id, nextPage, limitComment);
+
+      if (!resp.success) {
+        toast.error(resp.message);
+        setHasMore(false);
+        return;
+      }
+
+      // Filter komentar yang valid (memiliki author)
+      const validComments = resp.data.filter(
+        (comment) => comment && comment.author && comment.author.username
+      );
+
+      if (validComments.length < limitComment) {
+        setHasMore(false);
+      }
+
+      setComments((prev) => [...prev, ...validComments]);
+      setCurrentPage(nextPage);
+    } catch (error) {
+      toast.error(error.message);
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentPage, hasMore, loadingMore, post.id, limitComment]);
+
   return (
     <>
       <Card className={`${className} mb-4 transition-colors duration-300`}>
         <CardHeader className="pb-4">
           <div className="flex items-start">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={post?.author.avatar} alt={post?.author.name} />
+              <AvatarImage
+                src={post?.author?.avatar || null}
+                alt={post?.author?.username || null}
+              />
               <AvatarFallback>
-                {post?.author.username?.charAt(0)}
+                {post?.author?.username?.charAt(0) || '?'}
               </AvatarFallback>
             </Avatar>
             <div className="ml-2 flex-1">
               <div className="flex items-start flex-col text-sm text-gray-600 dark:text-gray-300">
-                <span className="font-medium">{post?.author.username}</span>
+                <span className="font-medium">
+                  {post?.author?.username || 'Pengguna Tidak Diketahui'}
+                </span>
                 <span className="text-xs">
                   {formatReadableTime(post?.created_at)}
                 </span>
@@ -123,10 +280,38 @@ export function ForumPost({
               post?.images.length > 0 ? '' : 'text-lg'
             }`}
           >
-            {post?.content}
+            {showAllTextContent ? (
+              <>
+                {post.content}
+                <span
+                  onClick={() => setShowAllTextContent(false)}
+                  className="cursor-pointer"
+                >
+                  {' '}
+                  ⬆️
+                </span>
+              </>
+            ) : (
+              <span>
+                {post?.content.length < 250 ? (
+                  post.content
+                ) : (
+                  <span>
+                    {post.content.slice(0, 250)}{' '}
+                    <span
+                      onClick={() => setShowAllTextContent(true)}
+                      className="cursor-pointer"
+                    >
+                      {'... '}
+                      ⬇️
+                    </span>
+                  </span>
+                )}
+              </span>
+            )}
           </p>
 
-          {post?.images.length > 0 && (
+          {post?.images && post?.images.length > 0 && (
             <div className="mb-4 rounded-2xl">
               <div className="relative group">
                 <div
@@ -305,16 +490,47 @@ export function ForumPost({
                 </Button>
               </div>
               <ScrollArea
+                ref={commentsContainerRef}
                 className={`w-full rounded-md relative dark:border-gray-700 md:p-4 p-1 h-[calc(100vh)] overflow-y-scroll`}
               >
-                {comments.map((comment, i) => (
-                  <Comment
-                    key={i}
-                    comment={comment}
-                    user={user}
-                    token={token}
-                  />
-                ))}
+                {loading && !comments.length ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <CommentSkeleton key={index} />
+                  ))
+                ) : (
+                  <>
+                    {comments.map((comment, i) => {
+                      if (comments.length === i + 1) {
+                        return (
+                          <div ref={lastCommentElementRef} key={comment.id}>
+                            <Comment
+                              comment={comment}
+                              user={user}
+                              token={token}
+                              onDeleteComment={handleDeleteComment}
+                            />
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <Comment
+                            key={comment.id}
+                            comment={comment}
+                            user={user}
+                            token={token}
+                            onDeleteComment={handleDeleteComment}
+                          />
+                        );
+                      }
+                    })}
+
+                    {loadingMore &&
+                      Array.from({ length: 2 }).map((_, index) => (
+                        <CommentSkeleton key={`loading-${index}`} />
+                      ))}
+                  </>
+                )}
+
                 {isAuth ? (
                   <CommentInput onAddComment={handleAddComment} />
                 ) : (
@@ -391,8 +607,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
           }
         );
         if (!response.ok) {
-          const errorData = await response.json();
-          return toast.error(errorData.error || 'Upload failed');
+          return toast.error('Upload failed');
         }
         const data = await response.json();
         uploadedImages = data.images;

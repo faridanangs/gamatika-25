@@ -39,7 +39,7 @@ export default function DashboardPage({ children }) {
     menuItems.find((item) => pathname === item.href)?.id || 'dashboard';
 
   return (
-    <div className="flex h-screen bg-card w-full mx-auto max-w-[110rem]">
+    <div className="flex h-screen bg-card w-full mx-auto max-w-[110rem] overflow-hidden">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
