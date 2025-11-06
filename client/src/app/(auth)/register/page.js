@@ -36,6 +36,8 @@ import {
   Fingerprint,
   GraduationCap,
   MessageSquare,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -43,6 +45,7 @@ export default function RegisterPage() {
 
   const [step, setStep] = useState('form');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -129,6 +132,11 @@ export default function RegisterPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fungsi untuk toggle visibilitas password
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -280,17 +288,28 @@ export default function RegisterPage() {
                       <div className="relative">
                         <Input
                           id="password"
-                          type="password"
+                          type={showPassword ? 'text' : 'password'} // Ubah tipe input berdasarkan state
                           value={formData.password}
                           onChange={handleFormChange}
                           required
                           minLength="6"
                           placeholder="••••••••"
-                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          className="pl-10 pr-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Lock className="h-5 w-5 text-gray-400" />
                         </div>
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          ) : (
+                            <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          )}
+                        </button>
                       </div>
                     </div>
 

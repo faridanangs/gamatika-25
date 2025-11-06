@@ -54,11 +54,10 @@ export default function LoginPage() {
         } catch (parseError) {
           toast.error(res.error);
         }
+        setIsLoading(false);
       } else {
         toast.success('Login successful!');
-        setTimeout(() => {
-          router.push('/dashboard/profile');
-        }, 600);
+        window.location.assign('/dashboard/profile');
       }
     } catch (error) {
       toast.error('An unexpected error occurred during login');
