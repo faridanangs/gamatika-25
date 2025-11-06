@@ -132,21 +132,6 @@ const Footer = () => {
                 <Mail size={20} />
               </a>
             </div>
-            <div className="bg-gradient-to-r from-blue-600/10 to-cyan-600/10 rounded-lg p-4 border border-blue-500/20">
-              <p className="text-sm text-gray-300 mb-2">
-                Dapatkan update terbaru:
-              </p>
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Email Anda"
-                  className="bg-gray-800 text-white px-3 py-2 rounded-l-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-lg transition">
-                  Subscribe
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
