@@ -23,7 +23,7 @@ func Connect() *gorm.DB {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbname, port)
 
 	if appEnv == "production" {
-		if err := godotenv.Load(); err != nil {
+		if err := godotenv.Load(".env.local"); err != nil {
 			log.Println("Peringatan: Tidak dapat memuat file .env")
 		}
 

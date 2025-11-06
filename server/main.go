@@ -20,7 +20,7 @@ import (
 func main() {
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv != "production" {
-		if err := godotenv.Load(); err != nil {
+		if err := godotenv.Load(".env.local"); err != nil {
 			log.Println("Peringatan: Tidak dapat memuat file .env")
 		}
 	}
