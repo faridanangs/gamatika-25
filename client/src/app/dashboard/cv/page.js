@@ -34,38 +34,169 @@ import { printPDF } from '@/lib/cvTemplate';
 import { CVHandler } from './cv-handler';
 import { Badge } from '@/components/ui/badge';
 
+// Data Dummy untuk Personal Info
+const dummyPersonalInfo = {
+  name: 'Ahmad Rizki Pratama',
+  title: 'Senior Full Stack Developer',
+  email: 'ahmad.rizki@example.com',
+  phone: '+62 812 3456 7890',
+  location: 'Jakarta, Indonesia',
+  linkedin: 'https://linkedin.com/in/ahmad-rizki',
+  github: 'https://github.com/ahmad-rizki',
+  portfolio: 'https://ahmad-rizki.dev',
+  image: 'https://example.com/profile.jpg',
+};
+
+// Data Dummy untuk Ringkasan Profesional
+const dummySummary =
+  'Seorang profesional pengembang perangkat lunak dengan lebih dari 8 tahun pengalaman dalam merancang, mengembangkan, dan memelihara aplikasi web yang skalabel. Ahli dalam berbagai teknologi modern dan memiliki passion untuk menciptakan solusi inovatif yang memenuhi kebutuhan bisnis. Terampil dalam bekerja dalam tim dan mampu memimpin proyek dari konsep hingga implementasi.';
+
+// Data Dummy untuk Keahlian
+const dummySkills = {
+  technical: [
+    'JavaScript',
+    'TypeScript',
+    'React',
+    'Next.js',
+    'Node.js',
+    'Express.js',
+    'MongoDB',
+    'PostgreSQL',
+    'Docker',
+    'AWS',
+    'GraphQL',
+    'REST API',
+  ],
+  soft: [
+    'Kepemimpinan Tim',
+    'Komunikasi',
+    'Pemecahan Masalah',
+    'Manajemen Proyek',
+    'Kreativitas',
+    'Analisis Data',
+  ],
+};
+
+// Data Dummy untuk Pengalaman Kerja
+const dummyExperience = [
+  {
+    id: '1',
+    name: 'TechCorp Indonesia',
+    position: 'Senior Full Stack Developer',
+    period: 'Jan 2020 – Sekarang',
+    location: 'Jakarta, Indonesia',
+    achievements: [
+      'Mengembangkan sistem e-commerce yang meningkatkan penjualan 40%',
+      'Memimpin tim 5 pengembang dalam proyek re-architecting aplikasi',
+      'Menerapkan CI/CD pipeline yang mengurangi waktu deployment 60%',
+    ],
+  },
+  {
+    id: '2',
+    name: 'Digital Solutions Ltd',
+    position: 'Full Stack Developer',
+    period: 'Jun 2017 – Des 2019',
+    location: 'Bandung, Indonesia',
+    achievements: [
+      'Mengembangkan dashboard analitik untuk pelanggan enterprise',
+      'Optimasi kinerja aplikasi yang mengurangi loading time 50%',
+      'Melatih 3 developer junior dalam teknologi stack perusahaan',
+    ],
+  },
+];
+
+// Data Dummy untuk Pendidikan
+const dummyEducation = [
+  {
+    id: '1',
+    degree: 'Sarjana Teknik Informatika',
+    institution: 'Universitas Indonesia',
+    period: '2013 – 2017',
+    gpa: '3.8/4.0',
+    honors: 'Cum Laude',
+  },
+  {
+    id: '2',
+    degree: 'Sertifikasi Cloud Computing',
+    institution: 'Amazon Web Services',
+    period: '2019',
+    gpa: '',
+    honors: 'AWS Certified Solutions Architect',
+  },
+];
+
+// Data Dummy untuk Proyek
+const dummyProjects = [
+  {
+    id: '1',
+    name: 'E-Commerce Platform',
+    description:
+      'Platform e-commerce full-stack dengan fitur pembayaran, manajemen inventori, dan dashboard admin',
+    technologies: ['React', 'Node.js', 'MongoDB', 'Stripe API', 'Docker'],
+    link: 'https://ecommerce-demo.example.com',
+    github: 'https://github.com/ahmad-rizki/ecommerce-platform',
+  },
+  {
+    id: '2',
+    name: 'Task Management App',
+    description:
+      'Aplikasi manajemen tugas dengan fitur real-time collaboration dan notifikasi',
+    technologies: ['Next.js', 'Firebase', 'Tailwind CSS', 'TypeScript'],
+    link: 'https://taskapp-demo.example.com',
+    github: 'https://github.com/ahmad-rizki/task-management',
+  },
+];
+
+// Data Dummy untuk Sertifikat
+const dummyCertifications = [
+  {
+    id: '1',
+    name: 'AWS Certified Solutions Architect',
+    issuer: 'Amazon Web Services',
+    date: '2022',
+  },
+  {
+    id: '2',
+    name: 'Google Cloud Professional Developer',
+    issuer: 'Google Cloud',
+    date: '2021',
+  },
+];
+
+// Data Dummy untuk Bahasa
+const dummyLanguages = [
+  {
+    id: '1',
+    name: 'Bahasa Indonesia',
+    level: 'Native',
+  },
+  {
+    id: '2',
+    name: 'Bahasa Inggris',
+    level: 'Fluent',
+  },
+  {
+    id: '3',
+    name: 'Bahasa Jepang',
+    level: 'Conversational',
+  },
+];
+
+// Contoh penggunaan data dummy dalam komponen:
+// Anda bisa mengganti state awal dengan data dummy ini
+
 const CVBuilder = () => {
   const [step, setStep] = useState(1);
   const componentRef = useRef();
 
-  const [personalInfo, setPersonalInfo] = useState({
-    name: '',
-    title: '',
-    email: '',
-    phone: '',
-    location: '',
-    linkedin: '',
-    github: '',
-    portfolio: '',
-    image: '',
-  });
-
-  const [summary, setSummary] = useState('');
-
-  const [skills, setSkills] = useState({
-    technical: [],
-    soft: [],
-  });
-
-  const [experience, setExperience] = useState([]);
-
-  const [education, setEducation] = useState([]);
-
-  const [projects, setProjects] = useState([]);
-
-  const [certifications, setCertifications] = useState([]);
-
-  const [languages, setLanguages] = useState([]);
+  const [personalInfo, setPersonalInfo] = useState(dummyPersonalInfo);
+  const [summary, setSummary] = useState(dummySummary);
+  const [skills, setSkills] = useState(dummySkills);
+  const [experience, setExperience] = useState(dummyExperience);
+  const [education, setEducation] = useState(dummyEducation);
+  const [projects, setProjects] = useState(dummyProjects);
+  const [certifications, setCertifications] = useState(dummyCertifications);
+  const [languages, setLanguages] = useState(dummyLanguages);
 
   const {
     handleAchievementChange,

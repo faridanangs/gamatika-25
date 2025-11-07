@@ -137,7 +137,7 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          const newAchievements = [...exp.achievements];
+          const newAchievements = [...exp?.achievements];
           newAchievements[achIndex] = value;
           return { ...exp, achievements: newAchievements };
         }
@@ -150,7 +150,7 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          return { ...exp, achievements: [...exp.achievements, ''] };
+          return { ...exp, achievements: [...exp?.achievements, ''] };
         }
         return exp;
       });
@@ -161,7 +161,7 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          const newAchievements = exp.achievements.filter(
+          const newAchievements = exp?.achievements.filter(
             (_, i) => i !== achIndex
           );
           return { ...exp, achievements: newAchievements };
@@ -687,7 +687,7 @@ export const ExperienceForm = ({
                 </Button>
               </div>
               <div className="space-y-2">
-                {exp.achievements.map((achievement, achIndex) => (
+                {exp?.achievements?.map((achievement, achIndex) => (
                   <div key={achIndex} className="flex items-center gap-2">
                     <Input
                       value={achievement}
