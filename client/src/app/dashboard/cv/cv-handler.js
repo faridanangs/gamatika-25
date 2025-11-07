@@ -1,7 +1,6 @@
 'use client';
 import { v4 as uuidv4 } from 'uuid';
-import { useState, useRef, memo } from 'react';
-
+import { useState } from 'react';
 import {
   Download,
   Mail,
@@ -50,7 +49,7 @@ export const CVHandler = ({
   const handlePersonalInfoChange = (field, value) => {
     setPersonalInfo((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: value || '',
     }));
   };
 
@@ -68,16 +67,14 @@ export const CVHandler = ({
     }
   };
 
-  // Handler untuk summary
   const handleSummaryChange = (value) => {
-    setSummary(value);
+    setSummary(value || '');
   };
 
-  // Handler untuk skills
   const handleSkillChange = (type, index, value) => {
     setSkills((prev) => {
       const newSkills = [...prev[type]];
-      newSkills[index] = value;
+      newSkills[index] = value || '';
       return {
         ...prev,
         [type]: newSkills,
@@ -103,13 +100,13 @@ export const CVHandler = ({
     });
   };
 
-  // Handler untuk experience
   const handleExperienceChange = (index, field, value) => {
     setExperience((prev) => {
       const newExperience = [...prev];
       newExperience[index] = {
         ...newExperience[index],
-        [field]: value,
+        [field]: value || '',
+        achievements: newExperience[index].achievements || [''],
       };
       return newExperience;
     });
@@ -137,8 +134,8 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          const newAchievements = [...exp?.achievements];
-          newAchievements[achIndex] = value;
+          const newAchievements = [...(exp.achievements || [''])];
+          newAchievements[achIndex] = value || '';
           return { ...exp, achievements: newAchievements };
         }
         return exp;
@@ -150,7 +147,10 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          return { ...exp, achievements: [...exp?.achievements, ''] };
+          return {
+            ...exp,
+            achievements: [...(exp.achievements || ['']), ''],
+          };
         }
         return exp;
       });
@@ -161,7 +161,7 @@ export const CVHandler = ({
     setExperience((prev) => {
       return prev.map((exp) => {
         if (exp.id === expId) {
-          const newAchievements = exp?.achievements.filter(
+          const newAchievements = (exp.achievements || []).filter(
             (_, i) => i !== achIndex
           );
           return { ...exp, achievements: newAchievements };
@@ -171,11 +171,10 @@ export const CVHandler = ({
     });
   };
 
-  // Handler untuk education
   const handleEducationChange = (index, field, value) => {
     setEducation((prev) => {
       const newEducation = [...prev];
-      newEducation[index] = { ...newEducation[index], [field]: value };
+      newEducation[index] = { ...newEducation[index], [field]: value || '' };
       return newEducation;
     });
   };
@@ -198,11 +197,14 @@ export const CVHandler = ({
     setEducation((prev) => prev.filter((edu) => edu.id !== id));
   };
 
-  // Handler untuk projects
   const handleProjectChange = (index, field, value) => {
     setProjects((prev) => {
       const newProjects = [...prev];
-      newProjects[index] = { ...newProjects[index], [field]: value };
+      newProjects[index] = {
+        ...newProjects[index],
+        [field]: value || '',
+        technologies: newProjects[index].technologies || [''],
+      };
       return newProjects;
     });
   };
@@ -229,8 +231,8 @@ export const CVHandler = ({
     setProjects((prev) => {
       return prev.map((proj) => {
         if (proj.id === projId) {
-          const newTechnologies = [...proj.technologies];
-          newTechnologies[techIndex] = value;
+          const newTechnologies = [...(proj.technologies || [''])];
+          newTechnologies[techIndex] = value || '';
           return { ...proj, technologies: newTechnologies };
         }
         return proj;
@@ -242,7 +244,10 @@ export const CVHandler = ({
     setProjects((prev) => {
       return prev.map((proj) => {
         if (proj.id === projId) {
-          return { ...proj, technologies: [...proj.technologies, ''] };
+          return {
+            ...proj,
+            technologies: [...(proj.technologies || ['']), ''],
+          };
         }
         return proj;
       });
@@ -253,7 +258,7 @@ export const CVHandler = ({
     setProjects((prev) => {
       return prev.map((proj) => {
         if (proj.id === projId) {
-          const newTechnologies = proj.technologies.filter(
+          const newTechnologies = (proj.technologies || []).filter(
             (_, i) => i !== techIndex
           );
           return { ...proj, technologies: newTechnologies };
@@ -263,13 +268,12 @@ export const CVHandler = ({
     });
   };
 
-  // Handler untuk certifications
   const handleCertificationChange = (index, field, value) => {
     setCertifications((prev) => {
       const newCertifications = [...prev];
       newCertifications[index] = {
         ...newCertifications[index],
-        [field]: value,
+        [field]: value || '',
       };
       return newCertifications;
     });
@@ -286,11 +290,10 @@ export const CVHandler = ({
     setCertifications((prev) => prev.filter((cert) => cert.id !== id));
   };
 
-  // Handler untuk languages
   const handleLanguageChange = (index, field, value) => {
     setLanguages((prev) => {
       const newLanguages = [...prev];
-      newLanguages[index] = { ...newLanguages[index], [field]: value };
+      newLanguages[index] = { ...newLanguages[index], [field]: value || '' };
       return newLanguages;
     });
   };
@@ -334,6 +337,7 @@ export const CVHandler = ({
   };
 };
 
+// Komponen form (tetap sama seperti sebelumnya)
 export const PersonalInfoForm = ({ personalInfo, onChange, onImageChange }) => (
   <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
@@ -687,7 +691,7 @@ export const ExperienceForm = ({
                 </Button>
               </div>
               <div className="space-y-2">
-                {exp?.achievements?.map((achievement, achIndex) => (
+                {(exp.achievements || []).map((achievement, achIndex) => (
                   <div key={achIndex} className="flex items-center gap-2">
                     <Input
                       value={achievement}
@@ -906,7 +910,7 @@ export const ProjectsForm = ({
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {project.technologies.map((tech, techIndex) => (
+                {(project.technologies || []).map((tech, techIndex) => (
                   <div
                     key={techIndex}
                     className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-3 py-1"
