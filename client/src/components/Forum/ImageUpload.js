@@ -19,7 +19,7 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
         });
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/auth/upload`,
+          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/upload`,
           {
             method: 'POST',
             body: formData,

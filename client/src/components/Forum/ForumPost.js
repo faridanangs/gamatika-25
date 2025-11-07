@@ -609,6 +609,8 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
         if (!response.ok) {
           return toast.error('Upload failed');
         }
+
+        console.log(response, 'upload file resp');
         const data = await response.json();
         uploadedImages = data.images;
       }
@@ -636,7 +638,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="dark:bg-gray-800 w-[80%] max-w-2xl h-[95vh] overflow-y-auto">
+      <DialogContent className="dark:bg-gray-800 w-[80%] max-w-2xl md:h-[95vh] h-[70vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
             Buat Postingan Baru
