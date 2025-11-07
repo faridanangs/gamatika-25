@@ -19,12 +19,21 @@ export const printPDF = async ({
 
     const element = componentRef.current;
 
+    // Tambahkan kelas untuk PDF rendering
     element.classList.add('pdf-rendering');
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Tunggu element sepenuhnya ter-render
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // Deteksi apakah ini perangkat mobile
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // Konfigurasi html2canvas dengan opsi yang dioptimalkan untuk mobile
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: isMobile ? 1.5 : 2, // Scale lebih rendah untuk mobile
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -32,12 +41,23 @@ export const printPDF = async ({
       height: element.scrollHeight,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
+      windowWidth: isMobile ? window.innerWidth : element.scrollWidth,
+      windowHeight: isMobile ? window.innerHeight : element.scrollHeight,
       backgroundColor: '#ffffff',
-      scale: window.devicePixelRatio || 2,
+      // Opsi khusus untuk mobile
+      scale: window.devicePixelRatio || (isMobile ? 1.5 : 2),
+      removeContainer: false,
+      foreignObjectRendering: true,
+      ignoreElements: (element) => {
+        // Abaikan elemen yang tidak perlu di PDF
+        return (
+          element.classList.contains('download-button') ||
+          element.classList.contains('contact-links')
+        );
+      },
     });
 
+    // Hapus kelas PDF rendering
     element.classList.remove('pdf-rendering');
 
     const imgData = canvas.toDataURL('image/png');
@@ -47,16 +67,18 @@ export const printPDF = async ({
       format: 'a4',
     });
 
-    const imgWidth = 210;
-    const pageHeight = 295;
+    const imgWidth = 210; // Lebar A4 dalam mm
+    const pageHeight = 295; // Tinggi A4 dalam mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let heightLeft = imgHeight;
 
     let position = 0;
 
+    // Tambahkan halaman pertama
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
+    // Tambahkan halaman tambahan jika diperlukan
     while (heightLeft >= 0) {
       position = heightLeft - imgHeight;
       pdf.addPage();
@@ -64,9 +86,16 @@ export const printPDF = async ({
       heightLeft -= pageHeight;
     }
 
-    const fileName = `${personalInfo.name.replace(/\s+/g, '_')}_CV.pdf`;
+    // Simpan PDF dengan nama file yang aman
+    const safeName = (personalInfo.name || 'CV')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase();
+    const fileName = `${safeName}_cv.pdf`;
     pdf.save(fileName);
   } catch (error) {
+    console.error('Error generating PDF:', error);
+
+    // Fallback ke metode alternatif jika jsPDF gagal
     try {
       await fallbackPrintPDF({
         componentRef,
@@ -80,11 +109,25 @@ export const printPDF = async ({
         languages,
       });
     } catch (fallbackError) {
-      throw new Error('Gagal membuat PDF. Silakan coba lagi.');
+      console.error('Fallback PDF generation also failed:', fallbackError);
+
+      // Method terakhir: gunakan browser print dialog
+      await browserPrint({
+        componentRef,
+        personalInfo,
+        summary,
+        skills,
+        experience,
+        education,
+        projects,
+        certifications,
+        languages,
+      });
     }
   }
 };
 
+// Fallback method jika jsPDF tidak tersedia atau gagal
 const fallbackPrintPDF = async ({
   componentRef,
   personalInfo,
@@ -102,14 +145,17 @@ const fallbackPrintPDF = async ({
 
   const element = componentRef.current;
 
+  // Clone element untuk menghindari modifikasi asli
   const printContent = element.cloneNode(true);
 
+  // Hapus elemen yang tidak diperlukan untuk print
   const downloadButton = printContent.querySelector('.download-button');
   if (downloadButton) downloadButton.remove();
 
   const contactLinks = printContent.querySelector('.contact-links');
   if (contactLinks) contactLinks.remove();
 
+  // Buat konten HTML untuk print dengan styling yang dioptimalkan untuk mobile
   const printHTML = generatePrintHTML({
     personalInfo,
     summary,
@@ -121,45 +167,111 @@ const fallbackPrintPDF = async ({
     languages,
   });
 
+  // Buat blob dan URL
   const blob = new Blob([printHTML], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
 
+  // Buka dalam tab baru untuk print
   const printWindow = window.open('', '_blank');
 
   if (printWindow) {
     printWindow.document.write(printHTML);
     printWindow.document.close();
 
+    // Tunggu konten dimuat sebelum print
     printWindow.onload = () => {
       setTimeout(() => {
         printWindow.print();
 
+        // Tutup window setelah print
         setTimeout(() => {
           printWindow.close();
           URL.revokeObjectURL(url);
-        }, 500);
-      }, 500);
+        }, 1000);
+      }, 1000);
     };
   } else {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    iframe.src = url;
-
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow.print();
-
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          URL.revokeObjectURL(url);
-        }, 500);
-      }, 500);
-    };
+    // Jika popup diblokir, coba metode lain
+    await browserPrint({
+      componentRef,
+      personalInfo,
+      summary,
+      skills,
+      experience,
+      education,
+      projects,
+      certifications,
+      languages,
+    });
   }
 };
 
+// Method terakhir untuk print menggunakan browser
+const browserPrint = async ({
+  componentRef,
+  personalInfo,
+  summary,
+  skills,
+  experience,
+  education,
+  projects,
+  certifications,
+  languages,
+}) => {
+  if (!componentRef || !componentRef.current) {
+    throw new Error('Element reference not found');
+  }
+
+  const element = componentRef.current;
+
+  // Buat iframe tersembunyi
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  // Tunggu iframe dimuat
+  await new Promise((resolve) => {
+    iframe.onload = resolve;
+    iframe.src = 'about:blank';
+  });
+
+  // Isi iframe dengan konten CV
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iframeDoc.open();
+  iframeDoc.write(
+    generatePrintHTML({
+      personalInfo,
+      summary,
+      skills,
+      experience,
+      education,
+      projects,
+      certifications,
+      languages,
+    })
+  );
+  iframeDoc.close();
+
+  // Tunggu konten dimuat
+  await new Promise((resolve) => {
+    iframe.onload = resolve;
+  });
+
+  // Tampilkan iframe secara sementara
+  iframe.style.display = 'block';
+
+  // Beri jeda sebelum print
+  setTimeout(() => {
+    iframe.contentWindow.print();
+
+    // Sembunyikan kembali setelah print
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  }, 1000);
+};
+
+// Fungsi untuk menghasilkan HTML untuk print dengan mobile optimization
 const generatePrintHTML = ({
   personalInfo,
   summary,
@@ -175,11 +287,28 @@ const generatePrintHTML = ({
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>CV - ${personalInfo.name || 'Nama Anda'}</title>
       <style>
         @page {
           size: A4;
-          margin: 1.5cm;
+          margin: 0.5cm;
+        }
+        
+        @media print {
+          body {
+            margin: 0;
+            padding: 0;
+          }
+          
+          .cv-container {
+            box-shadow: none;
+            border-radius: 0;
+          }
+          
+          .download-button, .contact-links, .back-button, .form-container {
+            display: none !important;
+          }
         }
         
         body {
@@ -189,15 +318,18 @@ const generatePrintHTML = ({
           color: #000;
           margin: 0;
           padding: 0;
+          background: white;
         }
         
         .cv-container {
-          max-width: none;
+          max-width: 210mm;
           width: 100%;
           background: white;
           box-shadow: none;
           border-radius: 0;
           padding: 0;
+          margin: 0 auto;
+          overflow-x: hidden;
         }
         
         .header {
@@ -210,24 +342,28 @@ const generatePrintHTML = ({
           display: flex;
           align-items: center;
           gap: 16pt;
+          flex-wrap: wrap;
         }
         
         .profile-image {
-          width: 90pt;
-          height: 90pt;
-          border-radius: 30%;
+          width: 70pt;
+          height: 70pt;
+          border-radius: 50%;
           object-fit: cover;
+          flex-shrink: 0;
         }
         
         .profile-info {
           flex: 1;
+          min-width: 0;
         }
         
         .name {
-          font-size: 24pt;
+          font-size: 22pt;
           font-weight: bold;
           margin-bottom: 4pt;
           line-height: 1.2;
+          word-wrap: break-word;
         }
         
         .title {
@@ -240,7 +376,7 @@ const generatePrintHTML = ({
         .contact-info {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 8pt;
+          gap: 6pt;
           margin-top: 8pt;
         }
         
@@ -249,6 +385,7 @@ const generatePrintHTML = ({
           align-items: center;
           gap: 4pt;
           font-size: 10pt;
+          word-wrap: break-word;
         }
         
         .summary {
@@ -299,10 +436,12 @@ const generatePrintHTML = ({
           margin-right: 4pt;
           margin-bottom: 4pt;
           border: 1pt solid #ddd;
+          word-wrap: break-word;
         }
         
         .experience-item {
           margin-bottom: 10pt;
+          page-break-inside: avoid;
         }
         
         .experience-title {
@@ -326,6 +465,10 @@ const generatePrintHTML = ({
           font-size: 10pt;
           margin-bottom: 4pt;
           font-weight: 500;
+          display: inline-block;
+          background: #f0f0f0;
+          padding: 2pt 6pt;
+          border-radius: 4pt;
         }
         
         .experience-achievements {
@@ -339,6 +482,7 @@ const generatePrintHTML = ({
           margin-bottom: 3pt;
           position: relative;
           padding-left: 10pt;
+          word-wrap: break-word;
         }
         
         .experience-achievements li:before {
@@ -349,6 +493,7 @@ const generatePrintHTML = ({
         
         .education-item {
           margin-bottom: 8pt;
+          page-break-inside: avoid;
         }
         
         .education-title {
@@ -367,6 +512,10 @@ const generatePrintHTML = ({
           font-size: 10pt;
           margin-bottom: 3pt;
           font-weight: 500;
+          display: inline-block;
+          background: #f0f0f0;
+          padding: 2pt 6pt;
+          border-radius: 4pt;
         }
         
         .education-details {
@@ -383,17 +532,20 @@ const generatePrintHTML = ({
           margin-bottom: 8pt;
           padding-bottom: 6pt;
           border-bottom: 1pt solid #eee;
+          page-break-inside: avoid;
         }
         
         .project-title {
           font-size: 11pt;
           font-weight: bold;
           margin-bottom: 2pt;
+          word-wrap: break-word;
         }
         
         .project-description {
           font-size: 10pt;
           margin-bottom: 3pt;
+          word-wrap: break-word;
         }
         
         .project-links {
@@ -407,6 +559,7 @@ const generatePrintHTML = ({
         .project-link {
           color: #0066cc;
           text-decoration: none;
+          word-wrap: break-word;
         }
         
         .project-technologies {
@@ -423,6 +576,7 @@ const generatePrintHTML = ({
           border-radius: 2pt;
           font-size: 9pt;
           border: 1pt solid #ddd;
+          word-wrap: break-word;
         }
         
         .certifications-grid {
@@ -434,17 +588,20 @@ const generatePrintHTML = ({
         .certification-item {
           padding-bottom: 6pt;
           border-bottom: 1pt solid #eee;
+          page-break-inside: avoid;
         }
         
         .certification-title {
           font-size: 11pt;
           font-weight: bold;
           margin-bottom: 1pt;
+          word-wrap: break-word;
         }
         
         .certification-issuer {
           font-size: 10pt;
           margin-bottom: 2pt;
+          word-wrap: break-word;
         }
         
         .certification-date {
@@ -460,6 +617,7 @@ const generatePrintHTML = ({
         
         .language-item {
           font-size: 10pt;
+          page-break-inside: avoid;
         }
         
         .language-name {
@@ -475,19 +633,31 @@ const generatePrintHTML = ({
           border-top: 1pt solid #eee;
         }
         
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-          }
-          
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
           .cv-container {
-            box-shadow: none;
-            border-radius: 0;
+            max-width: 100%;
           }
           
-          .download-button, .contact-links, .back-button, .form-container {
-            display: none !important;
+          .contact-info {
+            grid-template-columns: 1fr;
+          }
+          
+          .skills-container,
+          .projects-container,
+          .certifications-grid,
+          .languages-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .profile-container {
+            flex-direction: column;
+            text-align: center;
+          }
+          
+          .profile-image {
+            width: 80pt;
+            height: 80pt;
           }
         }
       </style>
