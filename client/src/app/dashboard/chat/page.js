@@ -1,13 +1,7 @@
 'use client';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import {
-  UploadIcon,
-  SendIcon,
-  XIcon,
-  CopyIcon,
-  Trash2Icon,
-} from 'lucide-react';
+import { SendIcon, CopyIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -19,29 +13,17 @@ const ai = new GoogleGenAI({
 
 const MAX_MESSAGES = 50;
 
-const MessageImage = React.memo(({ src, alt }) => (
-  <div className="mt-2 rounded-lg overflow-hidden shadow-md">
-    <img src={src} alt={alt} className="w-full max-w-md rounded-lg" />
-  </div>
-));
-
-MessageImage.displayName = 'MessageImage';
-
 // Komponen pesan dengan memoization
 const MessageBubble = React.memo(({ message, isTyping, onCopy }) => {
   const isUser = message.sender === 'user';
 
   return (
-    <div
-      className={`flex ${
-        isUser ? 'justify-end' : 'justify-start overflow-x-auto'
-      } mb-4`}
-    >
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div
         className={`max-w-2xl px-4 py-3 rounded-2xl shadow-md ${
           isUser
             ? 'bg-blue-500 text-white rounded-br-none'
-            : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none overflow-x-auto'
+            : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none'
         } break-words`}
       >
         {isTyping ? (
@@ -56,16 +38,7 @@ const MessageBubble = React.memo(({ message, isTyping, onCopy }) => {
         ) : (
           <div className="text-sm">
             {isUser ? (
-              <>
-                <p>{message.text}</p>
-                {message.images?.map((img, idx) => (
-                  <MessageImage
-                    key={idx}
-                    src={img}
-                    alt={`Uploaded ${idx + 1}`}
-                  />
-                ))}
-              </>
+              <p>{message.text}</p>
             ) : (
               <RenderReactMarkDown content={message.text} isSubstring={false} />
             )}
@@ -100,101 +73,11 @@ const ChatInput = React.memo(
     onSendMessage,
     isTyping,
     onStopTyping,
-    uploadedFiles,
-    setUploadedFiles,
     onClearChat,
   }) => {
-    const fileInputRef = useRef(null);
-
-    const handleFileUpload = useCallback(
-      (files) => {
-        const validFiles = Array.from(files).filter((file) => {
-          if (!file.type.startsWith('image/')) {
-            toast.error('Hanya file gambar yang diperbolehkan');
-            return false;
-          }
-          if (file.size > 20 * 1024 * 1024) {
-            toast.error(`File ${file.name} terlalu besar. Maksimal 20MB.`);
-            return false;
-          }
-          return true;
-        });
-
-        if (uploadedFiles.length + validFiles.length > 1) {
-          toast.error('Maksimal 1 gambar dapat di-upload');
-          return;
-        }
-
-        validFiles.forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setUploadedFiles((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                file,
-                preview: e.target.result,
-                name: file.name,
-                mimeType: file.type,
-              },
-            ]);
-          };
-          reader.readAsDataURL(file);
-        });
-      },
-      [uploadedFiles, setUploadedFiles]
-    );
-
-    const removeFile = useCallback(
-      (id) => {
-        setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
-      },
-      [setUploadedFiles]
-    );
-
     return (
       <div className="w-full rounded-t-2xl shadow-lg border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-900 p-4">
-        {uploadedFiles.length > 0 && (
-          <div className="mb-3">
-            <div className="flex flex-wrap gap-2">
-              {uploadedFiles.map((file) => (
-                <div key={file.id} className="relative group">
-                  <img
-                    src={file.preview}
-                    alt={`Preview ${file.name}`}
-                    className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-600"
-                  />
-                  <button
-                    onClick={() => removeFile(file.id)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                  >
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-[80px]">
-                    {file.name}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {uploadedFiles.length}/1 gambar terupload
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-2 items-center flex-col">
+        <div className="flex gap-2 items-center flex-col lg:flex-row">
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -204,62 +87,35 @@ const ChatInput = React.memo(
                 onSendMessage();
               }
             }}
-            placeholder={
-              uploadedFiles.length > 0
-                ? 'Tambahkan caption untuk gambar...'
-                : 'Tanya Gama'
-            }
+            placeholder="Tanya Gama"
             disabled={isTyping}
             className="max-h-[120px] h-[90px]"
           />
 
-          <div className="flex justify-between items-center w-full">
-            <div className="transition-colors inline-block cursor-pointer">
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={(e) =>
-                  e.target.files.length > 0 && handleFileUpload(e.target.files)
-                }
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <UploadIcon className="text-blue-500" />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={isTyping ? onStopTyping : onSendMessage}
-                disabled={
-                  !isTyping &&
-                  inputValue.trim() === '' &&
-                  uploadedFiles.length === 0
-                }
-                className={`rounded-full p-3 transition-all shadow-md ${
-                  isTyping
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
-                }`}
-              >
-                {isTyping ? (
-                  <XIcon className="w-5 h-5" />
-                ) : (
-                  <SendIcon className="w-5 h-5" />
-                )}
-              </Button>
-              <Button
-                onClick={onClearChat}
-                variant="outline"
-                className="rounded-full p-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                title="Hapus riwayat chat"
-              >
-                <Trash2Icon className="w-5 h-5" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={isTyping ? onStopTyping : onSendMessage}
+              disabled={!isTyping && inputValue.trim() === ''}
+              className={`rounded-full p-3 transition-all shadow-md ${
+                isTyping
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+              }`}
+            >
+              {isTyping ? (
+                <XIcon className="w-5 h-5" />
+              ) : (
+                <SendIcon className="w-5 h-5" />
+              )}
+            </Button>
+            <Button
+              onClick={onClearChat}
+              variant="outline"
+              className="rounded-full p-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              title="Hapus riwayat chat"
+            >
+              <Trash2Icon className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </div>
@@ -281,17 +137,7 @@ function ChatPage() {
 
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const abortControllerRef = useRef(null);
-
-  const fileToBase64 = useCallback((file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = (error) => reject(error);
-    });
-  }, []);
 
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard
@@ -300,7 +146,7 @@ function ChatPage() {
         toast.success('Teks berhasil disalin!');
       })
       .catch((err) => {
-        toast.error('Gagal menyalin teks: ', err);
+        toast.error('Gagal menyalin teks. Silakan coba lagi.');
       });
   }, []);
 
@@ -316,18 +162,10 @@ function ChatPage() {
     toast.success('Riwayat chat telah dihapus');
   }, []);
 
-  const sendMessageToAI = useCallback(async (msg, images) => {
+  const sendMessageToAI = useCallback(async (msg) => {
     try {
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
-
-      const contents = images?.length
-        ? images.map((img) => ({
-            inlineData: { mimeType: img.mimeType, data: img.data },
-          }))
-        : [];
-
-      contents.push({ text: msg });
 
       if (signal.aborted) {
         throw new Error('Permintaan dibatalkan');
@@ -335,7 +173,7 @@ function ChatPage() {
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',
-        contents,
+        contents: [{ text: msg }],
         config: {
           systemInstruction: `Kamu adalah Gama, asisten AI bawaan dari platform Delta Civitas. 
           Peranmu adalah membantu mahasiswa dalam belajar, diskusi, membuat CV, mencari lowongan kerja, dan mengelola aktivitas akademik mereka di dashboard.
@@ -344,7 +182,7 @@ function ChatPage() {
           - Gunakan bahasa santai tapi sopan, cocok untuk mahasiswa.
           - Jangan terlalu formal, tapi tetap informatif.
           - Beri contoh konkret jika diperlukan.
-          - Gunakan format markdown dan latext untuk struktur jawaban.`,
+          - Gunakan format markdown dan latex untuk struktur jawaban.`,
         },
         signal,
       });
@@ -375,7 +213,28 @@ function ChatPage() {
         return null;
       }
 
-      throw new Error('Maaf, terjadi kesalahan. Silakan coba lagi.');
+      // Menangani berbagai jenis error dengan pesan yang lebih jelas
+      if (error.name === 'APIError' || error.message.includes('API')) {
+        throw new Error(
+          'Sedang ada masalah dengan layanan AI. Silakan coba lagi dalam beberapa menit.'
+        );
+      } else if (
+        error.name === 'NetworkError' ||
+        error.message.includes('network')
+      ) {
+        throw new Error(
+          'Koneksi internet Anda tidak stabil. Silakan periksa koneksi Anda dan coba lagi.'
+        );
+      } else if (
+        error.name === 'AuthenticationError' ||
+        error.message.includes('auth')
+      ) {
+        throw new Error(
+          'Terjadi masalah autentikasi. Silakan hubungi administrator.'
+        );
+      } else {
+        throw new Error('Maaf, terjadi kesalahan. Silakan coba lagi.');
+      }
     }
   }, []);
 
@@ -391,7 +250,7 @@ function ChatPage() {
   }, []);
 
   const handleSendMessage = useCallback(async () => {
-    if (inputValue.trim() === '' && uploadedFiles.length === 0) return;
+    if (inputValue.trim() === '') return;
 
     if (isTyping) {
       handleStopTyping();
@@ -403,7 +262,6 @@ function ChatPage() {
       text: inputValue,
       sender: 'user',
       timestamp: new Date(),
-      images: uploadedFiles.map((file) => file.preview),
     };
 
     setMessages((prev) => {
@@ -416,27 +274,12 @@ function ChatPage() {
     });
 
     const currentInputValue = inputValue;
-    const currentUploadedFiles = [...uploadedFiles];
 
     setInputValue('');
-    setUploadedFiles([]);
     setIsTyping(true);
 
     try {
-      const imageDatas =
-        currentUploadedFiles.length > 0
-          ? await Promise.all(
-              currentUploadedFiles.map(async (fileObj) => {
-                const data = await fileToBase64(fileObj.file);
-                return {
-                  data,
-                  mimeType: fileObj.mimeType,
-                };
-              })
-            )
-          : null;
-
-      const aiResponse = await sendMessageToAI(currentInputValue, imageDatas);
+      const aiResponse = await sendMessageToAI(currentInputValue);
 
       if (aiResponse === null) {
         return;
@@ -460,18 +303,28 @@ function ChatPage() {
     } catch (error) {
       if (error.message !== 'Permintaan dibatalkan') {
         toast.error(error.message);
+
+        // Tambahkan pesan error ke chat agar user bisa melihat
+        const errorMessage = {
+          id: Date.now().toString() + '_error',
+          text: `Terjadi kesalahan: ${error.message}`,
+          sender: 'ai',
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => {
+          const newMessages = [...prev, errorMessage];
+          if (newMessages.length > MAX_MESSAGES) {
+            const keepMessages = newMessages.slice(-MAX_MESSAGES + 1);
+            return [prev[0], ...keepMessages];
+          }
+          return newMessages;
+        });
       }
     } finally {
       setIsTyping(false);
     }
-  }, [
-    inputValue,
-    uploadedFiles,
-    isTyping,
-    fileToBase64,
-    sendMessageToAI,
-    messages,
-  ]);
+  }, [inputValue, isTyping, sendMessageToAI, messages]);
 
   return (
     <div className="flex flex-col w-full max-w-5xl mx-auto h-full">
@@ -502,14 +355,10 @@ function ChatPage() {
         onSendMessage={handleSendMessage}
         onStopTyping={handleStopTyping}
         isTyping={isTyping}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
         onClearChat={clearChat}
       />
     </div>
   );
 }
-
-ChatPage.displayName = 'ChatPage';
 
 export default ChatPage;

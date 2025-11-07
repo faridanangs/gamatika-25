@@ -132,7 +132,7 @@ export const CVHandler = ({
 
   const handleAchievementChange = (expId, achIndex, value) => {
     setExperience((prev) => {
-      return prev.map((exp) => {
+      return prev?.map((exp) => {
         if (exp.id === expId) {
           const newAchievements = [...(exp.achievements || [''])];
           newAchievements[achIndex] = value || '';
@@ -145,7 +145,7 @@ export const CVHandler = ({
 
   const addAchievement = (expId) => {
     setExperience((prev) => {
-      return prev.map((exp) => {
+      return prev?.map((exp) => {
         if (exp.id === expId) {
           return {
             ...exp,
@@ -159,7 +159,7 @@ export const CVHandler = ({
 
   const removeAchievement = (expId, achIndex) => {
     setExperience((prev) => {
-      return prev.map((exp) => {
+      return prev?.map((exp) => {
         if (exp.id === expId) {
           const newAchievements = (exp.achievements || []).filter(
             (_, i) => i !== achIndex
@@ -229,7 +229,7 @@ export const CVHandler = ({
 
   const handleTechnologyChange = (projId, techIndex, value) => {
     setProjects((prev) => {
-      return prev.map((proj) => {
+      return prev?.map((proj) => {
         if (proj.id === projId) {
           const newTechnologies = [...(proj.technologies || [''])];
           newTechnologies[techIndex] = value || '';
@@ -242,7 +242,7 @@ export const CVHandler = ({
 
   const addTechnology = (projId) => {
     setProjects((prev) => {
-      return prev.map((proj) => {
+      return prev?.map((proj) => {
         if (proj.id === projId) {
           return {
             ...proj,
@@ -256,7 +256,7 @@ export const CVHandler = ({
 
   const removeTechnology = (projId, techIndex) => {
     setProjects((prev) => {
-      return prev.map((proj) => {
+      return prev?.map((proj) => {
         if (proj.id === projId) {
           const newTechnologies = (proj.technologies || []).filter(
             (_, i) => i !== techIndex
@@ -337,7 +337,7 @@ export const CVHandler = ({
   };
 };
 
-// Komponen form (tetap sama seperti sebelumnya)
+// Komponen form dengan tata letak responsif yang diperbaiki
 export const PersonalInfoForm = ({ personalInfo, onChange, onImageChange }) => (
   <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
@@ -346,7 +346,7 @@ export const PersonalInfoForm = ({ personalInfo, onChange, onImageChange }) => (
         Informasi Pribadi
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-4 dark:bg-gray-800 dark:text-gray-100">
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-5 dark:bg-gray-800 dark:text-gray-100">
       <div className="flex justify-center mb-4">
         <div className="relative">
           <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -375,7 +375,7 @@ export const PersonalInfoForm = ({ personalInfo, onChange, onImageChange }) => (
           />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="name" className="dark:text-gray-300">
             Nama Lengkap *
@@ -486,7 +486,7 @@ export const SummaryForm = ({ summary, onChange }) => (
         Ringkasan Profesional
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-2 dark:bg-gray-800 dark:text-gray-100">
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-3 dark:bg-gray-800 dark:text-gray-100">
       <Label htmlFor="summary" className="dark:text-gray-300">
         Ringkasan
       </Label>
@@ -515,8 +515,8 @@ export const SkillsForm = ({
         Keahlian
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      <div className="space-y-4">
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      <div className="space-y-5">
         <div className="flex justify-between items-center">
           <Label className="dark:text-gray-300">Keahlian Teknis</Label>
           <Button
@@ -529,11 +529,11 @@ export const SkillsForm = ({
             Keahlian
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {skills.technical.map((skill, index) => (
+        <div className="flex flex-wrap gap-3">
+          {skills.technical?.map((skill, index) => (
             <div
               key={index}
-              className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-3 py-1"
+              className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-4 py-2"
             >
               <Input
                 value={skill}
@@ -555,7 +555,7 @@ export const SkillsForm = ({
           ))}
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex justify-between items-center">
           <Label className="dark:text-gray-300">Keahlian Lunak</Label>
           <Button
@@ -568,11 +568,11 @@ export const SkillsForm = ({
             Keahlian
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {skills.soft.map((skill, index) => (
+        <div className="flex flex-wrap gap-3">
+          {skills.soft?.map((skill, index) => (
             <div
               key={index}
-              className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-3 py-1"
+              className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-4 py-2"
             >
               <Input
                 value={skill}
@@ -618,8 +618,8 @@ export const ExperienceForm = ({
         </Button>
       </div>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      {experience.map((exp, index) => (
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      {experience?.map((exp, index) => (
         <Card
           key={exp.id}
           className="border-dashed dark:border-gray-700 dark:bg-gray-800"
@@ -639,8 +639,8 @@ export const ExperienceForm = ({
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 dark:bg-gray-800 dark:text-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="p-4 md:p-5 space-y-5 dark:bg-gray-800 dark:text-gray-100">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Nama Perusahaan</Label>
                 <Input
@@ -678,7 +678,7 @@ export const ExperienceForm = ({
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label className="dark:text-gray-300">Pencapaian</Label>
                 <Button
@@ -690,8 +690,8 @@ export const ExperienceForm = ({
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="space-y-2">
-                {(exp.achievements || []).map((achievement, achIndex) => (
+              <div className="space-y-3">
+                {(exp.achievements || [])?.map((achievement, achIndex) => (
                   <div key={achIndex} className="flex items-center gap-2">
                     <Input
                       value={achievement}
@@ -734,8 +734,8 @@ export const EducationForm = ({ education, onChange, onAdd, onRemove }) => (
         </Button>
       </div>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      {education.map((edu, index) => (
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      {education?.map((edu, index) => (
         <Card
           key={edu.id}
           className="border-dashed dark:border-gray-700 dark:bg-gray-800"
@@ -755,8 +755,8 @@ export const EducationForm = ({ education, onChange, onAdd, onRemove }) => (
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 dark:bg-gray-800 dark:text-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="p-4 md:p-5 space-y-5 dark:bg-gray-800 dark:text-gray-100">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Gelar</Label>
                 <Input
@@ -834,8 +834,8 @@ export const ProjectsForm = ({
         </Button>
       </div>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      {projects.map((project, index) => (
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      {projects?.map((project, index) => (
         <Card
           key={project.id}
           className="border-dashed dark:border-gray-700 dark:bg-gray-800"
@@ -855,7 +855,7 @@ export const ProjectsForm = ({
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 dark:bg-gray-800 dark:text-gray-100">
+          <CardContent className="p-4 md:p-5 space-y-5 dark:bg-gray-800 dark:text-gray-100">
             <div className="space-y-2">
               <Label className="dark:text-gray-300">Nama Proyek</Label>
               <Input
@@ -875,7 +875,7 @@ export const ProjectsForm = ({
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Link Demo</Label>
                 <Input
@@ -895,7 +895,7 @@ export const ProjectsForm = ({
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label className="dark:text-gray-300">
                   Teknologi yang Digunakan
@@ -909,11 +909,11 @@ export const ProjectsForm = ({
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {(project.technologies || []).map((tech, techIndex) => (
+              <div className="flex flex-wrap gap-3">
+                {(project.technologies || [])?.map((tech, techIndex) => (
                   <div
                     key={techIndex}
-                    className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-3 py-1"
+                    className="flex items-center bg-secondary dark:bg-gray-700 rounded-md px-4 py-2"
                   >
                     <Input
                       value={tech}
@@ -965,8 +965,8 @@ export const CertificationsForm = ({
         </Button>
       </div>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      {certifications.map((cert, index) => (
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      {certifications?.map((cert, index) => (
         <Card
           key={cert.id}
           className="border-dashed dark:border-gray-700 dark:bg-gray-800"
@@ -986,8 +986,8 @@ export const CertificationsForm = ({
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="p-4 md:p-5">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Nama Sertifikat</Label>
                 <Input
@@ -1037,8 +1037,8 @@ export const LanguagesForm = ({ languages, onChange, onAdd, onRemove }) => (
         </Button>
       </div>
     </CardHeader>
-    <CardContent className="space-y-6 dark:bg-gray-800 dark:text-gray-100">
-      {languages.map((lang, index) => (
+    <CardContent className="p-5 md:p-6 lg:p-8 space-y-7 dark:bg-gray-800 dark:text-gray-100">
+      {languages?.map((lang, index) => (
         <Card
           key={lang.id}
           className="border-dashed dark:border-gray-700 dark:bg-gray-800"
@@ -1058,8 +1058,8 @@ export const LanguagesForm = ({ languages, onChange, onAdd, onRemove }) => (
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="p-4 md:p-5">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Bahasa</Label>
                 <Input
