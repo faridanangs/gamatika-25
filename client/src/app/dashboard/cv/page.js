@@ -776,6 +776,14 @@ const CVBuilder = () => {
                   </div>
                 </div>
               )}
+
+              <Button
+                onClick={() => downloadPDF()}
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Unduh CV
+              </Button>
             </div>
             {/* Footer */}
             <div className="bg-gray-50 dark:bg-gray-700 p-4 text-center text-gray-500 dark:text-gray-400 text-sm border-t dark:border-gray-600">
