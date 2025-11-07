@@ -134,7 +134,7 @@ export function Comment({ comment, user, token, onDeleteComment }) {
             )}
             {comment?.image && (
               <div
-                className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
+                className="mt-3 inline-block overflow-hidden  cursor-pointer"
                 onClick={() => handleImageClick(comment.image)}
               >
                 <Image
@@ -142,7 +142,7 @@ export function Comment({ comment, user, token, onDeleteComment }) {
                   alt={`Comment image ${comment.id}`}
                   width={600}
                   height={600}
-                  className="object-cover w-60 h-40"
+                  className="object-cover w-60 h-40 rounded-md"
                 />
               </div>
             )}
