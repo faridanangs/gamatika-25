@@ -13,6 +13,7 @@ export const printPDF = async ({
   languages,
 }) => {
   try {
+    // Validasi referensi element
     if (!componentRef || !componentRef.current) {
       throw new Error('Element reference not found');
     }
@@ -25,41 +26,18 @@ export const printPDF = async ({
     // Tunggu element sepenuhnya ter-render
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Deteksi apakah ini perangkat mobile
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
-
-    // Konfigurasi html2canvas dengan opsi yang dioptimalkan untuk mobile
     const canvas = await html2canvas(element, {
-      scale: isMobile ? 1.5 : 2, // Scale lebih rendah untuk mobile
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: isMobile ? window.innerWidth : element.scrollWidth,
-      windowHeight: isMobile ? window.innerHeight : element.scrollHeight,
       backgroundColor: '#ffffff',
-      // Opsi khusus untuk mobile
-      scale: window.devicePixelRatio || (isMobile ? 1.5 : 2),
-      removeContainer: false,
-      foreignObjectRendering: true,
-      ignoreElements: (element) => {
-        // Abaikan elemen yang tidak perlu di PDF
-        return (
-          element.classList.contains('download-button') ||
-          element.classList.contains('contact-links')
-        );
-      },
     });
 
     // Hapus kelas PDF rendering
     element.classList.remove('pdf-rendering');
 
+    // Buat PDF
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -67,37 +45,23 @@ export const printPDF = async ({
       format: 'a4',
     });
 
+    // Hitung dimensi
     const imgWidth = 210; // Lebar A4 dalam mm
-    const pageHeight = 295; // Tinggi A4 dalam mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
 
-    let position = 0;
+    // Tambahkan gambar ke PDF
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
-    // Tambahkan halaman pertama
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    // Tambahkan halaman tambahan jika diperlukan
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    // Simpan PDF dengan nama file yang aman
-    const safeName = (personalInfo.name || 'CV')
-      .replace(/[^a-z0-9]/gi, '_')
-      .toLowerCase();
-    const fileName = `${safeName}_cv.pdf`;
+    // Simpan PDF
+    const fileName = `${
+      personalInfo.name ? personalInfo.name.replace(/\s+/g, '_') : 'CV'
+    }_CV.pdf`;
     pdf.save(fileName);
-  } catch (error) {
-    console.error('Error generating PDF:', error);
 
-    // Fallback ke metode alternatif jika jsPDF gagal
+    return true;
+  } catch (error) {
     try {
-      await fallbackPrintPDF({
+      return await fallbackPrintPDF({
         componentRef,
         personalInfo,
         summary,
@@ -109,25 +73,11 @@ export const printPDF = async ({
         languages,
       });
     } catch (fallbackError) {
-      console.error('Fallback PDF generation also failed:', fallbackError);
-
-      // Method terakhir: gunakan browser print dialog
-      await browserPrint({
-        componentRef,
-        personalInfo,
-        summary,
-        skills,
-        experience,
-        education,
-        projects,
-        certifications,
-        languages,
-      });
+      throw new Error('fallback error');
     }
   }
 };
 
-// Fallback method jika jsPDF tidak tersedia atau gagal
 const fallbackPrintPDF = async ({
   componentRef,
   personalInfo,
@@ -139,139 +89,82 @@ const fallbackPrintPDF = async ({
   certifications,
   languages,
 }) => {
-  if (!componentRef || !componentRef.current) {
-    throw new Error('Element reference not found');
-  }
+  return new Promise((resolve, reject) => {
+    try {
+      if (!componentRef || !componentRef.current) {
+        throw new Error('Element reference not found');
+      }
 
-  const element = componentRef.current;
+      const element = componentRef.current;
 
-  // Clone element untuk menghindari modifikasi asli
-  const printContent = element.cloneNode(true);
+      // Buat HTML untuk print
+      const printHTML = generatePrintHTML({
+        personalInfo,
+        summary,
+        skills,
+        experience,
+        education,
+        projects,
+        certifications,
+        languages,
+      });
 
-  // Hapus elemen yang tidak diperlukan untuk print
-  const downloadButton = printContent.querySelector('.download-button');
-  if (downloadButton) downloadButton.remove();
+      // Buat blob
+      const blob = new Blob([printHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
 
-  const contactLinks = printContent.querySelector('.contact-links');
-  if (contactLinks) contactLinks.remove();
+      // Buka window baru
+      const printWindow = window.open('', '_blank');
 
-  // Buat konten HTML untuk print dengan styling yang dioptimalkan untuk mobile
-  const printHTML = generatePrintHTML({
-    personalInfo,
-    summary,
-    skills,
-    experience,
-    education,
-    projects,
-    certifications,
-    languages,
-  });
+      if (printWindow) {
+        // Tulis konten ke window
+        printWindow.document.write(printHTML);
+        printWindow.document.close();
 
-  // Buat blob dan URL
-  const blob = new Blob([printHTML], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-
-  // Buka dalam tab baru untuk print
-  const printWindow = window.open('', '_blank');
-
-  if (printWindow) {
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-
-    // Tunggu konten dimuat sebelum print
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-
-        // Tutup window setelah print
+        // Tunggu sebelum print
         setTimeout(() => {
-          printWindow.close();
-          URL.revokeObjectURL(url);
+          printWindow.print();
+
+          // Tutup setelah print
+          setTimeout(() => {
+            printWindow.close();
+            URL.revokeObjectURL(url);
+            resolve(true);
+          }, 1000);
         }, 1000);
-      }, 1000);
-    };
-  } else {
-    // Jika popup diblokir, coba metode lain
-    await browserPrint({
-      componentRef,
-      personalInfo,
-      summary,
-      skills,
-      experience,
-      education,
-      projects,
-      certifications,
-      languages,
-    });
-  }
+      } else {
+        // Jika window diblokir, gunakan iframe
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        iframe.src = url;
+
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow.print();
+
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+              URL.revokeObjectURL(url);
+              resolve(true);
+            }, 1000);
+          }, 1000);
+        };
+
+        // Timeout
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(url);
+          reject(new Error('Timeout saat mencetak'));
+        }, 5000);
+      }
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  });
 };
 
-// Method terakhir untuk print menggunakan browser
-const browserPrint = async ({
-  componentRef,
-  personalInfo,
-  summary,
-  skills,
-  experience,
-  education,
-  projects,
-  certifications,
-  languages,
-}) => {
-  if (!componentRef || !componentRef.current) {
-    throw new Error('Element reference not found');
-  }
-
-  const element = componentRef.current;
-
-  // Buat iframe tersembunyi
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-
-  // Tunggu iframe dimuat
-  await new Promise((resolve) => {
-    iframe.onload = resolve;
-    iframe.src = 'about:blank';
-  });
-
-  // Isi iframe dengan konten CV
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-  iframeDoc.open();
-  iframeDoc.write(
-    generatePrintHTML({
-      personalInfo,
-      summary,
-      skills,
-      experience,
-      education,
-      projects,
-      certifications,
-      languages,
-    })
-  );
-  iframeDoc.close();
-
-  // Tunggu konten dimuat
-  await new Promise((resolve) => {
-    iframe.onload = resolve;
-  });
-
-  // Tampilkan iframe secara sementara
-  iframe.style.display = 'block';
-
-  // Beri jeda sebelum print
-  setTimeout(() => {
-    iframe.contentWindow.print();
-
-    // Sembunyikan kembali setelah print
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 1000);
-  }, 1000);
-};
-
-// Fungsi untuk menghasilkan HTML untuk print dengan mobile optimization
 const generatePrintHTML = ({
   personalInfo,
   summary,
@@ -287,107 +180,77 @@ const generatePrintHTML = ({
     <html>
     <head>
       <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>CV - ${personalInfo.name || 'Nama Anda'}</title>
       <style>
         @page {
           size: A4;
-          margin: 0.5cm;
+          margin: 1.5cm;
         }
-        
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-          }
-          
-          .cv-container {
-            box-shadow: none;
-            border-radius: 0;
-          }
-          
-          .download-button, .contact-links, .back-button, .form-container {
-            display: none !important;
-          }
-        }
-        
+
         body {
-          font-family: 'Helvetica Neue', Arial, sans-serif;
+          font-family: Arial, sans-serif;
           font-size: 10pt;
           line-height: 1.4;
           color: #000;
           margin: 0;
           padding: 0;
-          background: white;
         }
-        
+
         .cv-container {
           max-width: 210mm;
-          width: 100%;
-          background: white;
-          box-shadow: none;
-          border-radius: 0;
-          padding: 0;
           margin: 0 auto;
-          overflow-x: hidden;
+          background: white;
         }
-        
+
         .header {
           border-bottom: 1pt solid #000;
           padding-bottom: 8pt;
           margin-bottom: 12pt;
         }
-        
+
         .profile-container {
           display: flex;
           align-items: center;
           gap: 16pt;
-          flex-wrap: wrap;
         }
-        
+
         .profile-image {
-          width: 70pt;
-          height: 70pt;
+          width: 90pt;
+          height: 90pt;
           border-radius: 50%;
           object-fit: cover;
-          flex-shrink: 0;
         }
-        
+
         .profile-info {
           flex: 1;
-          min-width: 0;
         }
-        
+
         .name {
-          font-size: 22pt;
+          font-size: 24pt;
           font-weight: bold;
           margin-bottom: 4pt;
-          line-height: 1.2;
-          word-wrap: break-word;
         }
-        
+
         .title {
           font-size: 14pt;
           font-weight: 600;
           margin-bottom: 8pt;
-          color: #333;
         }
-        
+
         .contact-info {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 6pt;
+          gap: 8pt;
           margin-top: 8pt;
         }
-        
+
         .contact-item {
           display: flex;
           align-items: center;
           gap: 4pt;
           font-size: 10pt;
-          word-wrap: break-word;
         }
-        
+
         .summary {
           font-size: 10pt;
           line-height: 1.3;
@@ -396,12 +259,11 @@ const generatePrintHTML = ({
           background: #f9f9f9;
           border-left: 2pt solid #333;
         }
-        
+
         .section {
           margin-bottom: 12pt;
-          page-break-inside: avoid;
         }
-        
+
         .section-title {
           font-size: 13pt;
           font-weight: bold;
@@ -409,23 +271,23 @@ const generatePrintHTML = ({
           padding-bottom: 2pt;
           border-bottom: 1pt solid #000;
         }
-        
+
         .skills-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12pt;
         }
-        
+
         .skills-group {
           margin-bottom: 6pt;
         }
-        
+
         .skills-title {
           font-size: 11pt;
           font-weight: 600;
           margin-bottom: 6pt;
         }
-        
+
         .skill-tag {
           display: inline-block;
           background: #f5f5f5;
@@ -436,118 +298,103 @@ const generatePrintHTML = ({
           margin-right: 4pt;
           margin-bottom: 4pt;
           border: 1pt solid #ddd;
-          word-wrap: break-word;
         }
-        
+
         .experience-item {
           margin-bottom: 10pt;
-          page-break-inside: avoid;
         }
-        
+
         .experience-title {
           font-size: 12pt;
           font-weight: bold;
           margin-bottom: 1pt;
         }
-        
+
         .experience-company {
           font-size: 10pt;
           font-weight: 600;
           margin-bottom: 1pt;
         }
-        
+
         .experience-location {
           font-size: 10pt;
           margin-bottom: 4pt;
         }
-        
+
         .experience-period {
           font-size: 10pt;
           margin-bottom: 4pt;
           font-weight: 500;
-          display: inline-block;
-          background: #f0f0f0;
-          padding: 2pt 6pt;
-          border-radius: 4pt;
         }
-        
+
         .experience-achievements {
           list-style: none;
           padding-left: 0;
           margin: 0;
         }
-        
+
         .experience-achievements li {
           font-size: 10pt;
           margin-bottom: 3pt;
           position: relative;
           padding-left: 10pt;
-          word-wrap: break-word;
         }
-        
+
         .experience-achievements li:before {
           content: "•";
           position: absolute;
           left: 0;
         }
-        
+
         .education-item {
           margin-bottom: 8pt;
-          page-break-inside: avoid;
         }
-        
+
         .education-title {
           font-size: 12pt;
           font-weight: bold;
           margin-bottom: 1pt;
         }
-        
+
         .education-institution {
           font-size: 10pt;
           font-weight: 600;
           margin-bottom: 1pt;
         }
-        
+
         .education-period {
           font-size: 10pt;
           margin-bottom: 3pt;
           font-weight: 500;
-          display: inline-block;
-          background: #f0f0f0;
-          padding: 2pt 6pt;
-          border-radius: 4pt;
         }
-        
+
         .education-details {
           font-size: 10pt;
         }
-        
+
         .projects-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10pt;
         }
-        
+
         .project-item {
           margin-bottom: 8pt;
           padding-bottom: 6pt;
           border-bottom: 1pt solid #eee;
-          page-break-inside: avoid;
         }
-        
+
         .project-title {
           font-size: 11pt;
           font-weight: bold;
           margin-bottom: 2pt;
-          word-wrap: break-word;
         }
-        
+
         .project-description {
           font-size: 10pt;
           margin-bottom: 3pt;
-          word-wrap: break-word;
         }
-        
+
         .project-links {
           display: flex;
           flex-direction: column;
@@ -555,19 +402,18 @@ const generatePrintHTML = ({
           margin-bottom: 3pt;
           font-size: 9pt;
         }
-        
+
         .project-link {
           color: #0066cc;
           text-decoration: none;
-          word-wrap: break-word;
         }
-        
+
         .project-technologies {
           display: flex;
           flex-wrap: wrap;
           gap: 4pt;
         }
-        
+
         .tech-tag {
           display: inline-block;
           background: #f5f5f5;
@@ -576,54 +422,49 @@ const generatePrintHTML = ({
           border-radius: 2pt;
           font-size: 9pt;
           border: 1pt solid #ddd;
-          word-wrap: break-word;
         }
-        
+
         .certifications-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8pt;
         }
-        
+
         .certification-item {
           padding-bottom: 6pt;
           border-bottom: 1pt solid #eee;
-          page-break-inside: avoid;
         }
-        
+
         .certification-title {
           font-size: 11pt;
           font-weight: bold;
           margin-bottom: 1pt;
-          word-wrap: break-word;
         }
-        
+
         .certification-issuer {
           font-size: 10pt;
           margin-bottom: 2pt;
-          word-wrap: break-word;
         }
-        
+
         .certification-date {
           font-size: 9pt;
           font-weight: 500;
         }
-        
+
         .languages-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8pt;
         }
-        
+
         .language-item {
           font-size: 10pt;
-          page-break-inside: avoid;
         }
-        
+
         .language-name {
           font-weight: 600;
         }
-        
+
         .footer {
           text-align: center;
           font-size: 9pt;
@@ -632,32 +473,16 @@ const generatePrintHTML = ({
           padding-top: 8pt;
           border-top: 1pt solid #eee;
         }
-        
-        /* Mobile-specific styles */
-        @media (max-width: 768px) {
+
+        @media print {
+          body {
+            margin: 0;
+            padding: 0;
+          }
+
           .cv-container {
-            max-width: 100%;
-          }
-          
-          .contact-info {
-            grid-template-columns: 1fr;
-          }
-          
-          .skills-container,
-          .projects-container,
-          .certifications-grid,
-          .languages-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .profile-container {
-            flex-direction: column;
-            text-align: center;
-          }
-          
-          .profile-image {
-            width: 80pt;
-            height: 80pt;
+            box-shadow: none;
+            border-radius: 0;
           }
         }
       </style>
@@ -713,7 +538,7 @@ const generatePrintHTML = ({
                  }
           </div>
         </div>
-        
+
         ${
           summary
             ? `
@@ -723,7 +548,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           skills.technical.length > 0 || skills.soft.length > 0
             ? `
@@ -742,7 +567,7 @@ const generatePrintHTML = ({
             `
                 : ''
             }
-            
+
             ${
               skills.soft.length > 0
                 ? `
@@ -760,7 +585,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           experience.length > 0
             ? `
@@ -801,7 +626,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           education.length > 0
             ? `
@@ -842,7 +667,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           projects.length > 0
             ? `
@@ -907,7 +732,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           certifications.length > 0
             ? `
@@ -936,7 +761,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         ${
           languages.length > 0
             ? `
@@ -964,7 +789,7 @@ const generatePrintHTML = ({
         `
             : ''
         }
-        
+
         <div class="footer">
           <p>© ${new Date().getFullYear()} ${
     personalInfo.name || 'Nama Anda'
