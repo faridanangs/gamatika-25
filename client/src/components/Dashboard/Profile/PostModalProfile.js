@@ -9,18 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../ui/dialog';
-import { Card, CardContent } from '../../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
-
-import { Badge } from '../../ui/badge';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 import { Button } from '../../ui/button';
-import { CommentInput } from '../../Forum/Comment';
-import { createComment, deleteComment } from '@/lib/action';
 import { getPrivateKey } from '@/data/getUserData';
-import { formatReadableTime } from '@/lib/timeReadable';
-import { ImageModal } from '@/components/Forum/ImageUpload';
 
 export const EditPostModal = ({ post, onDeletePost, onSave, onClose }) => {
   const [title, setTitle] = useState(post.title);

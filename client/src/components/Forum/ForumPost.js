@@ -582,55 +582,76 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
   const handleSubmit = async () => {
     if (!title || !content) {
       toast.error('Judul dan konten wajib diisi');
       return;
     }
+
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      toast.error('Konfigurasi upload error. Hubungi admin.');
+      return;
+    }
+
     setIsSubmitting(true);
+
     try {
       let uploadedImages = [];
-      if (images.length > 0) {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/uploads`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              files: images.map((img) => ({
-                base64: img.base64,
-                name: img.file.name,
-              })),
-            }),
-          }
-        );
-        if (!response.ok) {
-          return toast.error('Upload failed');
-        }
 
-        console.log(response, 'upload file resp');
-        const data = await response.json();
-        uploadedImages = data.images;
+      if (images.length > 0) {
+        const uploadPromises = images.map(async (image) => {
+          if (!image.file) {
+            return null;
+          }
+
+          const formData = new FormData();
+          formData.append('file', image.file);
+          formData.append('upload_preset', UPLOAD_PRESET);
+
+          const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const err = await response.json();
+            toast.error(`Cloudinary upload failed: ${err.error.message}`);
+          }
+
+          const data = await response.json();
+          return {
+            url: data.secure_url,
+            public_id: data.public_id,
+          };
+        });
+
+        const results = await Promise.all(uploadPromises);
+        uploadedImages = results.filter((img) => img !== null);
       }
+
       const postData = {
         title,
         content,
         category,
-        images: uploadedImages.map((img) => ({
-          url: img.url,
-          public_id: img.public_id,
-        })),
+        images: uploadedImages,
       };
+
       await onCreate(postData);
+
       setTitle('');
       setContent('');
       setCategory('Matematika');
       setImages([]);
       onClose();
+      toast.success('Postingan berhasil dibuat!');
     } catch (error) {
-      alert(`Gagal membuat postingan: ${error.message}`);
+      toast.error(`Gagal: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

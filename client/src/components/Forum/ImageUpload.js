@@ -3,47 +3,69 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { toast } from 'react-hot-toast';
 
 export function ImageUpload({ images, setImages, maxImages = 4 }) {
   const [uploading, setUploading] = useState(false);
 
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
   const handleImageChange = async (e) => {
     if (e.target.files && e.target.files.length > 0) {
+      if (!CLOUD_NAME || !UPLOAD_PRESET) {
+        toast.error('Konfigurasi upload error. Hubungi admin.');
+        return;
+      }
+
       const files = Array.from(e.target.files);
+      if (images.length + files.length > maxImages) {
+        toast.error(`Maksimal hanya ${maxImages} gambar yang diizinkan.`);
+        files.splice(maxImages - images.length);
+      }
+
       setUploading(true);
 
       try {
-        const formData = new FormData();
-        files.forEach((file) => {
-          formData.append('images', file);
+        const uploadPromises = files.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', UPLOAD_PRESET);
+
+          const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(`Cloudinary upload failed: ${err.error.message}`);
+          }
+
+          const data = await response.json();
+          return {
+            url: data.secure_url,
+            public_id: data.public_id,
+            file: file,
+          };
         });
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/upload`,
-          {
-            method: 'POST',
-            body: formData,
-          }
-        );
+        const newUploadedImages = await Promise.all(uploadPromises);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Upload failed');
-        }
-
-        const data = await response.json();
-
-        // Tambahkan gambar yang sudah diupload ke state
-        const newImages = data.images.map((img, index) => ({
-          id: Date.now() + index,
-          url: img.url,
-          public_id: img.public_id,
-          file: files[index],
-        }));
-
-        setImages((prev) => [...prev, ...newImages]);
+        setImages((prev) => [
+          ...prev,
+          ...newUploadedImages.map((img, index) => ({
+            ...img,
+            id: Date.now() + index,
+          })),
+        ]);
+        toast.success('Gambar berhasil di-upload!');
       } catch (error) {
-        alert(`Gagal mengunggah gambar: ${error.message}`);
+        toast.error(`Gagal mengunggah gambar: ${error.message}`);
+        console.error(error);
       } finally {
         setUploading(false);
       }
@@ -53,7 +75,6 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
   const removeImage = (id) => {
     setImages(images.filter((img) => img.id !== id));
   };
-
   return (
     <div className="mb-4">
       <label className="block text-gray-700 dark:text-gray-300 mb-2">
@@ -135,7 +156,6 @@ export function ImageUpload({ images, setImages, maxImages = 4 }) {
 export function ImageModal({ image, isOpen, onClose }) {
   if (!isOpen || !image) return null;
 
-  // Gunakan portal untuk memastikan modal dirender di root level
   return createPortal(
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
       <div className="relative max-w-5xl max-h-[90vh]">

@@ -102,49 +102,51 @@ export function Comment({ comment, user, token, onDeleteComment }) {
               </Button>
             )}
           </div>
-          {showAllTextContent ? (
-            <>
-              {comment.content}
-              <span
-                onClick={() => setShowAllTextContent(false)}
-                className="cursor-pointer"
-              >
-                {' '}
-                ⬆️
-              </span>
-            </>
-          ) : (
-            <span>
-              {comment?.content.length < 250 ? (
-                comment.content
-              ) : (
-                <span>
-                  {comment.content.slice(0, 250)}{' '}
-                  <span
-                    onClick={() => setShowAllTextContent(true)}
-                    className="cursor-pointer"
-                  >
-                    {'... '}
-                    ⬇️
-                  </span>
+          <div className="flex flex-col gap-1">
+            {showAllTextContent ? (
+              <>
+                {comment.content}
+                <span
+                  onClick={() => setShowAllTextContent(false)}
+                  className="cursor-pointer"
+                >
+                  {' '}
+                  ⬆️
                 </span>
-              )}
-            </span>
-          )}
-          {comment?.image && (
-            <div
-              className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleImageClick(comment.image)}
-            >
-              <Image
-                src={comment.image}
-                alt={`Comment image ${comment.id}`}
-                width={600}
-                height={600}
-                className="object-cover w-60 h-40"
-              />
-            </div>
-          )}
+              </>
+            ) : (
+              <span>
+                {comment?.content.length < 250 ? (
+                  comment.content
+                ) : (
+                  <span>
+                    {comment.content.slice(0, 250)}{' '}
+                    <span
+                      onClick={() => setShowAllTextContent(true)}
+                      className="cursor-pointer"
+                    >
+                      {'... '}
+                      ⬇️
+                    </span>
+                  </span>
+                )}
+              </span>
+            )}
+            {comment?.image && (
+              <div
+                className="mt-3 inline-block rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleImageClick(comment.image)}
+              >
+                <Image
+                  src={comment.image}
+                  alt={`Comment image ${comment.id}`}
+                  width={600}
+                  height={600}
+                  className="object-cover w-60 h-40"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -164,48 +166,54 @@ export function CommentInput({ onAddComment, className }) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
   const handleSubmit = async () => {
     if (!content.trim() && !image) return;
 
-    setIsUploading(true);
-    try {
-      let imageUrl = null;
+    if (image && (!CLOUD_NAME || !UPLOAD_PRESET)) {
+      return;
+    }
 
-      if (image && content != '') {
+    setIsUploading(true);
+    let imageUrl = null;
+
+    try {
+      if (image) {
+        const formData = new FormData();
+        formData.append('file', image.file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('folder', 'forum-comments');
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CLIENT_API_URL}api/upload`,
+          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              file: {
-                base64: image.base64,
-                name: image.file.name,
-              },
-            }),
+            body: formData,
           }
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
-          return toast.error(errorData?.error || 'Upload failed');
+          const err = await response.json();
+          throw new Error(`Cloudinary upload failed: ${err.error.message}`);
         }
 
         const data = await response.json();
-        imageUrl = data.image.url;
+        imageUrl = data.secure_url;
       }
 
       onAddComment({
-        content,
+        content: content.trim(),
         image: imageUrl,
       });
 
       setContent('');
       setImage(null);
+      toast.success('Komentar terkirim!');
     } catch (error) {
-      alert(`upload image failed: ${error?.message}`);
+      toast.error(`Gagal mengirim: ${error.message}`);
+      console.error(error);
     } finally {
       setIsUploading(false);
     }
@@ -322,12 +330,13 @@ export function CommentInput({ onAddComment, className }) {
 
             <Button
               onClick={handleSubmit}
-              disabled={!content.trim() && !image}
+              disabled={(!content.trim() && !image) || isUploading}
               className={cn(
                 'px-4 py-2 rounded-full font-medium inline-block',
                 content.trim() || image
                   ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed',
+                isUploading && 'opacity-50 cursor-not-allowed' // Tambahan
               )}
             >
               {isUploading ? 'Mengirim...' : 'Komentar'}
