@@ -111,7 +111,7 @@ export default function ForumPage({ contribsO, isAuth }) {
   }, [loadInitialPosts]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 transition-colors duration-300 pt-10">
+    <div className="min-h-screen bg-linear-to-br from-blue-600/5 to-purple-600/5 dark:bg-slate-900 transition-colors duration-300 pt-10">
       <Head>
         <title>Forum Diskusi - Delta Civitas</title>
         <meta

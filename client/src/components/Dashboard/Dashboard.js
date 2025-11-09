@@ -39,7 +39,7 @@ export default function DashboardPage({ children }) {
     menuItems.find((item) => pathname === item.href)?.id || 'dashboard';
 
   return (
-    <div className="flex h-screen bg-card w-full mx-auto max-w-[110rem] overflow-hidden">
+    <div className="flex min-h-screen bg-card w-full mx-auto max-w-440 overflow-hidden">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
@@ -119,7 +119,7 @@ export default function DashboardPage({ children }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 dark:bg-card">
+        <main className="flex-1 overflow-auto p-4 min-h-screen md:p-6 dark:bg-card">
           {children}
         </main>
       </div>

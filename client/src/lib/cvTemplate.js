@@ -8,46 +8,74 @@ export const printPDF = async ({
   certifications,
   languages,
 }) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const printHTML = generatePrintHTML({
-        personalInfo,
-        summary,
-        skills,
-        experience,
-        education,
-        projects,
-        certifications,
-        languages,
-      });
+  try {
+    const html2canvas = (await import('html2canvas-pro')).default;
+    const jsPDF = (await import('jspdf')).default;
 
-      const blob = new Blob([printHTML], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
+    const printHTML = generatePrintHTML({
+      personalInfo,
+      summary,
+      skills,
+      experience,
+      education,
+      projects,
+      certifications,
+      languages,
+    });
 
-      const printWindow = window.open('', '_blank');
+    const element = document.createElement('div');
+    element.innerHTML = printHTML;
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    element.style.width = '210mm';
+    document.body.appendChild(element);
 
-      if (printWindow) {
-        printWindow.document.write(printHTML);
-        printWindow.document.close();
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      onclone: (clonedDoc) => {
+        const styles = clonedDoc.querySelectorAll('style');
+        styles.forEach((style) => {
+          if (
+            style.innerHTML.includes('lab(') ||
+            style.innerHTML.includes('color-mix(')
+          ) {
+            style.remove();
+          }
+        });
+      },
+    });
 
-        setTimeout(() => {
-          printWindow.focus();
+    document.body.removeChild(element);
 
-          printWindow.print();
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-          setTimeout(() => {
-            printWindow.close();
-            URL.revokeObjectURL(url);
-            resolve(true);
-          }, 1000);
-        }, 2000);
-      } else {
-        reject(new Error('Tidak dapat membuka window baru untuk print'));
-      }
-    } catch (error) {
-      reject(error);
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
-  });
+
+    const filename = `CV-${personalInfo.name || 'CV'}.pdf`;
+    pdf.save(filename);
+  } catch (error) {
+    throw new Error('Gagal membuat PDF. Silakan coba lagi.');
+  }
 };
 
 const generatePrintHTML = ({
@@ -596,7 +624,7 @@ const generatePrintHTML = ({
         ${
           experience?.length > 0
             ? `
-        <div classsection">
+        <div class="section">
           <div class="section-title">Pengalaman Kerja</div>
           ${experience
             ?.map(

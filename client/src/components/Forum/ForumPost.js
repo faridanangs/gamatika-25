@@ -39,11 +39,10 @@ import { ImageModal } from './ImageUpload';
 import { getPostCommentPerPage } from '@/data/getPostsData';
 import { createComment } from '@/lib/action';
 
-// Komponen Skeleton untuk komentar
 const CommentSkeleton = () => {
   return (
     <div className="flex space-x-3 mb-4 animate-pulse">
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
       </div>
       <div className="flex-1">
@@ -116,10 +115,8 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
 
       const newCommentData = resp.data;
 
-      // Tambahkan komentar baru ke akhir daftar komentar
       setComments((prev) => [...prev, newCommentData]);
 
-      // Update comment count pada post
       post.comment_count = (post.comment_count || 0) + 1;
 
       toast.success('Komentar berhasil ditambahkan');
@@ -128,11 +125,9 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
     }
   };
 
-  // Fungsi untuk menghapus komentar dari state
   const handleDeleteComment = useCallback(
     (commentId) => {
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-      // Update comment count pada post
       post.comment_count = Math.max(0, (post.comment_count || 0) - 1);
     },
     [post]
@@ -186,7 +181,6 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
         return;
       }
 
-      // Filter komentar yang valid (memiliki author)
       const validComments = resp.data.filter(
         (comment) => comment && comment.author && comment.author.username
       );
@@ -223,7 +217,6 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
         return;
       }
 
-      // Filter komentar yang valid (memiliki author)
       const validComments = resp.data.filter(
         (comment) => comment && comment.author && comment.author.username
       );

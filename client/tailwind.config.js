@@ -15,5 +15,17 @@ module.exports = {
     extend: {},
   },
 
+  future: {
+    disableColorCorrectness: true,
+  },
+  corePlugins: {
+    textColor: false,
+    backgroundColor: false,
+    borderColor: false,
+    divideColor: false,
+    placeholderColor: false,
+    accentColor: false,
+  },
+
   plugins: [typo],
 };

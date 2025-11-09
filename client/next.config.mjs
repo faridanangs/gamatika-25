@@ -1,3 +1,6 @@
+// 1. IMPORT MODUL 'path' DARI NODE.JS
+import path from 'path';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -31,6 +34,15 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      html2canvas: path.resolve(process.cwd(), 'node_modules/html2canvas-pro'),
+    };
+
+    return config;
   },
 };
 
