@@ -34,30 +34,126 @@ import { Badge } from '@/components/ui/badge';
 import { printPDF } from '@/lib/cvTemplate';
 import { CVHandler } from './cv-handler';
 import toast from 'react-hot-toast';
-// Data Dummy untuk Personal Info
+
+// =SIAPKAN uuidv4 JIKA ANDA MENGGUNAKANNYA DI FILE LAIN
+// import { v4 as uuidv4 } from 'uuid';
+
+// ===========================================
+//       DATA DUMMY UNTUK LAMARAN KURIR
+// ===========================================
+
 const dummyPersonalInfo = {
-  name: '',
-  title: '',
-  email: '',
-  phone: '',
-  location: '',
-  linkedin: '',
-  github: '',
-  portfolio: '',
-  image: '',
+  name: 'Agus Setiawan',
+  title: 'Kurir Profesional & Berpengalaman',
+  email: 'agus.setiawan.kerja@gmail.com',
+  phone: '+62 857 1234 5678',
+  location: 'Jakarta Selatan, Indonesia',
+  linkedin: '', // Kurir tidak perlu LinkedIn
+  github: '', // Kurir tidak perlu GitHub
+  portfolio: '', // Kurir tidak perlu portofolio
+  image: 'https://i.pravatar.cc/150?img=12', // Menggunakan placeholder avatar
 };
+
+const dummySummary =
+  'Kurir yang berdedikasi dan dapat diandalkan dengan pengalaman lebih dari 3 tahun di industri logistik dan pengiriman. Menguasai wilayah Jakarta (Selatan, Pusat, Timur) dengan sangat baik. Memiliki rekam jejak terbukti dalam pengiriman paket secara tepat waktu, aman, dan efisien. Berkomitmen tinggi terhadap kepuasan pelanggan dan memiliki catatan berkendara yang bersih.';
+
+const dummySkills = {
+  // 'Technical' di sini diartikan sebagai keahlian keras/praktis
+  technical: [
+    'Mengemudi Sepeda Motor (SIM C Aktif)',
+    'Navigasi GPS (Google Maps & Waze)',
+    'Manajemen Pengiriman COD (Cash on Delivery)',
+    'Perawatan Kendaraan Ringan',
+  ],
+  soft: [
+    'Manajemen Waktu & Tepat Waktu',
+    'Pelayanan Pelanggan (Ramah & Sopan)',
+    'Mampu Bekerja di Bawah Tekanan',
+    'Cekatan dan Cepat Tanggap',
+  ],
+};
+
+const dummyExperience = [
+  {
+    id: uuidv4(),
+    name: 'PT. Logistik Cepat Indonesia',
+    position: 'Kurir Pengiriman (Rider)',
+    period: 'Mar 2021 – Sekarang',
+    location: 'Jakarta, Indonesia',
+    achievements: [
+      'Menyelesaikan rata-rata 50+ pengiriman paket per hari dengan tingkat keberhasilan pengiriman 99%.',
+      'Secara konsisten menerima rating kepuasan pelanggan di atas 4.8 dari 5.0.',
+      'Dipercaya menangani pengiriman barang bernilai tinggi dan COD hingga puluhan juta rupiah per hari.',
+      'Menerima penghargaan "Kurir Terbaik" Q3 2023 untuk ketepatan waktu dan minimnya keluhan.',
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: 'Restoran Sederhana Bintaro',
+    position: 'Kurir Pengantar Makanan',
+    period: 'Agu 2019 – Feb 2021',
+    location: 'Tangerang Selatan',
+    achievements: [
+      'Memastikan semua pesanan makanan diantar ke pelanggan dalam kondisi baik dan sesuai estimasi waktu.',
+      'Membantu proses pengemasan (packing) pesanan saat jam sibuk untuk mempercepat pengiriman.',
+      'Mempertahankan catatan berkendara yang bersih 100% tanpa pelanggaran lalu lintas atau kecelakaan.',
+    ],
+  },
+];
+
+const dummyEducation = [
+  {
+    id: uuidv4(),
+    degree: 'Sekolah Menengah Kejuruan (SMK)',
+    institution: 'SMK Negeri 2 Jakarta',
+    period: '2016 – 2019',
+    gpa: '', // GPA tidak relevan untuk SMK
+    honors: 'Jurusan: Teknik Otomotif Sepeda Motor',
+  },
+];
+
+// Bagian Proyek & Sertifikasi dikosongkan karena tidak relevan
+const dummyProjects = [];
+
+const dummyCertifications = [];
+
+const dummyLanguages = [
+  { id: uuidv4(), name: 'Bahasa Indonesia', level: 'Native' },
+  { id: uuidv4(), name: 'Bahasa Inggris', level: 'Dasar' },
+];
+
+// ===========================================
+//            AKHIR DATA DUMMY
+// ===========================================
+
+// ===========================================
+//              AKHIR DATA DUMMY
+// ===========================================
 
 const CVBuilder = () => {
   const [step, setStep] = useState(1);
 
+  // const [personalInfo, setPersonalInfo] = useState(dummyPersonalInfo);
+  // const [summary, setSummary] = useState(''); // String, bukan array
+  // const [skills, setSkills] = useState({
+  //   // Objek dengan properti technical dan soft
+  //   technical: [],
+  //   soft: [],
+  // });
+  // const [experience, setExperience] = useState([]);
+  // const [education, setEducation] = useState([]);
+  // const [projects, setProjects] = useState([]);
+  // const [certifications, setCertifications] = useState([]);
+  // const [languages, setLanguages] = useState([]);
+
   const [personalInfo, setPersonalInfo] = useState(dummyPersonalInfo);
-  const [summary, setSummary] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [experience, setExperience] = useState([]);
-  const [education, setEducation] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [certifications, setCertifications] = useState([]);
-  const [languages, setLanguages] = useState([]);
+  const [summary, setSummary] = useState(dummySummary);
+  const [skills, setSkills] = useState(dummySkills);
+  const [experience, setExperience] = useState(dummyExperience);
+  const [education, setEducation] = useState(dummyEducation);
+  const [projects, setProjects] = useState(dummyProjects);
+  const [certifications, setCertifications] = useState(dummyCertifications);
+  const [languages, setLanguages] = useState(dummyLanguages);
 
   const {
     handleAchievementChange,
