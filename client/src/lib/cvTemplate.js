@@ -30,112 +30,87 @@ export const printPDF = async ({
     element.style.width = '210mm';
     document.body.appendChild(element);
 
-    const sections = Array.from(element.querySelectorAll('.section')).filter(
-      (section) => {
-        const content = section.textContent.trim();
-        const hasItems =
-          section.querySelectorAll(
-            '.experience-item, .project-item, .education-item, .certification-item, .language-item, .skill-tag'
-          ).length > 0;
-        const hasNonEmptyContent =
-          content.length > 0 && !content.match(/^\s*$/);
-
-        return hasNonEmptyContent && hasItems;
-      }
-    );
-
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210; // mm
-    const pageHeight = 295; // mm
-    const margin = 10; // mm
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 10;
     const contentWidth = pageWidth - 2 * margin;
     const contentHeight = pageHeight - 2 * margin;
 
     let currentPosition = margin;
-    let currentPage = 0;
+    let currentPage = 1;
 
     const addNewPage = () => {
-      if (currentPage > 0) {
-        pdf.addPage();
-      }
+      pdf.addPage();
       currentPage++;
       currentPosition = margin;
     };
 
-    const fitsOnCurrentPage = (elementHeight) => {
-      return currentPosition + elementHeight <= pageHeight - margin;
-    };
+    const addElementToPDF = async (el) => {
+      if (!el) return;
 
-    const addImageToPDF = async (element, sectionTitle) => {
-      try {
-        const clonedElement = element.cloneNode(true);
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.width = contentWidth + 'mm';
-        tempContainer.appendChild(clonedElement);
-        document.body.appendChild(tempContainer);
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.width = contentWidth + 'mm';
 
-        const canvas = await html2canvas(tempContainer, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: tempContainer.scrollWidth,
-          height: tempContainer.scrollHeight,
-        });
+      const clonedEl = el.cloneNode(true);
+      clonedEl.style.marginBottom = '0';
 
-        document.body.removeChild(tempContainer);
+      tempContainer.appendChild(clonedEl);
+      document.body.appendChild(tempContainer);
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        const imgWidth = contentWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
 
-        if (!fitsOnCurrentPage(imgHeight)) {
-          addNewPage();
-        }
+      document.body.removeChild(tempContainer);
 
-        pdf.addImage(
-          imgData,
-          'JPEG',
-          margin,
-          currentPosition,
-          imgWidth,
-          imgHeight
-        );
-        currentPosition += imgHeight + 2; // Kurangi jarak antar section dari 5mm menjadi 2mm
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        return true;
-      } catch (error) {
-        console.error(`Error rendering ${sectionTitle}:`, error);
-        return false;
+      const elementSpacing =
+        el.tagName === 'DIV' && el.classList.contains('section-title') ? 3 : 2; // Spasi lebih besar setelah judul
+
+      if (
+        currentPosition + imgHeight + elementSpacing >
+        contentHeight + margin
+      ) {
+        addNewPage();
       }
+
+      pdf.addImage(
+        imgData,
+        'JPEG',
+        margin,
+        currentPosition,
+        imgWidth,
+        imgHeight
+      );
+
+      currentPosition += imgHeight + elementSpacing;
     };
 
-    addNewPage();
+    const allItems = element.querySelectorAll(
+      '.header, .section-title, .summary, .experience-item, .skills-group, .project-item, .education-item, .certification-item, .language-item'
+    );
 
-    const header = element.querySelector('.header');
-    if (header) {
-      await addImageToPDF(header, 'Header');
-    }
+    for (const item of allItems) {
+      const hasText = item.textContent.trim().length > 0;
+      const isHeader = item.classList.contains('header');
 
-    const mainContent = element.querySelector('.main-content');
-    if (mainContent && sections.length > 0) {
-      for (const section of sections) {
-        await addImageToPDF(
-          section,
-          section.querySelector('.section-title')?.textContent || 'Section'
-        );
+      if (hasText || isHeader) {
+        await addElementToPDF(item);
       }
     }
 
     document.body.removeChild(element);
-
     const filename = `CV-${personalInfo.name || 'CV'}.pdf`;
     pdf.save(filename);
   } catch (error) {
-    console.error('Error generating PDF:', error);
     throw new Error('Gagal membuat PDF. Silakan coba lagi.');
   }
 };
@@ -163,7 +138,7 @@ const generatePrintHTML = ({
   const sectionsHTML = [];
 
   // 1. Cek Summary
-  if (summary && summary.trim() !== '') {
+  if (summary && typeof summary === 'string' && summary.trim() !== '') {
     sectionsHTML.push(`
       <div class="section">
         <div class="section-title">Ringkasan Profesional</div>
@@ -445,6 +420,7 @@ const generatePrintHTML = ({
     `);
   }
 
+  // Kembalikan HTML lengkap dengan wrapper, <head>, dan <style>
   return `
     <!DOCTYPE html>
     <html>
@@ -452,21 +428,27 @@ const generatePrintHTML = ({
       <meta charset="utf-8">
       <title>CV - ${escapeHtml(personalInfo.name || 'Nama Anda')}</title>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      
       <style>
         @page {
           size: A4;
-          margin: 1cm;
+          margin: 1cm; 
           @bottom-right {
             content: counter(page);
             font-size: 9pt;
             font-family: 'Inter', sans-serif;
+            color: #94a3b8;
           }
         }
-        * { box-sizing: border-box; }
+        
+        * { 
+          box-sizing: border-box; 
+        }
+
         body {
           font-family: 'Inter', sans-serif;
           font-size: 10pt;
-          line-height: 1.5;
+          line-height: 1.5; /* Biang kerok alignment, tapi kita perbaiki di bawah */
           color: #1e293b;
           margin: 0;
           padding: 0;
@@ -475,12 +457,15 @@ const generatePrintHTML = ({
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
+
         .cv-container {
           max-width: 210mm;
           margin: 0 auto;
           background: white;
           padding: 0;
         }
+
+        /* --- HEADER --- */
         .header {
           background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
           color: white;
@@ -491,27 +476,18 @@ const generatePrintHTML = ({
           overflow: hidden;
           page-break-inside: avoid;
         }
+        
+        .header::before, .header::after { content: ""; position: absolute; border-radius: 50%; }
         .header::before {
-          content: "";
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 150pt;
-          height: 150pt;
+          top: 0; right: 0; width: 150pt; height: 150pt;
           background: rgba(255, 255, 255, 0.1);
-          border-radius: 50%;
           transform: translate(30%, -30%);
         }
         .header::after {
-          content: "";
-          position: absolute;
-          bottom: -50pt;
-          left: -50pt;
-          width: 100pt;
-          height: 100pt;
+          bottom: -50pt; left: -50pt; width: 100pt; height: 100pt;
           background: rgba(255, 255, 255, 0.05);
-          border-radius: 50%;
         }
+
         .profile-container {
           display: flex;
           align-items: center;
@@ -519,8 +495,9 @@ const generatePrintHTML = ({
           position: relative;
           z-index: 1;
         }
+
         .profile-image {
-          width: 100pt;
+          width: 100pt; 
           height: 100pt;
           border-radius: 10%;
           object-fit: cover;
@@ -528,362 +505,334 @@ const generatePrintHTML = ({
           flex-shrink: 0;
           box-shadow: 0 4pt 12pt rgba(0, 0, 0, 0.15);
         }
+        
         .profile-info { flex: 1; }
+
         .name {
-          font-size: 28pt;
+          font-size: 28pt; 
           font-weight: 700;
-          margin-bottom: 4pt;
-          line-height: 1.2;
+          margin-bottom: 4pt; 
+          line-height: 1.2; 
           letter-spacing: -0.02em;
         }
+
         .title {
-          font-size: 14pt;
-          font-weight: 500;
-          margin-bottom: 12pt;
-          opacity: 0.9;
+          font-size: 14pt; font-weight: 500;
+          margin-bottom: 12pt; opacity: 0.9;
+          line-height: 1.2; 
         }
+
         .contact-info {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 8pt;
         }
+
         .contact-item {
           display: flex;
           align-items: center;
           gap: 6pt;
           font-size: 9pt;
           opacity: 0.9;
+          line-height: 1.2; /* PERBAIKAN ALIGNMENT */
         }
+
         .contact-item svg {
-          width: 12pt;
-          height: 12pt;
+          width: 12pt; height: 12pt;
           fill: white;
+          flex-shrink: 0; 
         }
         
-        /* PERUBAHAN: Kurangi margin-bottom section dan hapus page-break-inside */
+        /* --- KONTEN UTAMA & ATURAN PAGE BREAK --- */
+        
+        .main-content { 
+          padding: 0 25pt; 
+        }
+
+        /* KUNCI #1: Biarkan .section bisa pecah halaman */
         .section {
-          margin-bottom: 25pt;
-          page-break-inside: auto;
-          break-inside: auto;
+          margin-bottom: 20pt;
+          page-break-inside: auto; 
+          break-inside: auto; 
         }
-        
-        .section:last-child {
-          margin-bottom: 0; /* Hapus margin untuk section terakhir */
-        }
+        .section:last-child { margin-bottom: 0; }
         
         .section-title {
-          font-size: 16pt;
-          font-weight: 700;
-          margin-bottom: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-          padding-bottom: 6pt; /* Kurangi dari 8pt menjadi 6pt */
+          font-size: 16pt; font-weight: 700;
+          margin-bottom: 8pt; padding-bottom: 4pt;
+          margin-top: 12pt;
           border-bottom: 2pt solid #e2e8f0;
           color: #1e40af;
           position: relative;
           display: flex;
           align-items: center;
+          page-break-after: avoid; 
+          line-height: 1.2; 
         }
+        
         .section-title::after {
           content: "";
           position: absolute;
-          bottom: -2pt;
-          left: 0;
-          width: 60pt;
-          height: 2pt;
+          bottom: -2pt; left: 0;
+          width: 60pt; height: 2pt;
           background: #3b82f6;
         }
-        .main-content { padding: 0 25pt; }
+
+        /* KUNCI #2: JANGAN potong item-item ini */
+        .summary,
+        .experience-item,
+        .skills-group,
+        .project-item,
+        .education-item,
+        .certification-item,
+        .language-item {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+
+        /* --- STYLING PER BAGIAN --- */
+
         .summary {
-          font-size: 10pt;
-          line-height: 1.6;
-          margin-bottom: 15pt; /* Kurangi dari 20pt menjadi 15pt */
-          padding: 12pt; /* Kurangi dari 15pt menjadi 12pt */
+          font-size: 10pt; line-height: 1.6; 
+          margin-bottom: 10pt; padding: 10pt;
           background: #f8fafc;
           border-radius: 6pt;
           border-left: 4pt solid #3b82f6;
         }
-        .skills-container {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 15pt; /* Kurangi dari 20pt menjadi 15pt */
+        .summary p {
+          margin: 0;
         }
-        .skills-group {
-          margin-bottom: 6pt; /* Kurangi dari 8pt menjadi 6pt */
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
+
+        /* Skills */
+        .skills-container { /* (kosong) */ }
+        
+        .skills-group { margin-bottom: 10pt; }
+        .skills-group:last-child { margin-bottom: 4pt; }
+        
         .skills-title {
-          font-size: 12pt;
-          font-weight: 600;
-          margin-bottom: 8pt; /* Kurangi dari 10pt menjadi 8pt */
-          color: #334155;
+          font-size: 12pt; font-weight: 600;
+          margin-bottom: 6pt; color: #334155;
+          line-height: 1.2; 
         }
+        
         .skill-tags {
           display: flex;
           flex-wrap: wrap;
-          gap: 5pt; /* Kurangi dari 6pt menjadi 5pt */
-          page-break-inside: auto;
-          break-inside: auto;
+          gap: 4pt;
         }
+        
         .skill-tag {
-          display: inline-block;
+          display: inline-flex; 
+          align-items: center;  
+          justify-content: center; 
+          line-height: 1.2; /* PERBAIKAN ALIGNMENT */
           background: #eff6ff;
           color: #1e40af;
-          padding: 3pt 8pt; /* Kurangi padding */
-          border-radius: 20pt;
-          font-size: 8.5pt;
+          padding: 3pt 6pt;
+          border-radius: 5pt; 
           font-weight: 500;
+          font-size: 8.5pt; 
           border: 1pt solid #bfdbfe;
         }
+
+        /* Experience */
         .experience-item {
-          margin-bottom: 15pt; /* Kurangi dari 18pt menjadi 15pt */
-          padding-bottom: 15pt; /* Kurangi dari 18pt menjadi 15pt */
+          margin-bottom: 12pt; padding-bottom: 12pt;
           border-bottom: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
         }
         .experience-item:last-child { 
-          border-bottom: none; 
-          margin-bottom: 0;
-          padding-bottom: 0;
+          border-bottom: none; margin-bottom: 0; padding-bottom: 0;
         }
+        
         .experience-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 5pt; /* Kurangi dari 6pt menjadi 5pt */
+          margin-bottom: 4pt;
         }
+        
         .experience-title {
-          font-size: 13pt;
-          font-weight: 700;
-          color: #1e40af;
+          font-size: 13pt; font-weight: 700; color: #1e40af;
+          line-height: 1.2; 
         }
         .experience-company {
-          font-size: 11pt;
-          font-weight: 600;
-          color: #334155;
-          margin-bottom: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          font-size: 11pt; font-weight: 600;
+          color: #334155; margin-bottom: 2pt;
+          line-height: 1.2; 
         }
+        
         .experience-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-          font-size: 9pt;
-          color: #64748b;
-          margin-bottom: 8pt; /* Kurangi dari 10pt menjadi 8pt */
+          display: flex; flex-wrap: wrap;
+          gap: 8pt; font-size: 9pt;
+          color: #64748b; margin-bottom: 6pt;
         }
+        
         .experience-meta-item {
           display: flex;
-          align-items: center;
+          align-items: center; 
           gap: 4pt;
+          line-height: 1.2; /* PERBAIKAN ALIGNMENT */
         }
+        
+        .experience-meta-item svg {
+          flex-shrink: 0; 
+        }
+        
         .experience-achievements {
-          list-style: none;
-          padding-left: 0;
-          margin: 0;
-          page-break-inside: auto;
-          break-inside: auto;
+          list-style: none; padding-left: 0; margin: 0;
         }
         .experience-achievements li {
-          font-size: 9.5pt;
-          margin-bottom: 4pt; /* Kurangi dari 5pt menjadi 4pt */
-          position: relative;
-          padding-left: 16pt;
-          line-height: 1.5;
+          font-size: 9.5pt; margin-bottom: 3pt;
+          position: relative; padding-left: 16pt;
+          line-height: 1.5; 
         }
         .experience-achievements li:before {
           content: "•";
-          position: absolute;
-          left: 4pt;
-          color: #3b82f6;
-          font-weight: bold;
+          position: absolute; left: 4pt;
+          color: #3b82f6; font-weight: bold;
         }
+
+        /* Education */
         .education-item {
-          margin-bottom: 12pt; /* Kurangi dari 16pt menjadi 12pt */
-          padding-bottom: 12pt; /* Kurangi dari 16pt menjadi 12pt */
+          margin-bottom: 10pt; padding-bottom: 10pt;
           border-bottom: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
         }
         .education-item:last-child { 
-          border-bottom: none; 
-          margin-bottom: 0;
-          padding-bottom: 0;
+          border-bottom: none; margin-bottom: 0; padding-bottom: 0;
         }
         .education-title {
-          font-size: 13pt;
-          font-weight: 700;
-          color: #1e40af;
-          margin-bottom: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          font-size: 13pt; font-weight: 700;
+          color: #1e40af; margin-bottom: 2pt;
+          line-height: 1.2; 
         }
         .education-institution {
-          font-size: 11pt;
-          font-weight: 600;
-          color: #334155;
-          margin-bottom: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          font-size: 11pt; font-weight: 600;
+          color: #334155; margin-bottom: 2pt;
+          line-height: 1.2; 
         }
         .education-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-          font-size: 9pt;
-          color: #64748b;
-          margin-bottom: 5pt; /* Kurangi dari 6pt menjadi 5pt */
+          display: flex; flex-wrap: wrap;
+          gap: 8pt; font-size: 9pt;
+          color: #64748b; margin-bottom: 4pt;
         }
-        .education-details {
-          font-size: 9.5pt;
-          color: #475569;
-        }
-        .projects-container {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12pt; /* Kurangi dari 16pt menjadi 12pt */
-        }
+
+        /* Projects */
+        .projects-container { /* (kosong) */ }
+        
         .project-item {
-          margin-bottom: 12pt; /* Kurangi dari 16pt menjadi 12pt */
-          padding-bottom: 12pt; /* Kurangi dari 16pt menjadi 12pt */
-          border-bottom: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
-          background: #f8fafc;
-          border-radius: 6pt;
-          padding: 10pt; /* Kurangi dari 12pt menjadi 10pt */
+          background: #f8fafc; border-radius: 6pt;
+          padding: 10pt; margin-bottom: 10pt;
+          border: 1px solid #e2e8f0;
         }
-        .project-item:last-child { 
-          border-bottom: none; 
-          margin-bottom: 0;
-          padding-bottom: 0;
-        }
+        .project-item:last-child { margin-bottom: 0; }
+
         .project-title {
-          font-size: 12pt;
-          font-weight: 700;
-          color: #1e40af;
-          margin-bottom: 5pt; /* Kurangi dari 6pt menjadi 5pt */
+          font-size: 12pt; font-weight: 700;
+          color: #1e40af; margin-bottom: 4pt;
+          line-height: 1.2; 
         }
         .project-description {
-          font-size: 9pt;
-          line-height: 1.5;
-          margin-bottom: 6pt; /* Kurangi dari 8pt menjadi 6pt */
-          color: #475569;
+          font-size: 9pt; line-height: 1.5; 
+          margin-bottom: 5pt; color: #475569;
         }
+        
         .project-links {
-          display: flex;
-          flex-direction: column;
-          gap: 3pt; /* Kurangi dari 4pt menjadi 3pt */
-          margin-bottom: 6pt; /* Kurangi dari 8pt menjadi 6pt */
+          display: flex; flex-direction: column;
+          gap: 2pt; margin-bottom: 5pt;
         }
+        
         .project-link {
-          color: #1e40af;
-          text-decoration: none;
+          color: #1e40af; text-decoration: none;
           font-size: 8.5pt;
           display: flex;
           align-items: center;
           gap: 4pt;
+          line-height: 1.2; /* PERBAIKAN ALIGNMENT */
+        }
+        .project-link svg {
+          flex-shrink: 0;
         }
         .project-link:hover { text-decoration: underline; }
+        
         .project-technologies {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          display: flex; flex-wrap: wrap; gap: 2pt;
         }
+        
         .tech-tag {
-          display: inline-block;
+          display: inline-flex; 
+          align-items: center;  
+          justify-content: center; 
+          line-height: 1.2;       
           background: #eff6ff;
           color: #1e40af;
-          padding: 2pt 6pt; /* Kurangi padding */
+          padding: 3pt 5pt;
           border-radius: 20pt;
           font-size: 8pt;
           border: 1pt solid #bfdbfe;
         }
-        .certifications-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-        }
+
+        /* Certifications */
+        .certifications-grid { /* (kosong) */ }
+        
         .certification-item {
-          padding: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-          border-bottom: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
-          background: #f8fafc;
-          border-radius: 6pt;
+          padding: 8pt; background: #f8fafc;
+          border-radius: 6pt; margin-bottom: 8pt;
+          border: 1px solid #e2e8f0;
         }
-        .certification-item:last-child { border-bottom: none; }
+        .certification-item:last-child { margin-bottom: 0; }
+        
         .certification-title {
-          font-size: 11pt;
-          font-weight: 700;
-          color: #1e40af;
-          margin-bottom: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          font-size: 11pt; font-weight: 700;
+          color: #1e40af; margin-bottom: 2pt;
+          line-height: 1.2; 
         }
         .certification-issuer {
-          font-size: 10pt;
-          font-weight: 600;
-          color: #334155;
-          margin-bottom: 3pt; /* Kurangi dari 4pt menjadi 3pt */
+          font-size: 10pt; font-weight: 600;
+          color: #334155; margin-bottom: 2pt;
+          line-height: 1.2; 
         }
         .certification-date {
-          font-size: 8.5pt;
-          color: #64748b;
+          font-size: 8.5pt; color: #64748b;
+          line-height: 1.2; 
         }
-        .languages-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-        }
+
+        /* Languages */
+        .languages-grid { /* (kosong) */ }
+        
         .language-item {
           font-size: 9.5pt;
           display: flex;
+          align-items: center; /* PERBAIKAN ALIGNMENT */
           justify-content: space-between;
-          padding: 8pt 10pt; /* Kurangi padding */
-          border-bottom: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
+          padding: 6pt 8pt;
           background: #f8fafc;
           border-radius: 6pt;
+          margin-bottom: 8pt;
+          border: 1px solid #e2e8f0;
+          line-height: 1.2; 
         }
-        .language-item:last-child { border-bottom: none; }
-        .language-name {
-          font-weight: 600;
-          color: #334155;
-        }
-        .language-level {
-          color: #64748b;
-          font-weight: 500;
-        }
-        .footer {
-          text-align: center;
-          font-size: 8pt;
-          color: #94a3b8;
-          margin-top: 20pt; /* Kurangi dari 24pt menjadi 20pt */
-          padding-top: 10pt; /* Kurangi dari 12pt menjadi 10pt */
-          border-top: 1pt solid #e2e8f0;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
+        .language-item:last-child { margin-bottom: 0; }
+        
+        .language-name { font-weight: 600; color: #334155; }
+        .language-level { color: #64748b; font-weight: 500; }
+
+        /* --- PRINT STYLES --- */
         @media print {
           body { margin: 0; padding: 0; background: white; }
-          .cv-container { box-shadow: none; border-radius: 0; }
-          
-          /* Tambahkan aturan untuk memastikan section yang panjang bisa dibagi */
-          .section {
-            page-break-inside: auto;
-            break-inside: auto;
-          }
-          
-          /* Pastikan item-item di dalam section tidak terpotong */
-          .experience-item,
-          .project-item,
-          .education-item,
-          .certification-item,
-          .language-item,
-          .skills-group {
+          .section { page-break-inside: auto; break-inside: auto; }
+          .experience-item, .project-item, .education-item,
+          .certification-item, .language-item, .skills-group,
+          .summary, .header {
             page-break-inside: avoid;
             break-inside: avoid;
           }
         }
       </style>
     </head>
+    
     <body>
       <div class="cv-container">
+        
         <div class="header">
           <div class="profile-container">
             <div class="profile-info">
@@ -947,7 +896,7 @@ const generatePrintHTML = ({
             }
           </div>
         </div>
-
+        
         <div class="main-content">
           ${sectionsHTML.length > 0 ? sectionsHTML.join('') : ''}
         </div>
