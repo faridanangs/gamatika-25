@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import { deleteComment } from '@/lib/action';
 import { formatReadableTime } from '@/lib/timeReadable';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
 
 export function Comment({ comment, user, token, onDeleteComment }) {
   const [showImageModal, setShowImageModal] = useState(false);
@@ -105,7 +106,10 @@ export function Comment({ comment, user, token, onDeleteComment }) {
           <div className="flex flex-col gap-1">
             {showAllTextContent ? (
               <>
-                {comment.content}
+                <RenderReactMarkDown
+                  content={post.content}
+                  isSubstring={false}
+                />
                 <span
                   onClick={() => setShowAllTextContent(false)}
                   className="cursor-pointer"
@@ -117,10 +121,17 @@ export function Comment({ comment, user, token, onDeleteComment }) {
             ) : (
               <span>
                 {comment?.content.length < 250 ? (
-                  comment.content
+                  <RenderReactMarkDown
+                    content={post.content}
+                    isSubstring={false}
+                  />
                 ) : (
                   <span>
-                    {comment.content.slice(0, 250)}{' '}
+                    <RenderReactMarkDown
+                      content={post.content}
+                      lenght={250}
+                      isSubstring={true}
+                    />
                     <span
                       onClick={() => setShowAllTextContent(true)}
                       className="cursor-pointer"

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
-import { categories, mockPosts } from '@/data/mockCategories';
+import { categories } from '@/data/mockCategories';
 import CreatePostModal, {
   CreatePostButton,
   ForumPost,

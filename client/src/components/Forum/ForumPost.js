@@ -38,6 +38,7 @@ import Link from 'next/link';
 import { ImageModal } from './ImageUpload';
 import { getPostCommentPerPage } from '@/data/getPostsData';
 import { createComment } from '@/lib/action';
+import { RenderReactMarkDown } from '@/lib/reactMarkDown';
 
 const CommentSkeleton = () => {
   return (
@@ -268,14 +269,17 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <p
+          <span
             className={`text-gray-700 dark:text-gray-300 mb-4 ${
               post?.images.length > 0 ? '' : 'text-lg'
             }`}
           >
             {showAllTextContent ? (
               <>
-                {post.content}
+                <RenderReactMarkDown
+                  content={post.content}
+                  isSubstring={false}
+                />
                 <span
                   onClick={() => setShowAllTextContent(false)}
                   className="cursor-pointer"
@@ -287,22 +291,28 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
             ) : (
               <span>
                 {post?.content.length < 250 ? (
-                  post.content
+                  <RenderReactMarkDown
+                    content={post.content}
+                    isSubstring={false}
+                  />
                 ) : (
                   <span>
-                    {post.content.slice(0, 250)}{' '}
+                    <RenderReactMarkDown
+                      content={post.content}
+                      isSubstring={true}
+                      lenght={250}
+                    />
                     <span
                       onClick={() => setShowAllTextContent(true)}
                       className="cursor-pointer"
                     >
-                      {'... '}
                       ⬇️
                     </span>
                   </span>
                 )}
               </span>
             )}
-          </p>
+          </span>
 
           {post?.images && post?.images.length > 0 && (
             <div className="mb-4 rounded-2xl">
@@ -642,7 +652,6 @@ export default function CreatePostModal({ isOpen, onClose, onCreate }) {
       setCategory('Matematika');
       setImages([]);
       onClose();
-      toast.success('Postingan berhasil dibuat!');
     } catch (error) {
       toast.error(`Gagal: ${error.message}`);
     } finally {
