@@ -250,11 +250,6 @@ func (h *DatabaseErrorHandler) handleDuplicateKeyError(err error, operation stri
 
 // Extract field name from constraint name
 func (h *DatabaseErrorHandler) extractFieldNameFromConstraint(constraint string) string {
-	// Handle constraint patterns:
-	// - "idx_users_email" -> "email"
-	// - "users_username_key" -> "username"
-	// - "users_email_key" -> "email"
-
 	parts := strings.Split(constraint, "_")
 	if len(parts) < 2 {
 		return ""
@@ -272,17 +267,14 @@ func (h *DatabaseErrorHandler) extractFieldNameFromConstraint(constraint string)
 		}
 	}
 
-	// If no clear field name, return the last part
 	return parts[len(parts)-1]
 }
 
 func (h *DatabaseErrorHandler) handlePostgresError(pgErr *pq.Error, operation string) *AppError {
 	switch pgErr.Code {
-	// Unique constraint violation
 	case "23505":
 		return h.handleUniqueViolation(pgErr, operation)
 
-	// Foreign key violation
 	case "23503":
 		return &AppError{
 			Code:    fiber.StatusBadRequest,
@@ -361,10 +353,8 @@ func (h *DatabaseErrorHandler) handlePostgresError(pgErr *pq.Error, operation st
 }
 
 func (h *DatabaseErrorHandler) handleUniqueViolation(pgErr *pq.Error, operation string) *AppError {
-	// Extract field name from column or constraint
 	fieldName := h.extractFieldNameFromColumn(pgErr.Column, pgErr.Constraint)
 	if fieldName == "" {
-		// Try to extract from constraint name
 		fieldName = h.extractFieldNameFromConstraint(pgErr.Constraint)
 	}
 
@@ -406,13 +396,11 @@ func (h *DatabaseErrorHandler) handleUniqueViolation(pgErr *pq.Error, operation 
 	}
 }
 
-// Extract field name from column or constraint
 func (h *DatabaseErrorHandler) extractFieldNameFromColumn(column, constraint string) string {
 	if column != "" {
 		return column
 	}
 
-	// Fallback to constraint name parsing
 	if constraint == "" {
 		return ""
 	}
@@ -422,7 +410,6 @@ func (h *DatabaseErrorHandler) extractFieldNameFromColumn(column, constraint str
 		return ""
 	}
 
-	// Skip common prefixes like "idx", "users", "key"
 	for _, part := range parts {
 		lowerPart := strings.ToLower(part)
 		if lowerPart != "idx" &&
@@ -434,11 +421,9 @@ func (h *DatabaseErrorHandler) extractFieldNameFromColumn(column, constraint str
 		}
 	}
 
-	// If no clear field name, return the last part
 	return parts[len(parts)-1]
 }
 
-// Get field code for error messages
 func (h *DatabaseErrorHandler) getFieldCode(fieldName string) string {
 	fieldCodeMap := map[string]string{
 		"email":          "EMAIL",
@@ -466,7 +451,6 @@ func (h *DatabaseErrorHandler) HandleTransactionError(err error, operation strin
 		return nil
 	}
 
-	// Check if it's a transaction rollback error
 	if strings.Contains(err.Error(), "transaction has already been committed or rolled back") {
 		return &AppError{
 			Code:    fiber.StatusInternalServerError,
@@ -485,11 +469,9 @@ func (h *DatabaseErrorHandler) HandleTransactionError(err error, operation strin
 		}
 	}
 
-	// Handle other transaction errors
 	return h.HandleError(err, operation)
 }
 
-// Get field code for error messages
 func getFieldCode(field string) string {
 	fieldCodeMap := map[string]string{
 		"FullName":       "FULL_NAME",

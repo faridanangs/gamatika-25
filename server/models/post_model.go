@@ -36,16 +36,16 @@ func (Post) TableName() string {
 
 // ==================== REQUEST DTO ====================
 type CreatePostRequest struct {
-	Title    string   `json:"title" validate:"required,min=4,max=100"`
-	Content  string   `json:"content" validate:"required,min=6"`
-	Category string   `json:"category" validate:"required,min=5,max=50"`
+	Title    string   `json:"title" validate:"required,min=2,max=100"`
+	Content  string   `json:"content" validate:"required,min=2"`
+	Category string   `json:"category" validate:"required,min=1,max=50"`
 	Images   []string `json:"images" validate:"max=4,required,omitempty"`
 }
 
 type UpdatePostRequest struct {
 	ID      string `json:"id" validate:"required"`
-	Title   string `json:"title" validate:"omitempty,min=4,max=100"`
-	Content string `json:"content" validate:"omitempty,min=6"`
+	Title   string `json:"title" validate:"omitempty,min=2,max=100"`
+	Content string `json:"content" validate:"omitempty,min=1"`
 	Updated bool   `json:"updated" validate:"omitempty"`
 }
 
