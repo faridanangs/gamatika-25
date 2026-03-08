@@ -68,7 +68,6 @@ func (us *UserService) CreateUser(req models.CreateUserRequest) (*models.UserRes
 		Role:          req.Role,
 		Avatar:        req.Avatar,
 		Prodi:         req.Prodi,
-		Nim:           req.Nim,
 		Email:         req.Email,
 		Password:      hashedPassword,
 		WalletAddress: req.WalletAddress,

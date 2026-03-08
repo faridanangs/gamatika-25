@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	_ "time/tzdata"
+
 	"github.com/faridanangs/gamatika-25/controllers"
 	"github.com/faridanangs/gamatika-25/database"
 	"github.com/faridanangs/gamatika-25/middleware"

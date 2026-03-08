@@ -16,7 +16,6 @@ type User struct {
 	Role          string    `gorm:"column:role;not null,type:varchar(5);default:user"`
 	Avatar        string    `gorm:"column:avatar;type:varchar(500);not null"`
 	Prodi         string    `gorm:"column:prodi;type:varchar(50);not null"`
-	Nim           string    `gorm:"column:nim;not null;uniqueIndex;type:varchar(30)"`
 	Email         string    `gorm:"uniqueIndex;column:email;type:varchar(150)"`
 	Password      string    `gorm:"column:password;type:string;not null"`
 	WalletAddress string    `gorm:"column:wallet_address;type:varchar(200);not null"`
@@ -39,7 +38,6 @@ type CreateUserRequest struct {
 	Avatar        string `json:"avatar" validate:"omitempty,url"`
 	Role          string `json:"role" validate:"omitempty,min=5,max=5"`
 	Prodi         string `json:"prodi" validate:"required,min=2,max=50"`
-	Nim           string `json:"nim" validate:"alphanum,required,min=6,max=20"`
 	Email         string `json:"email" validate:"required,email"`
 	Password      string `json:"password" validate:"required,min=8,max=30"`
 	WalletAddress string `json:"wallet_address" validate:"required"`
@@ -67,7 +65,6 @@ type UserResponse struct {
 	Role          string            `json:"role"`
 	Avatar        string            `json:"avatar"`
 	Prodi         string            `json:"prodi"`
-	Nim           string            `json:"nim"`
 	Email         string            `json:"email"`
 	WalletAddress string            `json:"wallet_address"`
 	Achievements  datatypes.JSON    `json:"achievements"`

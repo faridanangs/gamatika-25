@@ -101,7 +101,6 @@ func MapToUserResponse(user models.User) *models.UserResponse {
 		Role:          user.Role,
 		Avatar:        user.Avatar,
 		Prodi:         user.Prodi,
-		Nim:           user.Nim,
 		Email:         user.Email,
 		WalletAddress: user.WalletAddress,
 		Achievements:  user.Achievements,

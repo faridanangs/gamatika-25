@@ -205,8 +205,6 @@ func (h *DatabaseErrorHandler) handleDuplicateKeyError(err error, operation stri
 			fieldName = "email"
 		} else if strings.Contains(errStr, "username") {
 			fieldName = "username"
-		} else if strings.Contains(errStr, "nim") {
-			fieldName = "nim"
 		}
 	}
 
@@ -428,7 +426,6 @@ func (h *DatabaseErrorHandler) getFieldCode(fieldName string) string {
 	fieldCodeMap := map[string]string{
 		"email":          "EMAIL",
 		"username":       "USERNAME",
-		"nim":            "NIM",
 		"full_name":      "FULL_NAME",
 		"prodi":          "PRODI",
 		"wallet_address": "WALLET_ADDRESS",
@@ -478,7 +475,6 @@ func getFieldCode(field string) string {
 		"Username":       "USERNAME",
 		"Email":          "EMAIL",
 		"Password":       "PASSWORD",
-		"Nim":            "NIM",
 		"Prodi":          "PRODI",
 		"WalletAddress":  "WALLET_ADDRESS",
 		"PrivateKey":     "PRIVATE_KEY",
@@ -487,7 +483,6 @@ func getFieldCode(field string) string {
 		"Images":         "IMAGES",
 		"username":       "USERNAME",
 		"email":          "EMAIL",
-		"nim":            "NIM",
 		"full_name":      "FULL_NAME",
 		"prodi":          "PRODI",
 		"wallet_address": "WALLET_ADDRESS",
@@ -513,7 +508,6 @@ func getReadableFieldName(field string) string {
 		"Username":       "Username",
 		"Email":          "Email",
 		"Password":       "Password",
-		"Nim":            "Student ID",
 		"Prodi":          "Study Program",
 		"WalletAddress":  "Wallet Address",
 		"PrivateKey":     "Private Key",
@@ -522,7 +516,6 @@ func getReadableFieldName(field string) string {
 		"Images":         "Images",
 		"username":       "Username",
 		"email":          "Email",
-		"nim":            "Student ID",
 		"full_name":      "Full Name",
 		"prodi":          "Study Program",
 		"wallet_address": "Wallet Address",
