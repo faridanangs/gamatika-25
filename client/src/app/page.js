@@ -204,7 +204,7 @@ const HomePage = () => {
                 </p>
                 {feature.id === 3 && (
                   <Link
-                    href="/Cv-Budi-Santoso(2).pdf"
+                    href="/cv-template.pdf"
                     className={`text-black dark:text-white font-sans mb-2 inline-block px-2 py-1 bg-linear-to-r ${feature.gradient} rounded-md cursor-pointer`}
                   >
                     lihat template

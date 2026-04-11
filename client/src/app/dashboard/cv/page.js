@@ -270,7 +270,7 @@ const downloadPDF = async () => {
           <span className="flex lg:justify-between lg:items-center flex-col lg:flex-row">
             <h1 className="text-3xl font-bold">Pembuat CV Profesional</h1>{" "}
             <Link
-              href="/Cv-Budi-Santoso(2).pdf"
+              href="/cv-template.pdf"
               className={`text-black border-2 dark:text-white my-1 font-sans flex gap-2 px-2 bg-linear-to-r w-[8em] items-center justify-center text-center from-green-600/10 to-emerald-600/10 rounded-md cursor-pointer`}
             >
               template <DownloadIcon className="size-4 inline-block"/>
