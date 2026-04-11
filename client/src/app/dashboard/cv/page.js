@@ -1,5 +1,4 @@
 "use client";
-import { v4 as uuidv4 } from "uuid";
 import { useState, useRef, memo, useEffect } from "react";
 import {
   PersonalInfoForm,
@@ -11,10 +10,9 @@ import {
   SkillsForm,
   SummaryForm,
 } from "./cv-handler";
-import { Download, ChevronLeft, ChevronRight, DownloadIcon } from "lucide-react";
+import { Download, ChevronRight, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 import { printPDF } from "@/lib/cvTemplate";
 import { CVHandler } from "./cv-handler";
