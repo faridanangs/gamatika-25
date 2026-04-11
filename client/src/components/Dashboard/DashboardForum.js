@@ -41,6 +41,8 @@ export default function DashboardForumPage({
 
       if (node) observer.current.observe(node);
     },
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLoading, hasMore]
   );
 

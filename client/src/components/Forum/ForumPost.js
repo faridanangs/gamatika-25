@@ -83,6 +83,7 @@ export function ForumPost({ post, onLike, className, isAuth, user, token }) {
 
       if (node) observer.current.observe(node);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [loadingMore, hasMore, showComments]
   );
 
