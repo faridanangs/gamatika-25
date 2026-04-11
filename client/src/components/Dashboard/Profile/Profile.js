@@ -366,10 +366,6 @@ export default function ProfilePageComp({ user, token }) {
               <p className="font-medium">{user?.email}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">NIM</p>
-              <p className="font-medium">{user?.nim}</p>
-            </div>
-            <div>
               <p className="text-sm text-muted-foreground">Total Postingan</p>
               <p className="font-medium">{userStats.totalPosts}</p>
             </div>
@@ -502,7 +498,7 @@ export default function ProfilePageComp({ user, token }) {
                       key={i}
                       className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full"
                     >
-                      <CardContent className="p-3 sm:p-4 flex-grow flex flex-col">
+                      <CardContent className="p-3 sm:p-4 grow flex flex-col">
                         <div className="flex flex-col gap-3 sm:gap-4">
                           <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
                             <Image
@@ -515,7 +511,7 @@ export default function ProfilePageComp({ user, token }) {
                               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                               priority={i < 3}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                           </div>
                           <div className="space-y-2">
                             <h3 className="font-semibold text-sm sm:text-base line-clamp-1">

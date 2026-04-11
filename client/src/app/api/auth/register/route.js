@@ -48,10 +48,7 @@ export async function POST(request) {
       );
     }
 
-    const { fullName, username, prodi, nim, email, password } =
-      registrationData;
-
-    console.log(fullName, username, prodi, nim, email);
+    const { fullName, username, prodi, email, password } = registrationData;
 
     const wallet = ethers.Wallet.createRandom();
 
@@ -66,7 +63,6 @@ export async function POST(request) {
           full_name: fullName,
           username,
           prodi,
-          nim: nim,
           email,
           password,
           wallet_address: wallet.address,
@@ -92,7 +88,6 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error during registration:', error);
     return NextResponse.json(
       {
         success: false,

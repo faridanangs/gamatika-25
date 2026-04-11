@@ -87,7 +87,7 @@ export const NavItems = ({ items, className, onItemClick }) => {
       {items.map((item, idx) => (
         <Button
           key={`link-${idx}`}
-          disabled={item.link == '/loker' ? true : false}
+          disabled={item.link == '/loker'|| item.link == '/forum' || item.link == '/blogs' ? true : false}
           className="bg-transparent m-0 p-0 hover:bg-transparent relative"
         >
           {item.link == '/loker' && (

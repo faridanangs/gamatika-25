@@ -55,7 +55,6 @@ export const authOptions = {
             role: result.data.user.role,
             avatar: result.data.user.avatar,
             prodi: result.data.user.prodi,
-            nim: result.data.user.nim,
             email: result.data.user.email,
             walletAddress: result.data.user.wallet_address,
             token: result.data.token,
@@ -103,7 +102,6 @@ export const authOptions = {
         token.role = user.role;
         token.avatar = user.avatar;
         token.prodi = user.prodi;
-        token.nim = user.nim;
         token.email = user.email;
         token.walletAddress = user.walletAddress;
       }
@@ -118,7 +116,6 @@ export const authOptions = {
         session.user.role = token.role;
         session.user.avatar = token.avatar;
         session.user.prodi = token.prodi;
-        session.user.nim = token.nim;
         session.user.email = token.email;
         session.user.walletAddress = token.walletAddress;
       }

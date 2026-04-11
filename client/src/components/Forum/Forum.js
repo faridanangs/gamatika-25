@@ -232,7 +232,7 @@ export default function ForumPage({ contribsO, isAuth }) {
 
 export function TopContributors({ props, isText = true, isAddress = false }) {
   if (props.length == 0) {
-    return <TopContributorsSkeleton />;
+    return <TopContributorsSkeleton data={props} />;
   }
 
   return (

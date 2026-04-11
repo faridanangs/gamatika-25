@@ -19,6 +19,7 @@ export function NavbarHeader() {
     { name: 'Home', link: '/' },
     { name: 'Forum Diskusi', link: '/forum' },
     { name: 'Ingfo Loker Cok', link: '/loker' },
+    { name: 'Buat CV', link: '/cv' },
     { name: 'Blogs', link: '/blogs' },
   ];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -57,7 +58,7 @@ export function NavbarHeader() {
             {navItems.map((item, idx) => (
               <Button
                 key={`mobile-link-${idx}`}
-                disabled={item.link == '/loker' ? true : false}
+                disabled={item.link == '/loker'|| item.link == '/forum' || item.link == '/blogs' ? true : false}
                 className="bg-transparent m-0 px-2 hover:bg-transparent relative"
               >
                 {item.link == '/loker' && (

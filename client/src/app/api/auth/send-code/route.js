@@ -8,7 +8,7 @@
 
 // export async function POST(request) {
 //   try {
-//     const { fullName, username, prodi, nim, email, password } =
+//     const { fullName, username, prodi, email, password } =
 //       await request.json();
 
 //     const verificationCode = Math.floor(
@@ -48,7 +48,6 @@
 //       fullName,
 //       username,
 //       prodi,
-//       nim,
 //       email,
 //       password,
 //       verificationCode,
@@ -92,14 +91,11 @@ import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
-    const { fullName, username, prodi, nim, email, password } =
-      await request.json();
+    const { fullName, username, prodi, email, password } = await request.json();
 
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
-
-    console.log(`Verification code for ${email}: ${verificationCode}`);
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -136,7 +132,6 @@ export async function POST(request) {
       fullName,
       username,
       prodi,
-      nim,
       email,
       password,
       verificationCode,

@@ -1,13 +1,19 @@
-'use client';
-import React from 'react';
-import { Button } from '../../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Badge, Share2, Trash2 } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { formatReadableTime } from '@/lib/timeReadable';
-import { RenderReactMarkDown } from '@/lib/reactMarkDown';
-import { useRouter } from 'next/navigation';
+"use client";
+import React from "react";
+import { Button } from "../../ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../ui/card";
+import { Badge, Share2, Trash2 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { formatReadableTime } from "@/lib/timeReadable";
+import { RenderReactMarkDown } from "@/lib/reactMarkDown";
+import { useRouter } from "next/navigation";
 
 // Komponen Skeleton untuk Artikel
 const ArtikelSkeleton = () => (
@@ -96,7 +102,7 @@ export const ArtikelCard = ({
               {currentArtikels.map((artkl) => (
                 <Card
                   key={artkl.id}
-                  className=" hover:shadow-md transition-shadow"
+                  className=" hover:shadow-md transition-shadow relative"
                 >
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -112,34 +118,42 @@ export const ArtikelCard = ({
                       {formatReadableTime(artkl.created_at)}
                     </p>
                   </CardHeader>
-                  <CardContent className="lg:pt-4 overflow-hidden">
+                  <CardContent className="lg:pt-2 overflow-hidden">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        {artkl.tags && artkl.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {artkl.tags.map((tag, index) => (
-                              <span key={index} className="text-gray-600">
-                                #{tag}
-                              </span>
-                            ))}
+                        <div>
+                          {" "}
+                          {artkl.tags && artkl.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {artkl.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="text-gray-600 border-b"
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="inline-block text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">
+                            <RenderReactMarkDown
+                              content={artkl.content}
+                              isSubstring={true}
+                              lenght={200}
+                            />
                           </div>
-                        )}
-                        <div className="inline-block text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">
-                          <RenderReactMarkDown
-                            content={artkl.content}
-                            isSubstring={true}
-                            lenght={200}
-                          />
                         </div>
-                        <Link
-                          href={`/blogs/${artkl.id}`}
-                          className="underline text-sm mt-2"
-                        >
-                          lihat detail
-                        </Link>
                       </div>
                     </div>
                   </CardContent>
+                  <CardFooter>
+                    <Link
+                      href={`/blogs/${artkl.id}`}
+                      className="underline text-sm mt-2 inline-block absolute bottom-2 right-2"
+                    >
+                      lihat detail
+                    </Link>
+                  </CardFooter>
                 </Card>
               ))}
               {currentArtikels.length === 0 && (
@@ -191,7 +205,7 @@ export const ArtikelCard = ({
                         <Button
                           key={page}
                           variant={
-                            currentArtikelPage === page ? 'default' : 'outline'
+                            currentArtikelPage === page ? "default" : "outline"
                           }
                           onClick={() => setCurrentArtikelPage(page)}
                           className="flex-shrink-0 w-10 h-10 min-w-[40px]"
@@ -199,7 +213,7 @@ export const ArtikelCard = ({
                           {page}
                         </Button>
                       );
-                    }
+                    },
                   )}
                 </div>
 
@@ -247,11 +261,11 @@ export const PostCard = ({
     if (navigator.share) {
       navigator.share({
         title: post?.title,
-        text: post?.content?.substring(0, 20) + '...',
+        text: post?.content?.substring(0, 20) + "...",
         url: `${window.location.origin}/forum/${post.id}`,
       });
     } else {
-      alert('Link disalin ke clipboard!');
+      alert("Link disalin ke clipboard!");
       navigator.clipboard.writeText(window.location.href);
     }
   };
@@ -391,7 +405,7 @@ export const PostCard = ({
                         <Button
                           key={page}
                           variant={
-                            currentPostPage === page ? 'default' : 'outline'
+                            currentPostPage === page ? "default" : "outline"
                           }
                           onClick={() => setCurrentPostPage(page)}
                           className="flex-shrink-0 w-10 h-10 min-w-[40px]"
@@ -399,7 +413,7 @@ export const PostCard = ({
                           {page}
                         </Button>
                       );
-                    }
+                    },
                   )}
                 </div>
 

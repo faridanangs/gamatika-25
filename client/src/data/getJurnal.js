@@ -67,6 +67,9 @@ export async function getJurnals(selectedCourse, currentPage) {
       case 'Pancasila':
         query = 'pancasila';
         break;
+      case 'Digital':
+        query = 'digital';
+        break;
       default:
         query = 'science';
     }

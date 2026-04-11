@@ -51,7 +51,6 @@ export default function RegisterPage() {
     fullName: '',
     username: '',
     email: '',
-    nim: '',
     prodi: '',
     password: '',
   });
@@ -140,14 +139,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
       <BackgroundCircle />
       <div className="container mx-auto px-4 py-16">
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8 mt-9">
               <div className="flex justify-center mb-4">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
+                <div className="bg-linear-to-r from-blue-600 to-purple-600 p-3 rounded-full">
                   <UserCircle className="h-10 w-10 text-white" />
                 </div>
               </div>
@@ -231,28 +230,6 @@ export default function RegisterPage() {
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Mail className="h-5 w-5 text-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* NIM Input */}
-                    <div className="space-y-2">
-                      <Label htmlFor="nim" className="flex items-center">
-                        NIM
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="nim"
-                          type="text"
-                          value={formData.nim}
-                          onChange={handleFormChange}
-                          required
-                          title="NIM minimal 8 digit"
-                          placeholder="X12345678"
-                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Fingerprint className="h-5 w-5 text-gray-400" />
                         </div>
                       </div>
                     </div>

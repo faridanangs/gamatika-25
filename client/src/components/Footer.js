@@ -31,11 +31,11 @@ const Footer = () => {
             </p>
             <div className="flex space-x-2">
               <div className="bg-blue-500/10 rounded-lg p-2">
-                <span className="text-blue-400 font-semibold">5,000+</span>
+                <span className="text-blue-400 font-semibold">500+</span>
                 <span className="text-gray-400 text-sm block">Mahasiswa</span>
               </div>
               <div className="bg-purple-500/10 rounded-lg p-2">
-                <span className="text-purple-400 font-semibold">10,000+</span>
+                <span className="text-purple-400 font-semibold">1000+</span>
                 <span className="text-gray-400 text-sm block">Postingan</span>
               </div>
             </div>
@@ -62,10 +62,6 @@ const Footer = () => {
                 Pembuatan CV Otomatis
               </li>
               <li className="flex items-center hover:text-white transition cursor-pointer">
-                <MessageSquare className="mr-2 h-4 w-4 text-orange-400" />
-                Chat dengan AI
-              </li>
-              <li className="flex items-center hover:text-white transition cursor-pointer">
                 <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
                 Reward NFT
               </li>
@@ -90,14 +86,6 @@ const Footer = () => {
                 <Newspaper className="mr-2 h-4 w-4 text-green-400" />
                 Blogs
               </li>
-              <li className="flex items-center hover:text-white transition cursor-pointer">
-                <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
-                NFT Marketplace
-              </li>
-              <li className="flex items-center hover:text-white transition cursor-pointer">
-                <MessageCircle className="mr-2 h-4 w-4 text-blue-400" />
-                Event Komunitas
-              </li>
             </ul>
           </div>
 
@@ -106,54 +94,15 @@ const Footer = () => {
               <Mail className="mr-2 text-blue-400" /> Hubungi Kami
             </h4>
             <p className="text-gray-400 mb-4">support@deltacivitas.ac.id</p>
-            <div className="flex space-x-4 mb-6">
-              <a
-                href="#"
-                className="bg-gray-800 hover:bg-blue-600 rounded-full p-2 transition"
-              >
-                <MessageCircle size={20} />
-              </a>
-              <a
-                href="#"
-                className="bg-gray-800 hover:bg-green-600 rounded-full p-2 transition"
-              >
-                <Share2 size={20} />
-              </a>
-              <a
-                href="#"
-                className="bg-gray-800 hover:bg-purple-600 rounded-full p-2 transition"
-              >
-                <GraduationCap size={20} />
-              </a>
-              <a
-                href="#"
-                className="bg-gray-800 hover:bg-blue-500 rounded-full p-2 transition"
-              >
-                <Mail size={20} />
-              </a>
-            </div>
+            <div className="flex space-x-4 mb-6"></div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 mb-4 md:mb-0">
+            <p className="text-gray-400 md:mb-0">
               &copy; {currentYear} Delta Civitas. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-gray-400 text-sm">
-              <a href="#" className="hover:text-white transition">
-                Tentang Kami
-              </a>
-              <a href="#" className="hover:text-white transition">
-                Kebijakan Privasi
-              </a>
-              <a href="#" className="hover:text-white transition">
-                Syarat & Ketentuan
-              </a>
-              <a href="#" className="hover:text-white transition">
-                FAQ
-              </a>
-            </div>
           </div>
         </div>
       </div>

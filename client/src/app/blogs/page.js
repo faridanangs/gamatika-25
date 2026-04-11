@@ -111,16 +111,12 @@ export default function BlogsPage() {
         <meta name="description" content="Blogs resmi Delta Civitas" />
       </Head>
 
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg z-10 pt-12">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-center md:text-left mb-4 md:mb-0">
-              <h1 className="text-3xl font-bold text-white">Blogs Resmi</h1>
-              <p className="text-blue-100 mt-1">Fakultas MIPA</p>
-            </div>
-            <div className="bg-blue-500/20 px-4 py-2 rounded-lg">
-              <p className="text-white text-sm">Total: {totalArtikel} Blogs</p>
-            </div>
+      <header className="bg-linear-to-r from-blue-600 to-indigo-700 shadow-lg z-10 pt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center ">
+            <h1 className="text-3xl font-bold text-black dark:text-white">
+              Blogs DeltaCivitas
+            </h1>
           </div>
         </div>
       </header>

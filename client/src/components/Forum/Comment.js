@@ -107,7 +107,7 @@ export function Comment({ comment, user, token, onDeleteComment }) {
             {showAllTextContent ? (
               <>
                 <RenderReactMarkDown
-                  content={post.content}
+                  content={comment.content}
                   isSubstring={false}
                 />
                 <span
@@ -122,13 +122,13 @@ export function Comment({ comment, user, token, onDeleteComment }) {
               <span>
                 {comment?.content.length < 250 ? (
                   <RenderReactMarkDown
-                    content={post.content}
+                    content={comment.content}
                     isSubstring={false}
                   />
                 ) : (
                   <span>
                     <RenderReactMarkDown
-                      content={post.content}
+                      content={comment.content}
                       lenght={250}
                       isSubstring={true}
                     />

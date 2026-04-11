@@ -1,7 +1,14 @@
 'use client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
 
-export function TopContributorsSkeleton() {
+export function TopContributorsSkeleton({ data }) {
+  const [isData, setIsData] = useState(true);
+
+  setTimeout(() => {
+    setIsData(data.length > 0);
+  }, 1000);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl dark:shadow-gray-600 dark:shadow-sm p-6 mb-4 transition-colors duration-300">
       <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
@@ -9,17 +16,23 @@ export function TopContributorsSkeleton() {
         <p className="text-[14px] text-gray-400">(setiap 7 hari)</p>
       </h2>
       <div className="space-y-4">
-        {[1, 2, 3].map((index) => (
-          <div key={index} className="flex items-center">
-            <div className="relative">
-              <Skeleton className="w-12 h-12 rounded-full dark:bg-gray-700" />
+        {isData ? (
+          [1, 2, 3].map((index) => (
+            <div key={index} className="flex items-center">
+              <div className="relative">
+                <Skeleton className="w-12 h-12 rounded-full dark:bg-gray-700" />
+              </div>
+              <div className="ml-3 flex-1 space-y-2">
+                <Skeleton className="h-4  dark:bg-gray-700" />
+                <Skeleton className="h-3 w-12 dark:bg-gray-700" />
+              </div>
             </div>
-            <div className="ml-3 flex-1 space-y-2">
-              <Skeleton className="h-4  dark:bg-gray-700" />
-              <Skeleton className="h-3 w-12 dark:bg-gray-700" />
-            </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <h1 className="text-md font-bold text-gray-600 dark:text-white mb-4">
+            Waduhh, Masa Gak Ada Top Contributor!! 😔🥲
+          </h1>
+        )}
       </div>
     </div>
   );

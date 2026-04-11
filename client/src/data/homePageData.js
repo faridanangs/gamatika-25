@@ -35,16 +35,17 @@ const features = [
     id: 3,
     title: 'Pembuatan CV Otomatis',
     description:
-      'Buat CV profesional dalam hitungan menit dengan template yang disesuaikan',
+      'Buat CV profesional dalam hitungan menit dengan template yang disediakan',
     icon: FileText,
     color: 'from-purple-500 to-pink-500',
-    gradient: 'from-purple-600/10 to-pink-600/10',
+    gradient:
+      'from-purple-600/10 to-pink-600/10 dark:from-purple-600/70 dark:to-pink-600/70',
   },
   {
     id: 8,
     title: 'E-Book & Jurnal',
     description:
-      'Akses e-book dan jurnal berdasarkan mata kuliah MIPA untuk mendukung pembelajaran dan penelitian.',
+      'Akses e-book dan jurnal berdasarkan mata kuliah untuk mendukung pembelajaran dan penelitian.',
     icon: BookOpen,
     color: 'from-pink-500 to-red-500',
     gradient: 'from-pink-600/10 to-red-600/10',
@@ -67,14 +68,7 @@ const features = [
     color: 'from-green-500 to-teal-500',
     gradient: 'from-green-600/10 to-teal-600/10',
   },
-  {
-    id: 4,
-    title: 'Chat dengan AI',
-    description: 'Asisten AI untuk membantu belajar dan konsultasi akademik',
-    icon: MessageSquare,
-    color: 'from-orange-500 to-red-500',
-    gradient: 'from-orange-600/10 to-red-600/10',
-  },
+  
   {
     id: 5,
     title: 'Reward NFT',
@@ -112,12 +106,6 @@ const testimonials = [
       'Platform ini sangat membantu saya dalam membuat CV dan mencari pekerjaan part-time yang sesuai dengan jadwal kuliah.',
   },
   {
-    name: 'Ahmad R.',
-    role: 'Mahasiswa Fisika',
-    comment:
-      'Forum diskusinya sangat aktif dan AI chat-nya membantu saya memahami konsep yang sulit.',
-  },
-  {
     name: 'Maya S.',
     role: 'Mahasiswa Kimia',
     comment:
@@ -126,10 +114,10 @@ const testimonials = [
 ];
 
 const stats = [
-  { label: 'Mahasiswa Aktif', value: '5,000+' },
-  { label: 'Postingan Forum', value: '10,000+' },
+  { label: 'Mahasiswa Aktif', value: '500+' },
+  { label: 'Postingan Forum', value: '1000+' },
   { label: 'Lowongan Kerja', value: '500+' },
-  { label: 'CV Dibuat', value: '3,000+' },
+  { label: 'CV Dibuat', value: '200+' },
 ];
 
 export { stats, testimonials, features, whyChoose };

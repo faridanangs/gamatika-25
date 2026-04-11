@@ -22,7 +22,6 @@ const menuItems = [
     icon: '📚',
     href: '/dashboard/materi',
   },
-  { id: 'chat', label: 'Chat dengan AI', icon: '🤖', href: '/dashboard/chat' },
   // {
   //   id: 'langganan',
   //   label: 'Berlangganan',

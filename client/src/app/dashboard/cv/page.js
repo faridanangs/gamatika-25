@@ -1,6 +1,6 @@
-'use client';
-import { v4 as uuidv4 } from 'uuid';
-import { useState, useRef, memo } from 'react';
+"use client";
+import { v4 as uuidv4 } from "uuid";
+import { useState, useRef, memo, useEffect } from "react";
 import {
   PersonalInfoForm,
   LanguagesForm,
@@ -10,48 +10,37 @@ import {
   ProjectsForm,
   SkillsForm,
   SummaryForm,
-} from './cv-handler';
-import {
-  Download,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  Code,
-  Briefcase,
-  GraduationCap,
-  FolderOpen,
-  Award,
-  Linkedin,
-  Github,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from "./cv-handler";
+import { Download, ChevronLeft, ChevronRight, DownloadIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-import { printPDF } from '@/lib/cvTemplate';
-import { CVHandler } from './cv-handler';
-import toast from 'react-hot-toast';
+import { printPDF } from "@/lib/cvTemplate";
+import { CVHandler } from "./cv-handler";
+import toast from "react-hot-toast";
+import Link from "next/link";
 
 const dummyPersonalInfo = {
-  name: '',
-  title: '',
-  email: '',
-  phone: '',
-  location: '',
-  linkedin: '',
-  github: '',
-  portfolio: '',
-  image: '',
+  name: "",
+  title: "",
+  email: "",
+  phone: "",
+  location: "",
+  linkedin: "",
+  github: "",
+  portfolio: "",
+  image: "",
 };
 
-const CVBuilder = () => {
+export const CVBuilder = () => {
+  // // State isMounted untuk mencegah Hydration Error di Next.js
+  const [isMounted, setIsMounted] = useState(false);
   const [step, setStep] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const [personalInfo, setPersonalInfo] = useState(dummyPersonalInfo);
-  const [summary, setSummary] = useState('');
+  const [summary, setSummary] = useState("");
   const [skills, setSkills] = useState({
     technical: [],
     soft: [],
@@ -61,6 +50,59 @@ const CVBuilder = () => {
   const [projects, setProjects] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [languages, setLanguages] = useState([]);
+
+  // 1. Load data dari localStorage saat halaman pertama kali dirender
+  useEffect(() => {
+    setIsMounted(true);
+    const savedData = localStorage.getItem("cvDataDraft");
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.personalInfo) setPersonalInfo(parsed.personalInfo);
+        if (parsed.summary) setSummary(parsed.summary);
+        if (parsed.skills) setSkills(parsed.skills);
+        if (parsed.experience) setExperience(parsed.experience);
+        if (parsed.education) setEducation(parsed.education);
+        if (parsed.projects) setProjects(parsed.projects);
+        if (parsed.certifications) setCertifications(parsed.certifications);
+        if (parsed.languages) setLanguages(parsed.languages);
+      } catch (error) {
+        console.error("Gagal mem-parsing data CV dari localStorage", error);
+      }
+    }
+  }, []);
+
+  // 2. Simpan data ke localStorage setiap kali ada perubahan pada form
+  useEffect(() => {
+    if (isMounted) {
+      const cvData = {
+        personalInfo,
+        summary,
+        skills,
+        experience,
+        education,
+        projects,
+        certifications,
+        languages,
+      };
+      
+      try {
+        localStorage.setItem("cvDataDraft", JSON.stringify(cvData));
+      } catch (error) {
+        console.warn("Gagal menyimpan ke localStorage. File gambar mungkin terlalu besar.", error);
+      }
+    }
+  }, [
+    personalInfo,
+    summary,
+    skills,
+    experience,
+    education,
+    projects,
+    certifications,
+    languages,
+    isMounted
+  ]);
 
   const {
     handleAchievementChange,
@@ -101,7 +143,10 @@ const CVBuilder = () => {
     setSummary,
   });
 
-  const downloadPDF = async () => {
+const downloadPDF = async () => {
+    setIsDownloading(true); // Mulai loading
+    const toastId = toast.loading("Sedang menyiapkan CV Anda...");
+    
     try {
       await printPDF({
         personalInfo,
@@ -113,8 +158,11 @@ const CVBuilder = () => {
         certifications,
         languages,
       });
+      toast.success("CV berhasil diunduh!", { id: toastId });
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message, { id: toastId });
+    } finally {
+      setIsDownloading(false); // Selesai loading
     }
   };
 
@@ -123,6 +171,9 @@ const CVBuilder = () => {
   };
 
   const renderFormStep = () => {
+    // Jika belum di-mount di sisi client, render null (mencegah error UI berkedip)
+    if (!isMounted) return null;
+
     switch (step) {
       case 1:
         return (
@@ -176,27 +227,12 @@ const CVBuilder = () => {
               onRemove={removeLanguage}
             />
             <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => goToStep(2)}
-                className="dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
-              >
-                Lanjut ke Pratinjau
-              </Button>
               <div className="flex space-x-4">
                 <Button
-                  variant="outline"
-                  onClick={() => goToStep(step - 1)}
-                  disabled={step === 1}
-                  className="dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
                   onClick={() => goToStep(step + 1)}
-                  className="dark:bg-blue-600 dark:hover:bg-blue-700"
+                  className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  Next <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -230,10 +266,18 @@ const CVBuilder = () => {
   };
 
   return (
-    <div className="min-h-screen dark:bg-card text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div className="min-h-screen dark:bg-transparent text-gray-900 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-bold">Pembuat CV Profesional</h1>
+          <span className="flex lg:justify-between lg:items-center flex-col lg:flex-row">
+            <h1 className="text-3xl font-bold">Pembuat CV Profesional</h1>{" "}
+            <Link
+              href="/Cv-Budi-Santoso(2).pdf"
+              className={`text-black border-2 dark:text-white my-1 font-sans flex gap-2 px-2 bg-linear-to-r w-[8em] items-center justify-center text-center from-green-600/10 to-emerald-600/10 rounded-md cursor-pointer`}
+            >
+              template <DownloadIcon className="size-4 inline-block"/>
+            </Link>
+          </span>
           <p className="text-gray-600 dark:text-gray-400">
             Buat CV profesional Anda dalam hitungan menit
           </p>
@@ -244,8 +288,8 @@ const CVBuilder = () => {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     step === stepNumber
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                   }`}
                 >
                   {stepNumber}
@@ -253,20 +297,20 @@ const CVBuilder = () => {
                 <span
                   className={`ml-2 ${
                     step === stepNumber
-                      ? 'font-semibold'
-                      : 'text-gray-600 dark:text-gray-400'
+                      ? "font-semibold"
+                      : "text-gray-600 dark:text-gray-400"
                   }`}
                 >
                   {stepNumber === 1
-                    ? 'Masukkan Informasi'
-                    : 'Pratinjau & Unduh'}
+                    ? "Masukkan Informasi"
+                    : "Pratinjau & Unduh"}
                 </span>
                 {stepNumber < 2 && (
                   <div
                     className={`w-16 h-1 mx-4 ${
                       step === stepNumber
-                        ? 'bg-blue-500'
-                        : 'bg-gray-200 dark:bg-gray-700'
+                        ? "bg-blue-500"
+                        : "bg-gray-200 dark:bg-gray-700"
                     }`}
                   ></div>
                 )}

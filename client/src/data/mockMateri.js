@@ -20,4 +20,5 @@ export const mipaCourses = [
   'Fisika Kuantum',
   'Kimia Fisik',
   'Biologi Sel',
+  'Digital',
 ];

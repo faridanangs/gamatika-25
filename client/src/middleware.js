@@ -13,12 +13,18 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  if (
-    (pathname === '/login' || pathname === '/register') &&
-    token?.role === 'user'
+   if (
+    ((pathname === '/login' || pathname === '/register') || (pathname === '/forum' || pathname === "/blogs"))
   ) {
-    return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+    return NextResponse.redirect(new URL('/', req.url));
   }
+
+  // if (
+  //   (pathname === '/login' || pathname === '/register') &&
+  //   token?.role === 'user'
+  // ) {
+  //   return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+  // }
 
   if (token) {
     if (pathname === '/dashboard/admin' && token.role === 'user') {
@@ -30,5 +36,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/login', '/register', '/forum', '/blogs'],
 };
