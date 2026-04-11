@@ -1,26 +1,25 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/faridanangs/gamatika-25/models"
 	"github.com/joho/godotenv"
-	"github.com/josestg/getenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func Connect() *gorm.DB {
-	host := getenv.String("HOST", "localhost")
-	port := getenv.String("PORT", "5432")
-	user := getenv.String("USER", "postgres")
-	password := getenv.String("PASSWORD", "postgres")
-	dbname := getenv.String("DBNAME", "postgres")
+	// host := getenv.String("HOST", "localhost")
+	// port := getenv.String("PORT", "5432")
+	// user := getenv.String("USER", "postgres")
+	// password := getenv.String("PASSWORD", "postgres")
+	// dbname := getenv.String("DBNAME", "postgres")
 
 	appEnv := os.Getenv("APP_ENV")
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbname, port)
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbname, port)
+	dsn := "postgresql://neondb_owner:npg_9PfbYASEx4yZ@ep-old-cell-ahvejdan-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 	if appEnv == "production" {
 		if err := godotenv.Load(".env.local"); err != nil {

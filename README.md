@@ -47,7 +47,6 @@ Menjadi ekosistem digital pilihan utama yang memberdayakan kolaborasi, inovasi, 
 - **💬 Forum Diskusi:** Berinteraksi, bertanya, dan berbagi pengetahuan dengan sesama mahasiswa MIPA melalui postingan, komentar, dan fitur berbagi.
 - **📚 Perpustakaan Digital:** Akses e-book dan jurnal yang dikategorikan berdasarkan mata kuliah untuk mempermudah pencarian.
 - **📄 Pembuat CV ATS-Friendly:** Buat CV profesional dengan template siap pakai yang ramah sistem pelacakan pelamar (ATS) hanya dengan mengisi data diri.
-- **🤖 Asisten AI:** Dapatkan bantuan dan konsultasi cepat mengenai berbagai topik akademik melalui chat AI yang terintegrasi.
 - **🏆 Reward NFT:** Jadilah kontributor teratas di forum dan dapatkan penghargaan eksklusif berupa NFT yang di-minting setiap 7 hari.
 - **💼 Info Loker:** Jelajahi informasi lowongan kerja terbaru yang relevan dengan bidang MIPA (dapat diakses tanpa login).
 - **📢 Buar Artikel:** Bagikan pengetahuan, penelitian, atau pandangan Anda dengan menulis dan mempublikasikan artikel sendiri di platform.
